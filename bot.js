@@ -468,7 +468,7 @@ setInterval(
     const frase = FRASES_ANNIE[Math.floor(Math.random() * FRASES_ANNIE.length)];
     canal.send(`📮✨ *Annie comenta con cariño:* ${frase}`);
   },
-  1000 * 60 * 50,
+  1000 * 60 * 90,
 );
 setInterval(ejecutarRutinaDiaria, 1000 * 60 * 5);
 setInterval(mencionarVecinoRandom, 1000 * 60 * 60);
