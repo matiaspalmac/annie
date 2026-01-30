@@ -1,0 +1,401 @@
+{
+  "Paloma de Oliva Africana": {
+    "ubicacion": "Montaña Onsen (Onsen)",
+    "nivel_avistamiento": 5,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Flamenco Americano": {
+    "ubicacion": "Campo de Flores",
+    "nivel_avistamiento": 9,
+    "actividad": "Diaria",
+    "clima": ["🌈"],
+    "horario": ["☀️"]
+  },
+  "Gaviota de Audouin": {
+    "ubicacion": "Mar Ballena (Costas y playas), Playa Amatista",
+    "nivel_avistamiento": 3,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Herrerillo Azur": {
+    "ubicacion": "Campo de Flores (Campo del Molino)",
+    "nivel_avistamiento": 7,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Bigotudo": {
+    "ubicacion": "Montaña Onsen",
+    "nivel_avistamiento": 2,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Pavo Real Azul": {
+    "ubicacion": "Evento Nido de Cientos",
+    "nivel_avistamiento": 1,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Guacamayo Azul y Amarillo": {
+    "ubicacion": "Evento Nido de Cientos",
+    "nivel_avistamiento": 1,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Tiñosa Parda": {
+    "ubicacion": "Costa del Mar Antiguo",
+    "nivel_avistamiento": 5,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Paloma Terrestre Canela": {
+    "ubicacion": "Aldea de Pescadores (Muelle Este)",
+    "nivel_avistamiento": 6,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Cernícalo Vulgar": {
+    "ubicacion": "Bosque (Torre del Ciervo)",
+    "nivel_avistamiento": 7,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Pinzón de Doble Barra": {
+    "ubicacion": "Aldea de Pescadores (Faro)",
+    "nivel_avistamiento": 3,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Azulejo de las Montañas": {
+    "ubicacion": "Suburbios",
+    "nivel_avistamiento": 8,
+    "actividad": "Diaria",
+    "clima": ["🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Camachuelo Común": {
+    "ubicacion": "Suburbios",
+    "nivel_avistamiento": 1,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Pinzón Vulgar": {
+    "ubicacion": "Campo de Flores",
+    "nivel_avistamiento": 1,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Tórtola Turca": {
+    "ubicacion": "Hogar",
+    "nivel_avistamiento": 1,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Oropéndola Europea": {
+    "ubicacion": "Río Rosado, Hogar",
+    "nivel_avistamiento": 3,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Trepador Azul": {
+    "ubicacion": "Aldea de Pescadores",
+    "nivel_avistamiento": 2,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Silbón Europeo": {
+    "ubicacion": "Río",
+    "nivel_avistamiento": 2,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Chochín Común": {
+    "ubicacion": "Bosque",
+    "nivel_avistamiento": 1,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Abejaruco Europeo": {
+    "ubicacion": "Montaña Onsen (Orilla del Lago)",
+    "nivel_avistamiento": 5,
+    "actividad": "Diaria",
+    "clima": ["🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Petirrojo Europeo": {
+    "ubicacion": "Área Central",
+    "nivel_avistamiento": 1,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Cormorán Moñudo": {
+    "ubicacion": "Océano",
+    "nivel_avistamiento": 3,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Guacamayo Verde Mayor": {
+    "ubicacion": "Evento Nido de Cientos",
+    "nivel_avistamiento": 5,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Carbonero Común": {
+    "ubicacion": "Montaña Onsen",
+    "nivel_avistamiento": 1,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Flamenco Mayor": {
+    "ubicacion": "Orilla del Agua",
+    "nivel_avistamiento": 1,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Picogordo": {
+    "ubicacion": "Montaña Onsen (Lago del Cráter)",
+    "nivel_avistamiento": 6,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌇"]
+  },
+  "Cormorán Imperial": {
+    "ubicacion": "Mar del Este / Mar Céfiro",
+    "nivel_avistamiento": 9,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Tilopo de Jambu": {
+    "ubicacion": "Suburbios",
+    "nivel_avistamiento": 7,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Eider Real": {
+    "ubicacion": "Río",
+    "nivel_avistamiento": 3,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Faisán de Lady Amherst": {
+    "ubicacion": "Montaña Onsen (Ruinas)",
+    "nivel_avistamiento": 4,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Guacamayo de Lear": {
+    "ubicacion": "Evento Nido de Cientos",
+    "nivel_avistamiento": 7,
+    "actividad": "Diaria",
+    "clima": ["🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Flamenco Menor": {
+    "ubicacion": "Orilla del Lago del Bosque",
+    "nivel_avistamiento": 5,
+    "actividad": "Diaria",
+    "clima": ["🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Búho Chico": {
+    "ubicacion": "Montaña Onsen (Acantilado de Piedra)",
+    "nivel_avistamiento": 6,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Mito de Buscapies": {
+    "ubicacion": "Sobre la cabeza de Blanc",
+    "nivel_avistamiento": 1,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Ánade Real": {
+    "ubicacion": "Lago",
+    "nivel_avistamiento": 1,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Tangara Siete Colores": {
+    "ubicacion": "Suburbios",
+    "nivel_avistamiento": 9,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Halcón Peregrino": {
+    "ubicacion": "Montaña Onsen (Onsen)",
+    "nivel_avistamiento": 7,
+    "actividad": "Diaria",
+    "clima": ["🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Dúcula Imperial": {
+    "ubicacion": "Aldea de Pescadores",
+    "nivel_avistamiento": 1,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Camachuelo de los Pinos": {
+    "ubicacion": "Isla del Bosque",
+    "nivel_avistamiento": 4,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Paloma Rosa": {
+    "ubicacion": "Campo de Flores (Montaña Ballena)",
+    "nivel_avistamiento": 7,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Vinago Cuellirrojo": {
+    "ubicacion": "Campo de Flores",
+    "nivel_avistamiento": 2,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Paradoxorn de Przevalski": {
+    "ubicacion": "Aldea de Pescadores (Plaza)",
+    "nivel_avistamiento": 4,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Cormorán Carirrojo": {
+    "ubicacion": "Mar Antiguo / Mar Ballena",
+    "nivel_avistamiento": 6,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Guacamayo Rojo y Verde": {
+    "ubicacion": "Evento Nido de Cientos",
+    "nivel_avistamiento": 3,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Ave de Regente": {
+    "ubicacion": "Bosque (Pinar del Roble Espíritu)",
+    "nivel_avistamiento": 4,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Tarro Canelo": {
+    "ubicacion": "Lago Suburbano",
+    "nivel_avistamiento": 3,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Gaviota": {
+    "ubicacion": "Costa",
+    "nivel_avistamiento": 2,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Mito de Garganta Plateada": {
+    "ubicacion": "Bosque (Puzzle de Salto)",
+    "nivel_avistamiento": 3,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Serreta Chica": {
+    "ubicacion": "Lago del Bosque",
+    "nivel_avistamiento": 4,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Paloma Zurita": {
+    "ubicacion": "Área Central",
+    "nivel_avistamiento": 1,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Charrán": {
+    "ubicacion": "Costa del Este",
+    "nivel_avistamiento": 7,
+    "actividad": "Diaria",
+    "clima": ["🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Tilopo de Wallace": {
+    "ubicacion": "Campo de Flores (Campo del Molino)",
+    "nivel_avistamiento": 4,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Lavandera Blanca": {
+    "ubicacion": "Playa Amatista",
+    "nivel_avistamiento": 4,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Malvasía Cabeciblanca": {
+    "ubicacion": "Montaña Onsen (Orilla del Lago)",
+    "nivel_avistamiento": 9,
+    "actividad": "Diaria",
+    "clima": ["🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Paloma de Wonga": {
+    "ubicacion": "Bosque",
+    "nivel_avistamiento": 2,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Alcaudón Común": {
+    "ubicacion": "Suburbios",
+    "nivel_avistamiento": 2,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Papamoscas de Vientre Amarillo": {
+    "ubicacion": "Aldea de Pescadores (Muelle)",
+    "nivel_avistamiento": 5,
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  }
+}

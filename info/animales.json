@@ -1,0 +1,42 @@
+{
+  "Carpincho (Capibara)": {
+    "ubicacion": "Ruinas en el área del círculo",
+    "comida_favorita": ["🔴 Frambuesa", "🍅 Tomate", "🍇 Uva"],
+    "clima_preferido": ["🌧️"]
+  },
+  "Ciervo": {
+    "ubicacion": "Entre la Torre del Ciervo y el Pinar del Roble Espíritu",
+    "comida_favorita": ["🥬 Lechuga", "🥗 Ensalada", "🪓 Rama"],
+    "clima_preferido": ["🌞"]
+  },
+  "Panda": {
+    "ubicacion": "Puzzle de Salto",
+    "comida_favorita": ["🎋 Bambú", "🍎 Manzana", "🌽 Maíz"],
+    "clima_preferido": ["🌧️"]
+  },
+  "Nutria Marina": {
+    "ubicacion": "Puerto de la Plaza de la Aldea de Pescadores",
+    "comida_favorita": ["🦪 Ostra", "🍤 Camarón Común", "🦐 Camarón Oriental"],
+    "clima_preferido": ["🌧️"]
+  },
+  "Alpaca": {
+    "ubicacion": "Amatista cerca del puente de madera",
+    "comida_favorita": ["🔵 Arándano", "🍍 Piña", "🌾 Trigo"],
+    "clima_preferido": ["🌞"]
+  },
+  "Zorro": {
+    "ubicacion": "Debajo del Lago del Prado",
+    "comida_favorita": ["🥩 Carne", "🐟 Perca Europea", "🐟 Perca Americana"],
+    "clima_preferido": ["🌈"]
+  },
+  "Conejito": {
+    "ubicacion": "Camino de la Calle del Arte hacia los suburbios",
+    "comida_favorita": ["🌿 Hierba", "🥕 Zanahoria", "🍓 Fresa"],
+    "clima_preferido": ["🌞"]
+  },
+  "Hurón": {
+    "ubicacion": "Debajo del Río Rosado cerca del puente de madera",
+    "comida_favorita": ["🥚 Huevo", "🐟 Lubina", "🐟 Gobio"],
+    "clima_preferido": ["🌈"]
+  }
+}

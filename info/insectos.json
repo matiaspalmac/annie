@@ -1,0 +1,514 @@
+{
+  "Escarabajo Longicornio Alpino": {
+    "ubicacion": "Isla del Bosque",
+    "nivel": 5,
+    "tipo": "Escarabajo",
+    "actividad": "Diaria",
+    "clima": ["🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Escarabajo de la Flor Amatista": {
+    "ubicacion": "Hogar (Rocas)",
+    "nivel": 2,
+    "tipo": "Escarabajo",
+    "actividad": "Diaria",
+    "clima": ["🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Hormiga": {
+    "ubicacion": "Aldea de Pescadores (Plaza)",
+    "nivel": 3,
+    "tipo": "Bicho",
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Apolo": {
+    "ubicacion": "Evento Cebo para Insectos",
+    "nivel": 1,
+    "tipo": "Mariposa",
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Mariquita Asiática": {
+    "ubicacion": "Bosque (Torre del Ciervo)",
+    "nivel": 5,
+    "tipo": "Escarabajo",
+    "actividad": "Diaria",
+    "clima": ["🌧️", "🌈"],
+    "horario": ["☀️", "🌇", "🌙"]
+  },
+  "Escarabajo del Espárrago": {
+    "ubicacion": "Campo de Flores",
+    "nivel": 1,
+    "tipo": "Escarabajo",
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Polilla del Cesto": {
+    "ubicacion": "Bosque (Torre del Ciervo)",
+    "nivel": 10,
+    "tipo": "Mariposa",
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌈"],
+    "horario": ["🌙", "🌇"]
+  },
+  "Demoiselle Hermosa": {
+    "ubicacion": "Orilla del Lago del Bosque",
+    "nivel": 6,
+    "tipo": "Libélula",
+    "actividad": "Diaria",
+    "clima": ["🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Leopardo Hermoso": {
+    "ubicacion": "Aldea de Pescadores (Muelle)",
+    "nivel": 4,
+    "tipo": "Mariposa",
+    "actividad": "Diaria",
+    "clima": ["🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "🌇"]
+  },
+  "Morpho Azul": {
+    "ubicacion": "Bosque (Pinar del Roble Espíritu)",
+    "nivel": 7,
+    "tipo": "Mariposa",
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌈"],
+    "horario": ["🌅", "☀️", "🌇"]
+  },
+  "Chinche de Escudo Azul": {
+    "ubicacion": "Aldea de Pescadores (Faro)",
+    "nivel": 6,
+    "tipo": "Bicho",
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌅", "☀️"]
+  },
+  "Abejorro": {
+    "ubicacion": "Campo de Flores",
+    "nivel": 2,
+    "tipo": "Abeja",
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Blanquita de la Col": {
+    "ubicacion": "Aldea de Pescadores",
+    "nivel": 1,
+    "tipo": "Mariposa",
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Carpintera Cerúlea": {
+    "ubicacion": "Aldea de Pescadores (Plaza)",
+    "nivel": 9,
+    "tipo": "Abeja",
+    "actividad": "Diaria",
+    "clima": ["🌈"],
+    "horario": ["🌙", "🌇"]
+  },
+  "Tigre de Castaño": {
+    "ubicacion": "Evento Cebo para Insectos",
+    "nivel": 7,
+    "tipo": "Mariposa",
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Cigarra": {
+    "ubicacion": "Bosque (Pinar del Roble Espíritu)",
+    "nivel": 4,
+    "tipo": "Bicho",
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "☀️", "🌇"]
+  },
+  "Polilla Cometa": {
+    "ubicacion": "Suburbios",
+    "nivel": 8,
+    "tipo": "Mariposa",
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌈"],
+    "horario": ["🌇", "🌙"]
+  },
+  "Mariposa Azul Común": {
+    "ubicacion": "Área Central",
+    "nivel": 2,
+    "tipo": "Mariposa",
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Limonera Común": {
+    "ubicacion": "Suburbios",
+    "nivel": 1,
+    "tipo": "Mariposa",
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Libélula de Cola Blanca": {
+    "ubicacion": "Ribera del Río",
+    "nivel": 4,
+    "tipo": "Libélula",
+    "actividad": "Diaria",
+    "clima": ["🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Mantis de Cabeza de Cono": {
+    "ubicacion": "Montaña Onsen (Ruinas)",
+    "nivel": 9,
+    "tipo": "Saltamontes",
+    "actividad": "Diaria",
+    "clima": ["🌧️", "🌈"],
+    "horario": ["☀️", "🌇"]
+  },
+  "Planeador de Pantano Carmesí": {
+    "ubicacion": "Montaña Onsen",
+    "nivel": 7,
+    "tipo": "Libélula",
+    "actividad": "Diaria",
+    "clima": ["🌈"],
+    "horario": ["🌙", "☀️", "🌇"]
+  },
+  "Escarabajo de la Flor Elegante": {
+    "ubicacion": "Campo de Flores (Montaña Ballena)",
+    "nivel": 7,
+    "tipo": "Escarabajo",
+    "actividad": "Diaria",
+    "clima": ["🌧️", "🌈"],
+    "horario": ["🌅", "☀️"]
+  },
+  "Chinche de la Mezquita": {
+    "ubicacion": "Hogar (Rocas)",
+    "nivel": 1,
+    "tipo": "Bicho",
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Escarabajo de Color Fuego": {
+    "ubicacion": "Montaña Onsen (Onsen)",
+    "nivel": 3,
+    "tipo": "Escarabajo",
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Mariquita de Cuatro Manchas": {
+    "ubicacion": "Montaña Onsen (Lago del Cráter)",
+    "nivel": 4,
+    "tipo": "Escarabajo",
+    "actividad": "Diaria",
+    "clima": ["🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Libélula de Cuatro Manchas": {
+    "ubicacion": "Lakeshore Suburbano",
+    "nivel": 2,
+    "tipo": "Libélula",
+    "actividad": "Diaria",
+    "clima": ["🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Mantis Gigante Asiática": {
+    "ubicacion": "Montaña Onsen (Ruinas)",
+    "nivel": 5,
+    "tipo": "Saltamontes",
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Saltamontes de Oro": {
+    "ubicacion": "Montaña Onsen",
+    "nivel": 1,
+    "tipo": "Saltamontes",
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Escarabajo Joya Dorado": {
+    "ubicacion": "Bosque (Puzzle de Salto)",
+    "nivel": 7,
+    "tipo": "Escarabajo",
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌈"],
+    "horario": ["☀️", "🌇"]
+  },
+  "Escarabajo Ciervo Dorado": {
+    "ubicacion": "Bosque (Pinar del Roble Espíritu)",
+    "nivel": 9,
+    "tipo": "Escarabajo",
+    "actividad": "Diaria",
+    "clima": ["🌧️", "🌈"],
+    "horario": ["🌙", "🌇"]
+  },
+  "Ala de Pájaro Verde": {
+    "ubicacion": "Suburbios",
+    "nivel": 6,
+    "tipo": "Mariposa",
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌇", "🌙"]
+  },
+  "Escarabajo Tigre Verde": {
+    "ubicacion": "Montaña Onsen",
+    "nivel": 2,
+    "tipo": "Escarabajo",
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Escarabajo Hércules": {
+    "ubicacion": "Montaña Onsen (Lago del Cráter)",
+    "nivel": 10,
+    "tipo": "Escarabajo",
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌈"],
+    "horario": ["☀️", "🌇"]
+  },
+  "Escarabajo Cornudo": {
+    "ubicacion": "Aldea de Pescadores (Muelle Este)",
+    "nivel": 8,
+    "tipo": "Escarabajo",
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌈"],
+    "horario": ["🌙", "🌇"]
+  },
+  "Katídido": {
+    "ubicacion": "Campo de Flores (Playa Amatista)",
+    "nivel": 3,
+    "tipo": "Saltamontes",
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Saltamontes de Bandas Grandes": {
+    "ubicacion": "Suburbios",
+    "nivel": 4,
+    "tipo": "Saltamontes",
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌈"],
+    "horario": ["🌇", "🌙"]
+  },
+  "Libélula Roja Grande": {
+    "ubicacion": "Orilla del Agua",
+    "nivel": 1,
+    "tipo": "Libélula",
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Mantis Mediterránea": {
+    "ubicacion": "Montaña Onsen (Acantilado de Piedra)",
+    "nivel": 4,
+    "tipo": "Saltamontes",
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌈"],
+    "horario": ["☀️", "🌇", "🌙"]
+  },
+  "Mini Polilla Luna": {
+    "ubicacion": "Suburbios",
+    "nivel": 3,
+    "tipo": "Mariposa",
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌈"],
+    "horario": ["🌅", "☀️", "🌇"]
+  },
+  "Escarabajo Minotauro": {
+    "ubicacion": "Montaña Onsen (Ruinas)",
+    "nivel": 7,
+    "tipo": "Escarabajo",
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️"]
+  },
+  "Morpho Helena": {
+    "ubicacion": "Campo de Flores (Playa Amatista)",
+    "nivel": 10,
+    "tipo": "Mariposa",
+    "actividad": "Diaria",
+    "clima": ["🌈"],
+    "horario": ["🌅", "☀️"]
+  },
+  "Madreperla": {
+    "ubicacion": "Campo de Flores (Campo del Molino)",
+    "nivel": 9,
+    "tipo": "Mariposa",
+    "actividad": "Diaria",
+    "clima": ["🌧️", "🌈"],
+    "horario": ["🌙", "🌅"]
+  },
+  "Manto de Luto": {
+    "ubicacion": "Montaña Onsen (Onsen)",
+    "nivel": 5,
+    "tipo": "Mariposa",
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌈"],
+    "horario": ["🌙", "🌅", "☀️"]
+  },
+  "Macaón del Viejo Mundo": {
+    "ubicacion": "Bosque",
+    "nivel": 1,
+    "tipo": "Mariposa",
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Punta Naranja": {
+    "ubicacion": "Área Central",
+    "nivel": 1,
+    "tipo": "Mariposa",
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Mariposa Pavo Real": {
+    "ubicacion": "Campo de Flores (Campo del Molino)",
+    "nivel": 5,
+    "tipo": "Mariposa",
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Chinche Picasso": {
+    "ubicacion": "Campo de Flores (Playa Amatista)",
+    "nivel": 8,
+    "tipo": "Bicho",
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌈"],
+    "horario": ["🌙", "🌇"]
+  },
+  "Katídido Rosa": {
+    "ubicacion": "Evento Cebo para Insectos",
+    "nivel": 3,
+    "tipo": "Saltamontes",
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Mariposa Cartero": {
+    "ubicacion": "Evento Cebo para Insectos",
+    "nivel": 1,
+    "tipo": "Mariposa",
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Emperador Púrpura": {
+    "ubicacion": "Campo de Flores (Montaña Ballena)",
+    "nivel": 3,
+    "tipo": "Mariposa",
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌈"],
+    "horario": ["🌙", "☀️", "🌇"]
+  },
+  "Escarabajo Ciervo Arcoíris": {
+    "ubicacion": "Evento Cebo para Insectos (Ruinas)",
+    "nivel": 9,
+    "tipo": "Escarabajo",
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Ala de Pájaro de Rajah Brooke": {
+    "ubicacion": "Hogar",
+    "nivel": 3,
+    "tipo": "Mariposa",
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "🌇"]
+  },
+  "Mariquita de Siete Puntos": {
+    "ubicacion": "Suburbios",
+    "nivel": 2,
+    "tipo": "Escarabajo",
+    "actividad": "Diaria",
+    "clima": ["🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Saltamontes Siberiano": {
+    "ubicacion": "Aldea de Pescadores",
+    "nivel": 2,
+    "tipo": "Saltamontes",
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Escarabajo Joya de Plata": {
+    "ubicacion": "Acantilado Onsen (Lado de árboles)",
+    "nivel": 6,
+    "tipo": "Escarabajo",
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌈"],
+    "horario": ["🌙", "🌅", "☀️"]
+  },
+  "Polilla Luna Española": {
+    "ubicacion": "Bosque (Pinar del Roble Espíritu)",
+    "nivel": 8,
+    "tipo": "Mariposa",
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌈"],
+    "horario": ["☀️", "🌇"]
+  },
+  "Carpintera de Patas Desparramadas": {
+    "ubicacion": "Campo de Flores (Montaña Ballena)",
+    "nivel": 5,
+    "tipo": "Abeja",
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Escarabajo Ciervo": {
+    "ubicacion": "Bosque (Puzzle de Salto)",
+    "nivel": 6,
+    "tipo": "Escarabajo",
+    "actividad": "Diaria",
+    "clima": ["🌧️", "🌈"],
+    "horario": ["🌅", "☀️", "🌇"]
+  },
+  "Morpho de Sulkowsky": {
+    "ubicacion": "Atractor de Insectos Inflable Especial",
+    "nivel": 1,
+    "tipo": "Mariposa",
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Morpho del Atardecer": {
+    "ubicacion": "Bosque (Torre del Ciervo)",
+    "nivel": 10,
+    "tipo": "Mariposa",
+    "actividad": "Diaria",
+    "clima": ["🌈"],
+    "horario": ["🌅", "☀️"]
+  },
+  "Abeja Cuco de Waroona": {
+    "ubicacion": "Bosque (Torre del Ciervo)",
+    "nivel": 3,
+    "tipo": "Abeja",
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌅", "☀️", "🌇"]
+  },
+  "Escarabajo Avispa": {
+    "ubicacion": "Bosque",
+    "nivel": 2,
+    "tipo": "Escarabajo",
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Bruja Blanca": {
+    "ubicacion": "Evento Cebo para Insectos",
+    "nivel": 5,
+    "tipo": "Mariposa",
+    "actividad": "Diaria",
+    "clima": ["🌞", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  }
+}

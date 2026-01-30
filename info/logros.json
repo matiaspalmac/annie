@@ -1,0 +1,162 @@
+{
+  "Nunca con las manos vacías": {
+    "requisito": "Nivel 10 en el hobby de Pesca",
+    "titulo": "Pescador Místico",
+    "nota": "Skilled Angler"
+  },
+  "Pescador Místico": {
+    "requisito": "Activa la fase oculta del Evento de Pesca 10 veces en total",
+    "titulo": "Pescador",
+    "nota": "Fisher"
+  },
+  "Bendición del Cardumen": {
+    "requisito": "Activa 100 cardúmenes en total durante eventos de pesca",
+    "titulo": "Bendición",
+    "nota": "Blessing"
+  },
+  "Marinero Fuerte": {
+    "requisito": "Atrapa peces de más de 100kg por 2 veces consecutivas",
+    "titulo": "Sedal de Pesca",
+    "nota": "Fishing Line"
+  },
+  "Fortuna de Peces Gemelos": {
+    "requisito": "Atrapa 2 peces de 5 estrellas en menos de 1 minuto",
+    "titulo": "Águila Pescadora",
+    "nota": "Osprey"
+  },
+  "Máquina de Pesca": {
+    "requisito": "Atrapa un total de 50 peces de más de 100kg cada uno",
+    "titulo": "Cesta de Peces",
+    "nota": "Fish Basket"
+  },
+  "Frenesí de Tiburones": {
+    "requisito": "Atrapa 3 tiburones de sombras doradas en un solo evento de pesca marina",
+    "titulo": "Jaula de Tiburones",
+    "nota": "Shark Cage"
+  },
+  "Invocador de Cardúmenes": {
+    "requisito": "Activa 3 cardúmenes en un solo evento de pesca",
+    "titulo": "Invocador de Cardúmenes",
+    "nota": "Shoal Caller"
+  },
+  "Pescador de Luz Estelar": {
+    "requisito": "Atrapa 4 peces de 5 estrellas en un solo evento de pesca",
+    "titulo": "Maníaco de la Pesca",
+    "nota": "Fishing Maniac"
+  },
+  "Leyenda de la Cocina del Pueblo": {
+    "requisito": "Nivel 10 en el hobby de Cocina",
+    "titulo": "Chef",
+    "nota": "Chef"
+  },
+  "Rápido y Perfecto": {
+    "requisito": "Cocina 2 platos de 5 estrellas en menos de 60 segundos",
+    "titulo": "Reloj de Cocina",
+    "nota": "Kitchen Clock"
+  },
+  "Toque Verde": {
+    "requisito": "Nivel 10 en el hobby de Jardinería",
+    "titulo": "Horticultor",
+    "nota": "Horticulturist"
+  },
+  "Cosecha Abundante": {
+    "requisito": "Cosecha cultivos de 5 estrellas mientras la Cosecha de Bonificación está activa",
+    "titulo": "Cosecha",
+    "nota": "Harvest"
+  },
+  "Suerte del Arcoíris": {
+    "requisito": "Activa 2 bendiciones híbridas de arcoíris en un solo riego de área múltiple",
+    "titulo": "Suerte del Arcoíris",
+    "nota": "Rainbow Luck"
+  },
+  "Sirviente Gatuno Ace": {
+    "requisito": "Nivel 10 en el hobby de Cuidado de Gatos",
+    "titulo": "Amante de los Gatos",
+    "nota": "Cat Lover"
+  },
+  "Cantina Miau-Miau": {
+    "requisito": "Alimenta a 5 gatos con su comida favorita",
+    "titulo": "Comida para Gatos",
+    "nota": "Cat Food"
+  },
+  "Entrenador de Perros Ace": {
+    "requisito": "Nivel 10 en el hobby de Cuidado de Perros",
+    "titulo": "Amigo de los Perros",
+    "nota": "Dog Pal"
+  },
+  "Cantina Perruna": {
+    "requisito": "Alimenta a 3 perros con su comida favorita",
+    "titulo": "Comida para Perros",
+    "nota": "Dog Food"
+  },
+  "Comandante de Insectos": {
+    "requisito": "Nivel 10 en el hobby de Captura de Insectos",
+    "titulo": "Maestro de Insectos",
+    "nota": "Insect Master"
+  },
+  "Rastreador Místico": {
+    "requisito": "Activa la fase oculta del evento de captura de insectos 10 veces",
+    "titulo": "Exploración",
+    "nota": "Exploration"
+  },
+  "Recolector de Insectos": {
+    "requisito": "Atrapa 3 insectos con una sola burbuja de captura",
+    "titulo": "Triple Captura",
+    "nota": "Triple Catch"
+  },
+  "Susurrador de Aves": {
+    "requisito": "Nivel 10 en el hobby de Avistamiento de Aves",
+    "titulo": "Susurrador de Aves",
+    "nota": "Bird Whisperer"
+  },
+  "Caminante de Nubes": {
+    "requisito": "Activa la fase oculta del evento de aves 10 veces",
+    "titulo": "Cielo",
+    "nota": "Sky"
+  },
+  "Artista de Esculturas de Arena": {
+    "requisito": "Nivel 5 en el hobby de Esculturas de Arena",
+    "titulo": "Escultor de Arena",
+    "nota": "Sand Sculptor"
+  },
+  "Patrocinador de Cohetes": {
+    "requisito": "Gana un total de 500,000 de Oro vendiendo a Albert Jr.",
+    "titulo": "Cohete",
+    "nota": "Rocket"
+  },
+  "Miembro D.G.": {
+    "requisito": "Alcanza el nivel 30 de Miembro D.G.",
+    "titulo": "Miembro D.G.",
+    "nota": "D.G. Member"
+  },
+  "Vecino Animal": {
+    "requisito": "Alcanza el nivel 10 de vínculo con 8 grupos de animales",
+    "titulo": "Nuevo Vecino",
+    "nota": "New Neighbour"
+  },
+  "Guardián de Animales": {
+    "requisito": "Descubre la comida favorita de 8 grupos de animales",
+    "titulo": "Delicioso",
+    "nota": "Delicious"
+  },
+  "Experto en Reparaciones": {
+    "requisito": "Comparte kits de reparación con 100 miembros D.G. en total",
+    "titulo": "Reparaciones",
+    "nota": "Repairs"
+  },
+  "Estrella del Pop": {
+    "requisito": "Recibe un total de 100 Likes en tu casa",
+    "titulo": "Estrella Naciente",
+    "nota": "Rising Star"
+  },
+  "Compañero de Onsen": {
+    "requisito": "Toma un baño termal con amigos",
+    "titulo": "Onsen",
+    "nota": "Onsen"
+  },
+  "Bajo la Lluvia de Meteoritos": {
+    "requisito": "Pide un deseo bajo un meteorito con amigos",
+    "titulo": "Géminis",
+    "nota": "Gemini"
+  }
+}

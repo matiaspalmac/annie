@@ -1,0 +1,107 @@
+{
+  "Rama": {
+    "ubicacion": "Arbustos",
+    "precio_venta": 5,
+    "ganancia_energia": null
+  },
+  "Madera": {
+    "ubicacion": "Árbol",
+    "precio_venta": 6,
+    "ganancia_energia": null
+  },
+  "Madera de Calidad": {
+    "ubicacion": "Árbol",
+    "precio_venta": 12,
+    "ganancia_energia": null
+  },
+  "Madera Rara": {
+    "ubicacion": "Árbol Gigante en los Suburbios",
+    "precio_venta": 50,
+    "ganancia_energia": null
+  },
+  "Madera de Roble Errante": {
+    "ubicacion": "Roble Errante",
+    "precio_venta": 150,
+    "ganancia_energia": null
+  },
+  "Bambú": {
+    "ubicacion": "Bambú",
+    "precio_venta": 7,
+    "ganancia_energia": null
+  },
+  "Piedra": {
+    "ubicacion": "Hogar",
+    "precio_venta": 8,
+    "ganancia_energia": null
+  },
+  "Mineral": {
+    "ubicacion": "Hogar",
+    "precio_venta": 14,
+    "ganancia_energia": null
+  },
+  "Fluorita Impecable": {
+    "ubicacion": "Mina de Fluorita",
+    "precio_venta": 150,
+    "ganancia_energia": null
+  },
+  "Fragmento de Estrella": {
+    "ubicacion": "Lluvia de Meteoritos (Mineral de Meteorito)",
+    "precio_venta": 150,
+    "ganancia_energia": null
+  },
+  "Manzana": {
+    "ubicacion": "Hogar",
+    "precio_venta": 2,
+    "ganancia_energia": 88
+  },
+  "Mandarina": {
+    "ubicacion": "Hogar",
+    "precio_venta": 2,
+    "ganancia_energia": 88
+  },
+  "Arándano Azul": {
+    "ubicacion": "Hogar",
+    "precio_venta": 1,
+    "ganancia_energia": 65
+  },
+  "Frambuesa": {
+    "ubicacion": "Hogar",
+    "precio_venta": 2,
+    "ganancia_energia": 67
+  },
+  "Shiitake": {
+    "ubicacion": "Aldea de Pescadores",
+    "precio_venta": 1,
+    "ganancia_energia": 65
+  },
+  "Shiitake Extraño (Negro)": {
+    "ubicacion": "Aldea de Pescadores",
+    "precio_venta": 16,
+    "ganancia_energia": null
+  },
+  "Champiñón de París": {
+    "ubicacion": "Campo de Flores",
+    "precio_venta": 1,
+    "ganancia_energia": 65
+  },
+  "Boleto (Penny Bun)": {
+    "ubicacion": "Bosque",
+    "precio_venta": 1,
+    "ganancia_energia": 65
+  },
+  "Gírgola (Oyster Mushroom)": {
+    "ubicacion": "Montaña Onsen",
+    "precio_venta": 1,
+    "ganancia_energia": 65
+  },
+  "Trufa Negra": {
+    "ubicacion": "Bosque (Isla del Bosque)",
+    "precio_venta": 99,
+    "ganancia_energia": 25
+  },
+  "Matsutake": {
+    "ubicacion": "Bosque (Pinar del Roble Espíritu)",
+    "precio_venta": 5,
+    "ganancia_energia": null
+  }
+}

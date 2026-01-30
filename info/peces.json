@@ -1,0 +1,164 @@
+{
+    "Pez Abisal": {
+      "ubicacion": "Pesca Marina",
+      "nivel": 2,
+      "tipo": "Mar",
+      "sombra": "Dorada",
+      "actividad": "Diaria",
+      "clima": ["🌞", "🌧️", "🌈"],
+      "horario": ["🌙", "🌅", "☀️", "🌇"]
+    },
+    "Trucha Ártica": {
+      "ubicacion": "Lago del Bosque",
+      "nivel": 10,
+      "tipo": "Lago",
+      "sombra": "Mediana",
+      "actividad": "Diaria",
+      "clima": ["🌧️", "🌈"],
+      "horario": ["☀️", "🌇"]
+    },
+    "Caballa Atlántica": {
+      "ubicacion": "Mar Ballena",
+      "nivel": 5,
+      "tipo": "Mar",
+      "sombra": "Pequeña",
+      "actividad": "Diaria",
+      "clima": ["🌈", "🌞"],
+      "horario": ["☀️", "🌇"]
+    },
+    "Pulpo Pigmeo Atlántico": {
+      "ubicacion": "Mar Céfiro",
+      "nivel": 2,
+      "tipo": "Mar",
+      "sombra": "Pequeña",
+      "actividad": "Diaria",
+      "clima": ["🌞", "🌧️", "🌈"],
+      "horario": ["🌙", "🌅", "☀️", "🌇"]
+    },
+    "Salmón Atlántico": {
+      "ubicacion": "Mar Ballena",
+      "nivel": 3,
+      "tipo": "Mar",
+      "sombra": "Mediana",
+      "actividad": "Diaria",
+      "clima": ["🌞", "🌧️", "🌈"],
+      "horario": ["☀️", "🌇", "🌙"]
+    },
+    "Pez Cinta": {
+      "ubicacion": "Mar Céfiro",
+      "nivel": 1,
+      "tipo": "Mar",
+      "sombra": "Grande",
+      "actividad": "Diaria",
+      "clima": ["🌞", "🌧️", "🌈"],
+      "horario": ["🌙", "🌅", "☀️", "🌇"]
+    },
+    "Besugo Manchado": {
+      "ubicacion": "Mar Céfiro",
+      "nivel": 7,
+      "tipo": "Mar",
+      "sombra": "Mediana",
+      "actividad": "Diaria",
+      "clima": ["🌧️", "🌈"],
+      "horario": ["🌙", "🌇"]
+    },
+    "Cangrejo de Río Azul": {
+      "ubicacion": "Lago del Bosque",
+      "nivel": 8,
+      "tipo": "Lago",
+      "sombra": "Pequeña",
+      "actividad": "Diaria",
+      "clima": ["🌞", "🌧️", "🌈"],
+      "horario": ["🌇", "🌙"]
+    },
+    "Atún Aleta Azul": {
+      "ubicacion": "Mar Céfiro",
+      "nivel": 9,
+      "tipo": "Mar",
+      "sombra": "Grande",
+      "actividad": "Diaria",
+      "clima": ["🌈"],
+      "horario": ["🌅", "☀️"]
+    },
+    "Pez Payaso": {
+      "ubicacion": "Mar Antiguo",
+      "nivel": 3,
+      "tipo": "Mar",
+      "sombra": "Pequeña",
+      "actividad": "Diaria",
+      "clima": ["🌞", "🌧️", "🌈"],
+      "horario": ["🌙", "🌅", "☀️", "🌇"]
+    },
+    "Carpa Común": {
+      "ubicacion": "Río Rosado",
+      "nivel": 4,
+      "tipo": "Río",
+      "sombra": "Mediana",
+      "actividad": "Diaria",
+      "clima": ["🌞", "🌈"],
+      "horario": ["☀️", "🌇"]
+    },
+    "Pulpo Común": {
+      "ubicacion": "Pesca Marina",
+      "nivel": 2,
+      "tipo": "Mar",
+      "sombra": "Mediana / Dorada",
+      "actividad": "Diaria",
+      "clima": ["🌞", "🌧️", "🌈"],
+      "horario": ["🌙", "🌅", "☀️", "🌇"]
+    },
+    "Anguila Europea": {
+      "ubicacion": "Mar Antiguo",
+      "nivel": 7,
+      "tipo": "Mar",
+      "sombra": "Mediana",
+      "actividad": "Diaria",
+      "clima": ["🌈"],
+      "horario": ["🌅", "☀️", "🌇"]
+    },
+    "Pez Remo Gigante": {
+      "ubicacion": "Pesca Marina",
+      "nivel": 7,
+      "tipo": "Mar",
+      "sombra": "Dorada",
+      "actividad": "Diaria",
+      "clima": ["🌞", "🌧️", "🌈"],
+      "horario": ["🌅", "☀️"]
+    },
+    "Cangrejo Real Dorado": {
+      "ubicacion": "Pesca Marina",
+      "nivel": 8,
+      "tipo": "Mar",
+      "sombra": "Dorada",
+      "actividad": "Diaria",
+      "clima": ["🌈"],
+      "horario": ["🌙", "🌅", "☀️", "🌇"]
+    },
+    "Pez Luna": {
+      "ubicacion": "Pesca Marina",
+      "nivel": 9,
+      "tipo": "Mar",
+      "sombra": "Dorada",
+      "actividad": "Diaria",
+      "clima": ["🌞", "🌧️", "🌈"],
+      "horario": ["🌙", "🌇"]
+    },
+    "Tiburón Mako": {
+      "ubicacion": "Pesca Marina",
+      "nivel": 10,
+      "tipo": "Mar",
+      "sombra": "Dorada",
+      "actividad": "Diaria",
+      "clima": ["🌈"],
+      "horario": ["🌅", "☀️"]
+    },
+    "Pez Espada": {
+      "ubicacion": "Mar Ballena",
+      "nivel": 10,
+      "tipo": "Mar",
+      "sombra": "Grande",
+      "actividad": "Diaria",
+      "clima": ["🌈"],
+      "horario": ["🌅", "☀️"]
+    }
+  }
