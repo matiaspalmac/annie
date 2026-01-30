@@ -38,7 +38,7 @@ const CONFIG = {
   ANNIE_IMG: "https://imgur.com/pCWlxKG.png",
   HORA_DORMIR: 23,
   HORA_DESPERTAR: 8,
-  UMBRAL_CHISME: 10,
+  UMBRAL_CHISME: 15,
   VENTANA_CHISME: 180000,
   COOLDOWN_CHISME: 900000,
 
@@ -471,8 +471,8 @@ setInterval(
   1000 * 60 * 90,
 );
 setInterval(ejecutarRutinaDiaria, 1000 * 60 * 5);
-setInterval(mencionarVecinoRandom, 1000 * 60 * 60);
-setInterval(anunciarClima, 1000 * 60 * 5);
+setInterval(mencionarVecinoRandom, 1000 * 60 * 90);
+setInterval(anunciarClima, 1000 * 60 * 120);
 
 // Eventos
 client.once("clientReady", async () => {
