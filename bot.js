@@ -1157,7 +1157,7 @@ client.on(Events.InteractionCreate, async (int) => {
 
           embed.addFields({
             name: `${pez.tipo === "Mar" ? "🌊" : pez.tipo === "Lago" ? "🏞️" : "🌿"} ${nombre}`,
-            value: `Lvl **${pez.nivel}** • Sombra **${pez.sombra}**\n📍 ${pez.ubicacion}\n⛅ ${clima}  🕒 ${horario}`,
+            value: `Lvl **${pez.nivel}** 📍 ${pez.ubicacion}\n⛅ ${clima}  🕒 ${horario}`,
             inline: false,
           });
         });
@@ -1183,8 +1183,6 @@ client.on(Events.InteractionCreate, async (int) => {
         .setDescription(`**${pez.tipo || "—"}** en **${pez.ubicacion}**`)
         .addFields(
           { name: "Nivel", value: String(pez.nivel ?? "—"), inline: true },
-          { name: "Sombra", value: pez.sombra ?? "—", inline: true },
-          { name: "Actividad", value: pez.actividad ?? "—", inline: true },
           { name: "Clima", value: pez.clima?.join(" ") || "—", inline: true },
           {
             name: "Horario",
