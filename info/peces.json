@@ -1,164 +1,583 @@
 {
-    "Pez Abisal": {
-      "ubicacion": "Pesca Marina",
-      "nivel": 2,
-      "tipo": "Mar",
-      "sombra": "Dorada",
-      "actividad": "Diaria",
-      "clima": ["🌞", "🌧️", "🌈"],
-      "horario": ["🌙", "🌅", "☀️", "🌇"]
-    },
-    "Trucha Ártica": {
-      "ubicacion": "Lago del Bosque",
-      "nivel": 10,
-      "tipo": "Lago",
-      "sombra": "Mediana",
-      "actividad": "Diaria",
-      "clima": ["🌧️", "🌈"],
-      "horario": ["☀️", "🌇"]
-    },
-    "Caballa Atlántica": {
-      "ubicacion": "Mar Ballena",
-      "nivel": 5,
-      "tipo": "Mar",
-      "sombra": "Pequeña",
-      "actividad": "Diaria",
-      "clima": ["🌈", "🌞"],
-      "horario": ["☀️", "🌇"]
-    },
-    "Pulpo Pigmeo Atlántico": {
-      "ubicacion": "Mar Céfiro",
-      "nivel": 2,
-      "tipo": "Mar",
-      "sombra": "Pequeña",
-      "actividad": "Diaria",
-      "clima": ["🌞", "🌧️", "🌈"],
-      "horario": ["🌙", "🌅", "☀️", "🌇"]
-    },
-    "Salmón Atlántico": {
-      "ubicacion": "Mar Ballena",
-      "nivel": 3,
-      "tipo": "Mar",
-      "sombra": "Mediana",
-      "actividad": "Diaria",
-      "clima": ["🌞", "🌧️", "🌈"],
-      "horario": ["☀️", "🌇", "🌙"]
-    },
-    "Pez Cinta": {
-      "ubicacion": "Mar Céfiro",
-      "nivel": 1,
-      "tipo": "Mar",
-      "sombra": "Grande",
-      "actividad": "Diaria",
-      "clima": ["🌞", "🌧️", "🌈"],
-      "horario": ["🌙", "🌅", "☀️", "🌇"]
-    },
-    "Besugo Manchado": {
-      "ubicacion": "Mar Céfiro",
-      "nivel": 7,
-      "tipo": "Mar",
-      "sombra": "Mediana",
-      "actividad": "Diaria",
-      "clima": ["🌧️", "🌈"],
-      "horario": ["🌙", "🌇"]
-    },
-    "Cangrejo de Río Azul": {
-      "ubicacion": "Lago del Bosque",
-      "nivel": 8,
-      "tipo": "Lago",
-      "sombra": "Pequeña",
-      "actividad": "Diaria",
-      "clima": ["🌞", "🌧️", "🌈"],
-      "horario": ["🌇", "🌙"]
-    },
-    "Atún Aleta Azul": {
-      "ubicacion": "Mar Céfiro",
-      "nivel": 9,
-      "tipo": "Mar",
-      "sombra": "Grande",
-      "actividad": "Diaria",
-      "clima": ["🌈"],
-      "horario": ["🌅", "☀️"]
-    },
-    "Pez Payaso": {
-      "ubicacion": "Mar Antiguo",
-      "nivel": 3,
-      "tipo": "Mar",
-      "sombra": "Pequeña",
-      "actividad": "Diaria",
-      "clima": ["🌞", "🌧️", "🌈"],
-      "horario": ["🌙", "🌅", "☀️", "🌇"]
-    },
-    "Carpa Común": {
-      "ubicacion": "Río Rosado",
-      "nivel": 4,
-      "tipo": "Río",
-      "sombra": "Mediana",
-      "actividad": "Diaria",
-      "clima": ["🌞", "🌈"],
-      "horario": ["☀️", "🌇"]
-    },
-    "Pulpo Común": {
-      "ubicacion": "Pesca Marina",
-      "nivel": 2,
-      "tipo": "Mar",
-      "sombra": "Mediana / Dorada",
-      "actividad": "Diaria",
-      "clima": ["🌞", "🌧️", "🌈"],
-      "horario": ["🌙", "🌅", "☀️", "🌇"]
-    },
-    "Anguila Europea": {
-      "ubicacion": "Mar Antiguo",
-      "nivel": 7,
-      "tipo": "Mar",
-      "sombra": "Mediana",
-      "actividad": "Diaria",
-      "clima": ["🌈"],
-      "horario": ["🌅", "☀️", "🌇"]
-    },
-    "Pez Remo Gigante": {
-      "ubicacion": "Pesca Marina",
-      "nivel": 7,
-      "tipo": "Mar",
-      "sombra": "Dorada",
-      "actividad": "Diaria",
-      "clima": ["🌞", "🌧️", "🌈"],
-      "horario": ["🌅", "☀️"]
-    },
-    "Cangrejo Real Dorado": {
-      "ubicacion": "Pesca Marina",
-      "nivel": 8,
-      "tipo": "Mar",
-      "sombra": "Dorada",
-      "actividad": "Diaria",
-      "clima": ["🌈"],
-      "horario": ["🌙", "🌅", "☀️", "🌇"]
-    },
-    "Pez Luna": {
-      "ubicacion": "Pesca Marina",
-      "nivel": 9,
-      "tipo": "Mar",
-      "sombra": "Dorada",
-      "actividad": "Diaria",
-      "clima": ["🌞", "🌧️", "🌈"],
-      "horario": ["🌙", "🌇"]
-    },
-    "Tiburón Mako": {
-      "ubicacion": "Pesca Marina",
-      "nivel": 10,
-      "tipo": "Mar",
-      "sombra": "Dorada",
-      "actividad": "Diaria",
-      "clima": ["🌈"],
-      "horario": ["🌅", "☀️"]
-    },
-    "Pez Espada": {
-      "ubicacion": "Mar Ballena",
-      "nivel": 10,
-      "tipo": "Mar",
-      "sombra": "Grande",
-      "actividad": "Diaria",
-      "clima": ["🌈"],
-      "horario": ["🌅", "☀️"]
-    }
+  "Coregono": {
+    "ubicacion": "Mar de Céfiro",
+    "nivel": 1,
+    "tipo": "Lago",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Barbo Común": {
+    "ubicacion": "Río Poco Profundo",
+    "nivel": 1,
+    "tipo": "Río",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Alburno": {
+    "ubicacion": "Lago",
+    "nivel": 1,
+    "tipo": "Lago",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Perca Europea": {
+    "ubicacion": "Río",
+    "nivel": 1,
+    "tipo": "Río",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Cacho": {
+    "ubicacion": "Lago",
+    "nivel": 1,
+    "tipo": "Lago",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Locha de Espina": {
+    "ubicacion": "Río del Bosque Gigante",
+    "nivel": 1,
+    "tipo": "Río",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Pequeño Pez de Río": {
+    "ubicacion": "Río Tranquilo",
+    "nivel": 1,
+    "tipo": "Río",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Tenca": {
+    "ubicacion": "Lago del Bosque",
+    "nivel": 1,
+    "tipo": "Lago",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Carpa Gibelio": {
+    "ubicacion": "Lago",
+    "nivel": 1,
+    "tipo": "Lago",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Pez Schneider": {
+    "ubicacion": "Lago Suburbano",
+    "nivel": 1,
+    "tipo": "Lago",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Sardina": {
+    "ubicacion": "Océano",
+    "nivel": 1,
+    "tipo": "Mar",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Lubina": {
+    "ubicacion": "Océano",
+    "nivel": 1,
+    "tipo": "Mar",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Camarón Oriental": {
+    "ubicacion": "Río",
+    "nivel": 1,
+    "tipo": "Río",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Listado": {
+    "ubicacion": "Océano",
+    "nivel": 1,
+    "tipo": "Mar",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Pez Sable": {
+    "ubicacion": "Mar de Céfiro",
+    "nivel": 1,
+    "tipo": "Mar",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Camarón Común": {
+    "ubicacion": "Mar del Este",
+    "nivel": 1,
+    "tipo": "Mar",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Jurel": {
+    "ubicacion": "Mar de la Ballena",
+    "nivel": 1,
+    "tipo": "Mar",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Espinoso Marino": {
+    "ubicacion": "Mar Viejo",
+    "nivel": 1,
+    "tipo": "Mar",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Salmonete de Roca": {
+    "ubicacion": "Pesca Marina",
+    "nivel": 1,
+    "tipo": "Mar",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Eperlán Europeo": {
+    "ubicacion": "Lago de la Pradera",
+    "nivel": 1,
+    "tipo": "Lago",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Caballito de Mar": {
+    "ubicacion": "Mar de la Ballena",
+    "nivel": 1,
+    "tipo": "Mar",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️"]
+  },
+  "Pulpo Común": {
+    "ubicacion": "Pesca Marina",
+    "nivel": 2,
+    "tipo": "Mar",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Locha de Piedra": {
+    "ubicacion": "Lago Suburbano",
+    "nivel": 2,
+    "tipo": "Lago",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Jurel Falso": {
+    "ubicacion": "Mar de Céfiro",
+    "nivel": 2,
+    "tipo": "Mar",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Pez Abisal": {
+    "ubicacion": "Pesca Marina",
+    "nivel": 2,
+    "tipo": "Mar",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Pulpo Pigmeo del Atlántico": {
+    "ubicacion": "Mar de la Ballena",
+    "nivel": 2,
+    "tipo": "Mar",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Rodaballo": {
+    "ubicacion": "Pesca Marina",
+    "nivel": 2,
+    "tipo": "Mar",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Lubina Negra": {
+    "ubicacion": "Lago del Bosque",
+    "nivel": 2,
+    "tipo": "Lago",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Salmón del Atlántico": {
+    "ubicacion": "Mar de la Ballena",
+    "nivel": 3,
+    "tipo": "Mar",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["☀️", "🌇", "🌙"]
+  },
+  "Pez Payaso": {
+    "ubicacion": "Mar Viejo",
+    "nivel": 3,
+    "tipo": "Mar",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Lucioperca": {
+    "ubicacion": "Río del Bosque Gigante",
+    "nivel": 3,
+    "tipo": "Río",
+    "clima": ["🌞", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Acerina": {
+    "ubicacion": "Lago de la Montaña Onsen",
+    "nivel": 3,
+    "tipo": "Lago",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["☀️", "🌇", "🌙"]
+  },
+  "Rana Comestible": {
+    "ubicacion": "Lagos",
+    "nivel": 3,
+    "tipo": "Lago",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Cangrejo Ermitaño": {
+    "ubicacion": "Mar del Este",
+    "nivel": 3,
+    "tipo": "Mar",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Pez Sol del Fango": {
+    "ubicacion": "Lago del Bosque",
+    "nivel": 3,
+    "tipo": "Lago",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌅", "☀️", "🌇"]
+  },
+  "Tilapia": {
+    "ubicacion": "Ríos",
+    "nivel": 3,
+    "tipo": "Río",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Streber": {
+    "ubicacion": "Río Rosado",
+    "nivel": 3,
+    "tipo": "Río",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Cangrejo de Río Europeo": {
+    "ubicacion": "Lago del Bosque",
+    "nivel": 3,
+    "tipo": "Lago",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌇", "🌙", "🌅"]
+  },
+  "Carpa Común": {
+    "ubicacion": "Río Rosado",
+    "nivel": 4,
+    "tipo": "Río",
+    "clima": ["🌞", "🌈"],
+    "horario": ["☀️", "🌇"]
+  },
+  "Lota": {
+    "ubicacion": "Río Tranquilo",
+    "nivel": 4,
+    "tipo": "Río",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["☀️"]
+  },
+  "Solla": {
+    "ubicacion": "Mar Viejo",
+    "nivel": 4,
+    "tipo": "Mar",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌇", "🌙", "🌅"]
+  },
+  "Gobio": {
+    "ubicacion": "Mar del Este",
+    "nivel": 4,
+    "tipo": "Mar",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["☀️", "🌇", "🌅"]
+  },
+  "Mejillón": {
+    "ubicacion": "Lago Suburbano",
+    "nivel": 4,
+    "tipo": "Lago",
+    "clima": ["🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Pez Conejo": {
+    "ubicacion": "Océano",
+    "nivel": 4,
+    "tipo": "Mar",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Cangrejo de Río": {
+    "ubicacion": "Lago Suburbano",
+    "nivel": 4,
+    "tipo": "Lago",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Renacuajo": {
+    "ubicacion": "Lago de la Montaña Onsen",
+    "nivel": 4,
+    "tipo": "Lago",
+    "clima": ["🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Trucha": {
+    "ubicacion": "Lago de la Pradera",
+    "nivel": 5,
+    "tipo": "Lago",
+    "clima": ["🌞", "🌈"],
+    "horario": ["🌇", "🌙", "🌅"]
+  },
+  "Koi Mariposa": {
+    "ubicacion": "Lago de la Pradera",
+    "nivel": 5,
+    "tipo": "Lago",
+    "clima": ["🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Caballa del Atlántico": {
+    "ubicacion": "Mar de la Ballena",
+    "nivel": 5,
+    "tipo": "Mar",
+    "clima": ["🌞", "🌈"],
+    "horario": ["☀️", "🌇"]
+  },
+  "Rutilo": {
+    "ubicacion": "Lago Suburbano",
+    "nivel": 5,
+    "tipo": "Lago",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Calamar Volador Europeo": {
+    "ubicacion": "Pesca Marina",
+    "nivel": 5,
+    "tipo": "Mar",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Langosta Europea": {
+    "ubicacion": "Mar de Céfiro",
+    "nivel": 5,
+    "tipo": "Mar",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌇", "🌙"]
+  },
+  "Blenio de Agua Dulce": {
+    "ubicacion": "Río Rosado",
+    "nivel": 5,
+    "tipo": "Río",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Piraña de Vientre Rojo": {
+    "ubicacion": "Río del Bosque Gigante",
+    "nivel": 5,
+    "tipo": "Río",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Salmón Keta": {
+    "ubicacion": "Río Tranquilo",
+    "nivel": 6,
+    "tipo": "Río",
+    "clima": ["🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Tímalo": {
+    "ubicacion": "Lago Suburbano",
+    "nivel": 6,
+    "tipo": "Lago",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Mejillón de Perla Grande": {
+    "ubicacion": "Lago del Bosque",
+    "nivel": 6,
+    "tipo": "Lago",
+    "clima": ["🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Lija": {
+    "ubicacion": "Pesca Marina",
+    "nivel": 6,
+    "tipo": "Mar",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Pez Globo": {
+    "ubicacion": "Mar Viejo",
+    "nivel": 6,
+    "tipo": "Mar",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Rubio": {
+    "ubicacion": "Mar del Este",
+    "nivel": 6,
+    "tipo": "Mar",
+    "clima": ["🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Besugo": {
+    "ubicacion": "Mar de Céfiro",
+    "nivel": 7,
+    "tipo": "Mar",
+    "clima": ["🌧️", "🌈"],
+    "horario": ["🌇"]
+  },
+  "Anguila Europea": {
+    "ubicacion": "Mar Viejo",
+    "nivel": 7,
+    "tipo": "Mar",
+    "clima": ["🌈"],
+    "horario": ["🌅", "☀️", "🌇"]
+  },
+  "Fartet del Mediterráneo": {
+    "ubicacion": "Lago Suburbano",
+    "nivel": 7,
+    "tipo": "Lago",
+    "clima": ["🌞", "🌈"],
+    "horario": ["☀️", "🌇", "🌙"]
+  },
+  "Pez Remo Gigante": {
+    "ubicacion": "Pesca Marina",
+    "nivel": 7,
+    "tipo": "Mar",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌅", "☀️"]
+  },
+  "Esculpin Moteado": {
+    "ubicacion": "Lago de la Montaña Onsen",
+    "nivel": 7,
+    "tipo": "Lago",
+    "clima": ["🌧️", "🌈"],
+    "horario": ["🌅", "☀️", "🌇"]
+  },
+  "Espinoso": {
+    "ubicacion": "Río Poco Profundo",
+    "nivel": 7,
+    "tipo": "Río",
+    "clima": ["🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Cangrejo de Río Azul": {
+    "ubicacion": "Lago del Bosque",
+    "nivel": 8,
+    "tipo": "Lago",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌇", "🌙"]
+  },
+  "Umbra Europea": {
+    "ubicacion": "Lago Suburbano",
+    "nivel": 8,
+    "tipo": "Lago",
+    "clima": ["🌞", "🌈"],
+    "horario": ["🌙", "🌅"]
+  },
+  "Cangrejo Real Dorado": {
+    "ubicacion": "Pesca Marina",
+    "nivel": 8,
+    "tipo": "Mar",
+    "clima": ["🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Pez Dorado": {
+    "ubicacion": "Lago de la Pradera",
+    "nivel": 8,
+    "tipo": "Lago",
+    "clima": ["🌧️", "🌈"],
+    "horario": ["🌅", "☀️", "🌇"]
+  },
+  "Atún de Aleta Azul": {
+    "ubicacion": "Pesca Marina",
+    "nivel": 9,
+    "tipo": "Mar",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Huchón": {
+    "ubicacion": "Río del Bosque Gigante",
+    "nivel": 9,
+    "tipo": "Río",
+    "clima": ["🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Pez Luna": {
+    "ubicacion": "Pesca Marina",
+    "nivel": 9,
+    "tipo": "Mar",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌇"]
+  },
+  "Lucio del Norte": {
+    "ubicacion": "Lago Suburbano",
+    "nivel": 9,
+    "tipo": "Lago",
+    "clima": ["🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Pez Luna Gigante": {
+    "ubicacion": "Mar del Este",
+    "nivel": 9,
+    "tipo": "Mar",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Pez Sol": {
+    "ubicacion": "Lago de la Montaña Onsen",
+    "nivel": 9,
+    "tipo": "Lago",
+    "clima": ["🌞", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Trucha Ártica": {
+    "ubicacion": "Lago del Bosque",
+    "nivel": 10,
+    "tipo": "Lago",
+    "clima": ["🌧️", "🌈"],
+    "horario": ["☀️", "🌇"]
+  },
+  "Agalla Azul": {
+    "ubicacion": "Lago de la Montaña Onsen",
+    "nivel": 10,
+    "tipo": "Lago",
+    "clima": ["🌞", "🌈"],
+    "horario": ["🌇", "🌙"]
+  },
+  "Tiburón Mako": {
+    "ubicacion": "Pesca Marina",
+    "nivel": 10,
+    "tipo": "Mar",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Pez Espada": {
+    "ubicacion": "Pesca Marina",
+    "nivel": 10,
+    "tipo": "Mar",
+    "clima": ["🌞", "🌧️", "🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
+  },
+  "Siluro": {
+    "ubicacion": "Lago de la Pradera",
+    "nivel": 10,
+    "tipo": "Lago",
+    "clima": ["🌞", "🌈"],
+    "horario": ["🌇", "🌙"]
+  },
+  "Pargo": {
+    "ubicacion": "Mar de Céfiro",
+    "nivel": 10,
+    "tipo": "Mar",
+    "clima": ["🌧️", "🌈"],
+    "horario": ["🌇", "🌙"]
+  },
+  "Cangrejo Real": {
+    "ubicacion": "Mar de la Ballena",
+    "nivel": 10,
+    "tipo": "Mar",
+    "clima": ["🌈"],
+    "horario": ["🌙", "🌅", "☀️", "🌇"]
   }
+}
