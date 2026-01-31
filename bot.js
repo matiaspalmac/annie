@@ -1141,26 +1141,29 @@ client.on(Events.InteractionCreate, async (int) => {
       .setFooter({
         text: `Notas de pesca de Annie • ${new Date().toLocaleDateString("es-CL")}`,
       });
-
+    
     if (mostrarTodos) {
-      embed
-        .setTitle("🐟 Todos los pececitos que Annie quiere 💕🎣")
-        .setDescription(
-          "Lista completita y ordenadita con cariño. ¡A mojarse los piecitos juntitos, vecin@! 🌊",
-        );
+      const items = Object.entries(PECES).sort((a, b) =>
+        a[0].localeCompare(b[0], "es"),
+      );
 
-      Object.entries(PECES)
-        .sort((a, b) => a[0].localeCompare(b[0], "es"))
-        .forEach(([nombre, pez]) => {
-          const clima = pez.clima?.join(" ") || "—";
-          const horario = pez.horario?.join(" ") || "—";
-
-          embed.addFields({
-            name: `${pez.tipo === "Mar" ? "🌊" : pez.tipo === "Lago" ? "🏞️" : "🌿"} ${nombre}`,
-            value: `Lvl **${pez.nivel}** 📍 ${pez.ubicacion}\n⛅ ${clima}  🕒 ${horario}`,
-            inline: false,
-          });
-        });
+      await enviarPaginado({
+        interaction: int,
+        baseEmbed: embed,
+        items,
+        itemsPorPagina: 15,
+        titulo: "🐟 ¡Todos los pececitos del pueblito juntitos!",
+        descripcion: "Mira qué lindos están todos reuniditos... Annie los quiere muchísimo y los cuida con cariñito ✨\n" +
+          "¡Ven a pescar con amor cuando los veas!",
+        renderItem: ([nombre, pez]) => {
+          return {
+            name: `✨ ${nombre}`,
+            value: `📍 **${pez.ubicacion}** | **Nivel:** ${pez.nivel ?? "—"} | **Clima:** ${pez.clima?.join(" ") || "—"} | **Horario:** ${pez.horario?.join(" ") || "—"}`
+          };
+        },
+        content: bostezo,
+      });
+      return;
     } else {
       const pez = PECES[itemInput];
       if (!pez) {
@@ -1847,3 +1850,4 @@ http
   })
   .listen(8000);
 client.login(CONFIG.TOKEN);
+
