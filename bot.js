@@ -32,6 +32,7 @@ const CONFIG = {
   TIMEZONE: "America/New_York",
   GUILD_ID: "1463659718382977253",
   CANAL_HORA_ID: "1465953316029726801",
+  CANAL_CLIMA_ID: "1466973835831283876",
   MENSAJE_ROLES_ID: "1466700694852472936",
   CANAL_GENERAL_ID: "1463659720207372464",
   CANAL_VOZ_DORMIR_ID: "1466250598302355570",
@@ -159,36 +160,28 @@ const FRASES_ANNIE = [
 ];
 
 const CLIMA_PUEBLO = {
-  viernes: {
-    hoy: {
-      tipo: "🌙 Noche suave y despejadita en el Pueblo",
-      descripcion:
-        "El cielo está clarito y lleno de estrellitas... ideal pa' acurrucarse y soñar juntitos ✨\n" +
-        "La luna nos abraza y las estrellas brillan con cariño. Perfecto pa' charlas bajitas y deseos dulces 🌌💕",
-
-      timeline: [
-        {
-          hora: 20,
-          icono: "🌙✨",
-          texto: "Anochecer tranquilo, primeras estrellitas",
-        },
-        {
-          hora: 2,
-          icono: "🌠",
-          texto: "¡Lluvia de estrellitas! Pide un deseo con el corazón",
-        },
-        { hora: 8, icono: "🌤️", texto: "Amanecer fresco y lleno de cariño" },
-        { hora: 14, icono: "☀️", texto: "Día soleado y dulce pa' compartir" },
-        { hora: 20, icono: "🌙", texto: "La noche vuelve suave, cielo limpio" },
-      ],
-    },
+  hoy: {
+    tipo: "☁️ Noche nubosa en el Pueblo",
+    descripcion:
+      "Parece que las nubes han llegado para quedarse un ratito, vecino. Aunque esté nuboso, el cielo tiene su encanto... ¡y prepárate, que mañana temprano necesitaremos el paraguas! ☁️☂️",
+    eventos: [
+      { hora: 8, evento: "Lluvia ligera", icono: "🌧️" },
+      { hora: 14, evento: "Aparición de un arcoíris", icono: "🌈" },
+    ],
+    timeline: [
+      { hora: 20, icono: "☁️🌙", texto: "Noche nubosa" },
+      { hora: 2, icono: "🌙✨", texto: "Cielo despejado por la madrugada" },
+      { hora: 8, icono: "🌧️", texto: "Mañana de lluvia, ¡saque el paraguas!" },
+      { hora: 14, icono: "🌈☁️", texto: "Nuboso con un lindo arcoíris" },
+      { hora: 20, icono: "🌙✨", texto: "Noche despejada" },
+    ],
   },
-
   proximos: [
-    { dia: "Sábado", icono: "🌈", clima: "Lluvia suave" },
-    { dia: "Domingo", icono: "☀️", clima: "Soleado y dulce" },
-    { dia: "Lunes", icono: "☀️", clima: "Soleado pa' empezar lindo" },
-    { dia: "Martes", icono: "☀️", clima: "Soleado con cariño" },
+    { dia: "Sábado", icono: "🌈", clima: "Lluvia matutina y arcoíris" },
+    { dia: "Domingo", icono: "☀️", clima: "Soleado y despejado" },
+    { dia: "Lunes", icono: "☀️", clima: "Soleado y despejado" },
+    { dia: "Martes", icono: "☀️", clima: "Soleado y despejado" },
+    { dia: "Miércoles", icono: "☀️", clima: "Soleado y despejado" },
   ],
 };
 
@@ -214,19 +207,7 @@ function getCanalGeneral() {
   return guild?.channels.cache.get(CONFIG.CANAL_GENERAL_ID) ?? null;
 }
 
-function timestampHoyHora(horaChile) {
-  const ahora = new Date();
-  const fechaChile = new Date(
-    ahora.toLocaleString("en-US", { timeZone: "America/Santiago" }),
-  );
-
-  fechaChile.setHours(horaChile, 0, 0, 0);
-
-  return Math.floor(fechaChile.getTime() / 1000);
-}
-
 async function anunciarClima(forzado = false) {
-  const ahora = new Date();
   const horaChile = getHoraChile();
 
   if (!forzado && horaChile !== 19) return;
@@ -234,7 +215,7 @@ async function anunciarClima(forzado = false) {
   const canal = client.channels.cache.get(CONFIG.CANAL_GENERAL_ID);
   if (!canal) return;
 
-  const hoy = CLIMA_PUEBLO.viernes.hoy;
+  const hoy = CLIMA_PUEBLO.hoy;
 
   const embed = new EmbedBuilder()
     .setTitle(`🌦️ Clima del Pueblito — Hoy`)
@@ -323,22 +304,55 @@ async function gestionarSueno() {
   }
 }
 
+async function updateWeatherChannel() {
+  if (!CONFIG.CANAL_CLIMA_ID) return;
+  try {
+    const canalClima = await client.channels.fetch(CONFIG.CANAL_CLIMA_ID);
+    if (!canalClima) return;
+
+    const horaActual = new Date(new Date().toLocaleString("es-CL", {timeZone: 'America/Santiago'})).getHours();
+    
+    const estadosPasados = CLIMA_PUEBLO.hoy.timeline.filter(t => t.hora <= horaActual);
+    const climaAhora = estadosPasados.length > 0 
+      ? estadosPasados[estadosPasados.length - 1] 
+      : CLIMA_PUEBLO.hoy.timeline[CLIMA_PUEBLO.hoy.timeline.length - 1];
+
+    const nombreCanal = `${climaAhora.icono} Clima: ${climaAhora.texto}`;
+
+    if (canalClima.name !== nombreCanal) {
+      await canalClima.setName(nombreCanal);
+      console.log(`[Canal] Clima actualizado a: ${nombreCanal}`);
+    }
+  } catch (error) {
+    if (error.status !== 429) console.error("Error al actualizar canal de clima:", error);
+  }
+}
+
 async function updateTimeChannel() {
   if (!CONFIG.CANAL_HORA_ID) return;
   try {
     const channel = await client.channels.fetch(CONFIG.CANAL_HORA_ID);
-    if (channel) {
-      const time = new Date().toLocaleTimeString("es-ES", {
-        timeZone: CONFIG.TIMEZONE,
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      });
-      const newName = `Hora del Pueblito: ${time}🕐`;
-      if (channel.name !== newName) await channel.setName(newName);
+    if (!channel) return;
+
+    const ahora = new Date();
+    const time = ahora.toLocaleTimeString("es-ES", {
+      timeZone: CONFIG.TIMEZONE,
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+
+    const hora12 = ahora.getHours() % 12 || 12;
+    const relojes = ["🕛","🕐","🕑","🕒","🕓","🕔","🕕","🕖","🕗","🕘","🕙","🕚","🕛"];
+    const emojiReloj = relojes[hora12];
+
+    const newName = `${time} ${emojiReloj} Pueblito`;
+
+    if (channel.name !== newName) {
+      await channel.setName(newName);
     }
   } catch (e) {
-    console.error("Error reloj:", e.message);
+    if (e.status !== 429) console.error("Error reloj:", e.message);
   }
 }
 
@@ -612,19 +626,22 @@ client.once("clientReady", async () => {
       ),
   ].map((c) => c.toJSON());
 
-  const scheduleUpdate = () => {
+const scheduleUpdate = () => {
     const now = new Date();
     const ms =
       (5 - (now.getMinutes() % 5)) * 60000 -
       now.getSeconds() * 1000 -
       now.getMilliseconds();
+    
     setTimeout(() => {
       updateTimeChannel();
+      updateWeatherChannel();
       scheduleUpdate();
     }, ms + 2000);
   };
 
   updateTimeChannel();
+  updateWeatherChannel();
   scheduleUpdate();
 
   const rest = new REST({ version: "10" }).setToken(CONFIG.TOKEN);
@@ -1180,42 +1197,77 @@ client.on(Events.InteractionCreate, async (int) => {
     return int.reply({ content: bostezo, embeds: [embed] });
   }
   if (int.commandName === "clima") {
-    const hoy = CLIMA_PUEBLO.viernes.hoy;
+    const hoy = CLIMA_PUEBLO.hoy;
+
+    let pasoAlSiguienteDia = false;
+    let ultimaHora = -1;
+    const getSmartTimestamp = (hora) => {
+      if (hora < ultimaHora) pasoAlSiguienteDia = true;
+      ultimaHora = hora;
+      const fecha = new Date();
+      if (pasoAlSiguienteDia) fecha.setDate(fecha.getDate() + 1);
+      fecha.setHours(hora, 0, 0, 0);
+      return Math.floor(fecha.getTime() / 1000);
+    };
 
     const embed = new EmbedBuilder()
-      .setColor("#A7D8DE")
-      .setTitle(`${hoy.tipo}`)
-      .setDescription(
-        "El cielo está clarito y lleno de estrellitas... ideal pa' acurrucarse y soñar juntitos 🌌💕",
-      )
-      .setThumbnail(CONFIG.ANNIE_IMG)
-      .addFields(
-        {
-          name: "🌠 Lluvia de estrellitas especial",
-          value: `<t:${timestampHoyHora(2)}:t> — ¡Pide un deseo con el corazón!\n⏳ <t:${timestampHoyHora(2)}:R>`,
-          inline: false,
-        },
-        {
-          name: "🕰️ Horarios con cariño",
-          value: hoy.timeline
-            .map(
-              (e) =>
-                `• ${e.icono} <t:${timestampHoyHora(e.hora)}:t> — ${e.texto}`,
-            )
-            .join("\n"),
-          inline: false,
-        },
-        {
-          name: "📅 Próximos días en el pueblito",
-          value: CLIMA_PUEBLO.proximos
-            .map((d) => `${d.icono} **${d.dia}** — ${d.clima}`)
-            .join("\n"),
-          inline: false,
-        },
-      )
-      .setFooter({ text: "Pronóstico hecho con mucho amor • Annie 🌸" });
+      .setColor(hoy.eventos.length > 0 ? "#FFD700" : "#A7D8DE")
+      .setAuthor({
+        name: "Servicio Meteorológico del Pueblo 🌸",
+        iconURL: CONFIG.ANNIE_IMG,
+      })
+      .setTitle(`✨ ${hoy.tipo.toUpperCase()} ✨`)
+      .setDescription(`${hoy.descripcion}\n\n${"┈".repeat(20)}`)
+      .setThumbnail(CONFIG.ANNIE_IMG);
 
-    return int.reply({ content: bostezo, embeds: [embed] });
+    if (hoy.eventos.length > 0) {
+      pasoAlSiguienteDia = false;
+      ultimaHora = 18;
+
+      embed.addFields({
+        name: "📢 ¡AVISOS IMPORTANTES!",
+        value: "\u200B",
+        inline: false,
+      });
+
+      hoy.eventos.forEach((ev) => {
+        const ts = getSmartTimestamp(ev.hora);
+        embed.addFields({
+          name: `${ev.icono} ${ev.evento}`,
+          value: `┣ ⌚ **Hora:** <t:${ts}:t>\n┗ ⏳ **Inicia:** <t:${ts}:R>`,
+          inline: true,
+        });
+      });
+
+      embed.addFields({ name: "\u200B", value: "─".repeat(32), inline: false });
+    }
+
+    pasoAlSiguienteDia = false;
+    ultimaHora = -1;
+    const textoTimeline = hoy.timeline
+      .map((e) => {
+        const ts = getSmartTimestamp(e.hora);
+        return `🔹 <t:${ts}:t> ⮕ ${e.icono} **${e.texto}**`;
+      })
+      .join("\n");
+
+    embed.addFields(
+      { name: "🕒 CRONOLOGÍA DEL TIEMPO", value: textoTimeline, inline: false },
+      {
+        name: "📅 PRÓXIMOS DÍAS",
+        value: `\`\`\`\n${CLIMA_PUEBLO.proximos.map((d) => `${d.icono} ${d.dia.padEnd(9)} | ${d.clima}`).join("\n")}\n\`\`\``,
+        inline: false,
+      },
+    );
+
+    embed.setFooter({
+      text: "Pronóstico hecho con mucho amor • ¡Disfruta el clima, vecino!",
+    });
+
+    return int.reply({
+      content: typeof bostezo !== "undefined" ? bostezo : null,
+      embeds: [embed],
+    });
   }
   if (int.commandName === "venta") {
     let itemInput = int.options.getString("item")?.trim() || "";
@@ -1356,53 +1408,53 @@ client.on(Events.InteractionCreate, async (int) => {
     }, min * 60000);
   }
   if (int.commandName === "help" || int.commandName === "annie") {
-  const embed = new EmbedBuilder()
-    .setColor("#FFB7C5")
-    .setTitle("📮 —  Oficinita dulce de Annie")
-    .setThumbnail(CONFIG.ANNIE_IMG)
-    .setDescription(
-      estaDurmiendoActual
-        ? "*(Bosteza suave y se frota los ojitos)*\nZzz... Hola corazoncito, soy Annie. Aunque esté medio dormidita, aquí tienes mi libretita de ayuda con mucho cariño. 💤✨"
-        : `¡Wena, ${getTrato()}! 💖\nSoy **Annie**, la carterista del pueblito. Entre repartos y chismecitos, aquí te dejo mis cositas para ayudarte. 🌸`
-    )
-    .addFields(
-      {
-        name: "💰 Economía y Utilidad",
-        value: 
-          "• `/precio` <item> — *Revisa la libretita de precios.*\n" +
-          "• `/venta` <item> <⭐> <qty> — *Calcula tus ganancias.*\n" +
-          "• `/recordar` <tiempo> <msg> — *Te aviso con cariño.*\n" +
-          "• `/clima` — *Pronóstico del pueblito.* 🌦️",
-        inline: false,
-      },
-      {
-        name: "🌿 Enciclopedia del Pueblo",
-        value: 
-          "```/animales   /aves      /insectos\n/peces      /cultivos  /recolectables\n/logros```\n*Usa `<nombre>` o `todos` después de cada comando.*",
-        inline: false,
-      },
-      {
-        name: "🎭 Comunidad & Voz",
-        value:
-          "✨ **Roles:** Reacciona con 🪲 🫧 🦆 🎣 🪺 💐 en el canal de roles.\n" +
-          "🎙️ **Voz:** ¡Entra a mi oficina y pasaré a saludarte!",
-        inline: false,
-      },
-      {
-        name: "⏰ Horarios de Annie",
-        value: 
-          "💤 **Sueño:** 23:00 - 08:00 (Chile)\n" +
-          "🌦️ **Boletín:** 19:00 cada día",
-        inline: true,
-      }
-    )
-    .setFooter({
-      text: `Annie v1.2 • ${estaDurmiendoActual ? "Zzz... sueñen bonito 💕" : "Hecho con amor para Heartopia 💖"}`,
-      iconURL: int.guild.iconURL()
-    })
-    .setTimestamp();
+    const embed = new EmbedBuilder()
+      .setColor("#FFB7C5")
+      .setTitle("📮 —  Oficinita dulce de Annie")
+      .setThumbnail(CONFIG.ANNIE_IMG)
+      .setDescription(
+        estaDurmiendoActual
+          ? "*(Bosteza suave y se frota los ojitos)*\nZzz... Hola corazoncito, soy Annie. Aunque esté medio dormidita, aquí tienes mi libretita de ayuda con mucho cariño. 💤✨"
+          : `¡Wena, ${getTrato()}! 💖\nSoy **Annie**, la carterista del pueblito. Entre repartos y chismecitos, aquí te dejo mis cositas para ayudarte. 🌸`,
+      )
+      .addFields(
+        {
+          name: "💰 Economía y Utilidad",
+          value:
+            "• `/precio` <item> — *Revisa la libretita de precios.*\n" +
+            "• `/venta` <item> <⭐> <qty> — *Calcula tus ganancias.*\n" +
+            "• `/recordar` <tiempo> <msg> — *Te aviso con cariño.*\n" +
+            "• `/clima` — *Pronóstico del pueblito.* 🌦️",
+          inline: false,
+        },
+        {
+          name: "🌿 Enciclopedia del Pueblo",
+          value:
+            "```/animales   /aves      /insectos\n/peces      /cultivos  /recolectables\n/logros```\n*Usa `<nombre>` o `todos` después de cada comando.*",
+          inline: false,
+        },
+        {
+          name: "🎭 Comunidad & Voz",
+          value:
+            "✨ **Roles:** Reacciona con 🪲 🫧 🦆 🎣 🪺 💐 en el canal de roles.\n" +
+            "🎙️ **Voz:** ¡Entra a mi oficina y pasaré a saludarte!",
+          inline: false,
+        },
+        {
+          name: "⏰ Horarios de Annie",
+          value:
+            "💤 **Sueño:** 23:00 - 08:00 (Chile)\n" +
+            "🌦️ **Boletín:** 19:00 cada día",
+          inline: true,
+        },
+      )
+      .setFooter({
+        text: `Annie v1.2 • ${estaDurmiendoActual ? "Zzz... sueñen bonito 💕" : "Hecho con amor para Heartopia 💖"}`,
+        iconURL: int.guild.iconURL(),
+      })
+      .setTimestamp();
 
-  return int.reply({ content: bostezo, embeds: [embed] });
+    return int.reply({ content: bostezo, embeds: [embed] });
   }
   if (int.commandName === "aves") {
     let aveInput = int.options.getString("ave")?.trim() || "";
