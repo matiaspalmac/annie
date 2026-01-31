@@ -177,7 +177,6 @@ const CLIMA_PUEBLO = {
     ],
   },
   proximos: [
-    { dia: "Sábado", icono: "🌈", clima: "Lluvia matutina y arcoíris" },
     { dia: "Domingo", icono: "☀️", clima: "Soleado y despejado" },
     { dia: "Lunes", icono: "☀️", clima: "Soleado y despejado" },
     { dia: "Martes", icono: "☀️", clima: "Soleado y despejado" },
@@ -1200,15 +1199,16 @@ client.on(Events.InteractionCreate, async (int) => {
   if (int.commandName === "clima") {
     const hoy = CLIMA_PUEBLO.hoy;
 
-    let pasoAlSiguienteDia = false;
-    let ultimaHora = -1;
-    const getSmartTimestamp = (hora) => {
-      if (hora < ultimaHora) pasoAlSiguienteDia = true;
-      ultimaHora = hora;
-      const fecha = new Date();
-      if (pasoAlSiguienteDia) fecha.setDate(fecha.getDate() + 1);
-      fecha.setHours(hora, 0, 0, 0);
-      return Math.floor(fecha.getTime() / 1000);
+    const getSmartTimestamp = (horaReferencia) => {
+      const ahora = new Date(new Date().toLocaleString("en-US", { timeZone: CONFIG.TIMEZONE }));
+      const fechaResultado = new Date(ahora);
+
+      if (horaReferencia < ahora.getHours()) {
+        fechaResultado.setDate(ahora.getDate() + 1);
+      }
+      
+      fechaResultado.setHours(horaReferencia, 0, 0, 0);
+      return Math.floor(fechaResultado.getTime() / 1000);
     };
 
     const embed = new EmbedBuilder()
@@ -1222,9 +1222,6 @@ client.on(Events.InteractionCreate, async (int) => {
       .setThumbnail(CONFIG.ANNIE_IMG);
 
     if (hoy.eventos.length > 0) {
-      pasoAlSiguienteDia = false;
-      ultimaHora = 18;
-
       embed.addFields({
         name: "📢 ¡AVISOS IMPORTANTES!",
         value: "\u200B",
@@ -1243,14 +1240,14 @@ client.on(Events.InteractionCreate, async (int) => {
       embed.addFields({ name: "\u200B", value: "─".repeat(32), inline: false });
     }
 
-    pasoAlSiguienteDia = false;
-    ultimaHora = -1;
-    const textoTimeline = hoy.timeline
-      .map((e) => {
-        const ts = getSmartTimestamp(e.hora);
-        return `🔹 <t:${ts}:t> ⮕ ${e.icono} **${e.texto}**`;
-      })
-      .join("\n");
+    const textoTimeline = hoy.timeline.map(e => {
+      const ts = getSmartTimestamp(e.hora);
+      const opciones = { weekday: 'long', timeZone: CONFIG.TIMEZONE };
+      const diaNombre = new Date(ts * 1000).toLocaleDateString('es-ES', opciones);
+      const diaCap = diaNombre.charAt(0).toUpperCase() + diaNombre.slice(1);
+      
+      return `🔹 <t:${ts}:t> ⮕ ${e.icono} ${e.texto}\n`;
+    }).join("");
 
     embed.addFields(
       { name: "🕒 CRONOLOGÍA DEL TIEMPO", value: textoTimeline, inline: false },
@@ -1850,4 +1847,5 @@ http
   })
   .listen(8000);
 client.login(CONFIG.TOKEN);
+
 
