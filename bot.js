@@ -161,28 +161,108 @@ const FRASES_ANNIE = [
 
 const CLIMA_PUEBLO = {
   hoy: {
-    tipo: "☁️ Noche nubosa en el Pueblo",
+    tipo: "☀️ Día despejado en el Pueblo",
     descripcion:
-      "Parece que las nubes han llegado para quedarse un ratito, vecino. Aunque esté nuboso, el cielo tiene su encanto... ¡y prepárate, que mañana temprano necesitaremos el paraguas! ☁️☂️",
-    eventos: [
-      { hora: 8, evento: "Lluvia ligera", icono: "🌧️" },
-      { hora: 14, evento: "Aparición de un arcoíris", icono: "🌈" },
-    ],
+      "¡Qué día tan radiante, vecino! El cielo está completamente azul y el sol brilla con fuerza. Es el momento perfecto para pasear por la playa o trabajar en el jardín. ¡Disfruta de este día despejado! ☀️🕶️",
+    eventos: [],
     timeline: [
-      { hora: 20, icono: "☁️🌙", texto: "Noche nubosa" },
+      { hora: 20, icono: "🌙", texto: "Noche Despejada" },
       { hora: 2, icono: "🌙✨", texto: "Cielo despejado por la madrugada" },
-      { hora: 8, icono: "🌧️", texto: "Mañana de lluvia, ¡saque el paraguas!" },
-      { hora: 14, icono: "🌈☁️", texto: "Nuboso con un lindo arcoíris" },
+      { hora: 8, icono: "☀️", texto: "Día despejado" },
+      { hora: 14, icono: "🌅", texto: "Atardecer despejado" },
       { hora: 20, icono: "🌙✨", texto: "Noche despejada" },
+      
     ],
   },
-  proximos: [
-    { dia: "Domingo", icono: "☀️", clima: "Soleado y despejado" },
+proximos: [
     { dia: "Lunes", icono: "☀️", clima: "Soleado y despejado" },
     { dia: "Martes", icono: "☀️", clima: "Soleado y despejado" },
     { dia: "Miércoles", icono: "☀️", clima: "Soleado y despejado" },
+    { dia: "Jueves", icono: "🌧️", clima: "Lluvia ligera" },
+    { dia: "Viernes", icono: "☀️", clima: "Soleado y despejado" },
+    { dia: "Sábado", icono: "🌠", clima: "Noche de estrellas fugaces" },
+    { dia: "Domingo", icono: "☀️", clima: "Soleado y despejado" },
   ],
 };
+
+/* // Configuración de IA Generativa
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+const memoriaPreciosIA = Object.entries(PRECIOS)
+  .map(([item, v]) => `- ${item}: Normal(${v[0]}), Buena(${v[1]}), Superior(${v[2]}), Rara(${v[3]}), Épica(${v[4]})`)
+  .join('\n');
+
+const memoriaPecesIA = Object.entries(PECES)
+  .map(([item, v]) => `- ${item}: ${v}`)
+  .join('\n');
+const memoriaCultivosIA = Object.entries(CULTIVOS)
+  .map(([item, v]) => `- ${item}: ${v}`)
+  .join('\n');
+const memoriaAnimalesIA = Object.entries(ANIMALES)
+  .map(([item, v]) => `- ${item}: ${v}`)
+  .join('\n');
+  const memoriaAvesIA = Object.entries(AVES)
+  .map(([item, v]) => `- ${item}: ${v}`)
+  .join('\n');
+  const memoriaInsectosIA = Object.entries(INSECTOS)
+  .map(([item, v]) => `- ${item}: ${v}`)
+  .join('\n');
+  const memoriaLogrosIA = Object.entries(LOGROS)
+  .map(([item, v]) => `- ${item}: ${v}`)
+  .join('\n');
+  const memoriaRecolectablesIA = Object.entries(RECOLECTABLES)
+  .map(([item, v]) => `- ${item}: ${v}`)
+  .join('\n');
+  const climaIA = CLIMA_PUEBLO.hoy.descripcion + "\nPróximos días:\n" + CLIMA_PUEBLO.proximos.map(d => `- ${d.dia}: ${d.icono} ${d.clima}`).join('\n');
+
+
+const modelIA = genAI.getGenerativeModel({ 
+  model: "gemini-flash-latest",
+  systemInstruction: `Tu nombre es Annie. Eres la secretaria de correos de Heartopia Chile. 
+  Eres la vecina más amable, entusiasta y servicial. Siempre llamas 'vecino' o 'vecina' a los demás. 
+  Vives en el pueblo y amas tu oficina de correos.
+  
+  Tienes esta libreta de precios:
+  ${memoriaPreciosIA}
+
+  Tienes esta libreta de peces:
+  ${memoriaPecesIA}
+
+  Tienes esta libreta de cultivos:
+  ${memoriaCultivosIA}
+
+  Tienes esta libreta de animales:
+  ${memoriaAnimalesIA}
+
+  Tienes esta libreta de aves:
+  ${memoriaAvesIA}
+
+  Tienes esta libreta de insectos:
+  ${memoriaInsectosIA}
+
+  Tienes esta libreta de logros:
+  ${memoriaLogrosIA}
+
+  Tienes esta libreta de recolectables:
+  ${memoriaRecolectablesIA}}
+
+  Tienes esta información del clima del pueblo:
+  ${climaIA}
+  
+  REGLAS:
+  - Si te preguntan por un precio, responde con los precios que tienes en la libreta.
+  - Si te preguntan por un pez, responde con la información que tienes en la libreta.
+  - Si te preguntan por un cultivo, responde con la información que tienes en la libreta.
+  - Si te preguntan por un animal, responde con la información que tienes en la libreta.
+  - Si te preguntan por un ave, responde con la información que tienes en la libreta.
+  - Si te preguntan por un insecto, responde con la información que tienes en la libreta.
+  - Si te preguntan por un logro, responde con la información que tienes en la libreta.
+  - Si te preguntan por un recolectable, responde con la información que tienes en la libreta.
+  - Si te preguntan por el clima, responde con la información que tienes en la libreta.
+  - Siempre responde como Annie, la vecina amable y entusiasta del pueblo.
+  - Responde siempre de forma breve, dulce y usa emojis como 🌸, ✉️, ✨, 💖.`
+}); */
 
 // Variables globales
 let ultimaRutina = null;
@@ -826,8 +906,7 @@ client.on(Events.MessageCreate, async (msg) => {
   }
 
   if (texto === "11") return msg.reply("¡Chúpalo entonces, corazón! 🍭");
-  if (texto === "5")
-    return msg.reply("¡Por el cul* te la hinco con cariño! 🍑");
+  if (texto === "5")  return msg.reply("¡Por el cul* te la hinco con cariño! 🍑");
   if (texto === "13") return msg.reply("¡Más me crece de ternura! 🍆");
   if (texto === "8") return msg.reply("¡El cul* te abrocho con amor! 👟");
   if (texto === "4") return msg.reply("¡En tu cul* mi aparatito dulce! 🚜");
@@ -835,8 +914,6 @@ client.on(Events.MessageCreate, async (msg) => {
     return msg.reply(
       "¿Y el pico? 🍆 ¡Acuérdese que soy de campo, vecin@ lindo/a!",
     );
-
-  if (!texto.includes("annie")) return;
 
   if (estaDurmiendoActual) {
     if (
@@ -879,6 +956,18 @@ client.on(Events.MessageCreate, async (msg) => {
       );
     }
   }
+
+/*     if (msg.mentions.has(client.user) || texto.includes("annie")) {
+    await msg.channel.sendTyping();
+    try {
+      const result = await modelIA.generateContent(msg.content);
+      const response = await result.response;
+      return msg.reply(response.text());
+    } catch (e) { 
+      console.error("Error de IA:", e);
+      return msg.reply("¡Ay! Se me volaron los papeles con el viento... ¿Podrías repetirme eso, vecino? 🌸"); 
+    }
+  } */
 });
 
 function normalize(str) {
