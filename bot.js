@@ -161,27 +161,26 @@ const FRASES_ANNIE = [
 
 const CLIMA_PUEBLO = {
   hoy: {
-    tipo: "☀️ Día despejado en el Pueblo",
+    tipo: "⛅ Día Nuboso en el Pueblo",
     descripcion:
-      "¡Qué día tan radiante, vecino! El cielo está completamente azul y el sol brilla con fuerza. Es el momento perfecto para pasear por la playa o trabajar en el jardín. ¡Disfruta de este día despejado! ☀️🕶️",
+      "Parece que las nubes han decidido visitarnos hoy, vecino. El cielo está algo cubierto, pero es el clima ideal para pasear sin que el sol nos moleste tanto. ¡Aprovecha para pescar o charlar con los amigos mientras el ambiente está fresquito! ☁️🍎",
     eventos: [],
     timeline: [
-      { hora: 20, icono: "🌙", texto: "Noche Despejada" },
+      { hora: 20, icono: "🌙", texto: "Noche despejada y tranquila" },
       { hora: 2, icono: "🌙✨", texto: "Cielo despejado por la madrugada" },
-      { hora: 8, icono: "☀️", texto: "Día despejado" },
+      { hora: 8, icono: "☀️", texto: "Mañana de sol radiante" },
       { hora: 14, icono: "🌅", texto: "Atardecer despejado" },
-      { hora: 20, icono: "🌙✨", texto: "Noche despejada" },
-      
+      { hora: 20, icono: "🌙✨", texto: "Noche estrellada" },
     ],
   },
-proximos: [
-    { dia: "Lunes", icono: "☀️", clima: "Soleado y despejado" },
-    { dia: "Martes", icono: "☀️", clima: "Soleado y despejado" },
+  proximos: [
     { dia: "Miércoles", icono: "☀️", clima: "Soleado y despejado" },
     { dia: "Jueves", icono: "🌧️", clima: "Lluvia ligera" },
     { dia: "Viernes", icono: "☀️", clima: "Soleado y despejado" },
     { dia: "Sábado", icono: "🌠", clima: "Noche de estrellas fugaces" },
     { dia: "Domingo", icono: "☀️", clima: "Soleado y despejado" },
+    { dia: "Lunes", icono: "🌧️", clima: "Lluvia ligera" },
+    { dia: "Martes", icono: "☀️", clima: "Soleado y despejado" },
   ],
 };
 
@@ -1936,5 +1935,6 @@ http
   })
   .listen(8000);
 client.login(CONFIG.TOKEN);
+
 
 
