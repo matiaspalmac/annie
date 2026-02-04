@@ -161,10 +161,13 @@ const FRASES_ANNIE = [
 
 const CLIMA_PUEBLO = {
   hoy: {
-    tipo: "⛅ Día Nuboso en el Pueblo",
+    tipo: "☀️ Día Despejado en el Pueblo",
     descripcion:
-      "Parece que las nubes han decidido visitarnos hoy, vecino. El cielo está algo cubierto, pero es el clima ideal para pasear sin que el sol nos moleste tanto. ¡Aprovecha para pescar o charlar con los amigos mientras el ambiente está fresquito! ☁️🍎",
-    eventos: [],
+      "¡Feliz miércoles, vecino! El cielo se ha despejado por completo y el sol brilla con fuerza. Es un día maravilloso para salir a recolectar conchas a la orilla del mar o regar las flores. ¡No olvides disfrutar de este clima tan radiante! ☀️🌻",
+      eventos: [
+      { hora: 13, evento: "Sol máximo", icono: "☀️" },
+      { hora: 21, evento: "Cielo estrellado", icono: "✨" }
+    ],
     timeline: [
       { hora: 20, icono: "🌙", texto: "Noche despejada y tranquila" },
       { hora: 2, icono: "🌙✨", texto: "Cielo despejado por la madrugada" },
@@ -173,18 +176,18 @@ const CLIMA_PUEBLO = {
       { hora: 20, icono: "🌙✨", texto: "Noche estrellada" },
     ],
   },
-  proximos: [
-    { dia: "Miércoles", icono: "☀️", clima: "Soleado y despejado" },
+    proximos: [
     { dia: "Jueves", icono: "🌧️", clima: "Lluvia ligera" },
     { dia: "Viernes", icono: "☀️", clima: "Soleado y despejado" },
     { dia: "Sábado", icono: "🌠", clima: "Noche de estrellas fugaces" },
     { dia: "Domingo", icono: "☀️", clima: "Soleado y despejado" },
     { dia: "Lunes", icono: "🌧️", clima: "Lluvia ligera" },
     { dia: "Martes", icono: "☀️", clima: "Soleado y despejado" },
+    { dia: "Miércoles", icono: "☀️", clima: "Soleado y despejado" },
   ],
 };
 
-/* // Configuración de IA Generativa
+// Configuración de IA Generativa
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
@@ -259,9 +262,10 @@ const modelIA = genAI.getGenerativeModel({
   - Si te preguntan por un logro, responde con la información que tienes en la libreta.
   - Si te preguntan por un recolectable, responde con la información que tienes en la libreta.
   - Si te preguntan por el clima, responde con la información que tienes en la libreta.
+  - Eres chilena, ten esa picardia para hacer bromas tambien.
   - Siempre responde como Annie, la vecina amable y entusiasta del pueblo.
   - Responde siempre de forma breve, dulce y usa emojis como 🌸, ✉️, ✨, 💖.`
-}); */
+});
 
 // Variables globales
 let ultimaRutina = null;
@@ -956,7 +960,7 @@ client.on(Events.MessageCreate, async (msg) => {
     }
   }
 
-/*     if (msg.mentions.has(client.user) || texto.includes("annie")) {
+     if (msg.mentions.has(client.user) || texto.includes("annie")) {
     await msg.channel.sendTyping();
     try {
       const result = await modelIA.generateContent(msg.content);
@@ -966,7 +970,7 @@ client.on(Events.MessageCreate, async (msg) => {
       console.error("Error de IA:", e);
       return msg.reply("¡Ay! Se me volaron los papeles con el viento... ¿Podrías repetirme eso, vecino? 🌸"); 
     }
-  } */
+  }
 });
 
 function normalize(str) {
@@ -1935,6 +1939,7 @@ http
   })
   .listen(8000);
 client.login(CONFIG.TOKEN);
+
 
 
 
