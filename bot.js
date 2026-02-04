@@ -916,15 +916,15 @@ client.on(Events.MessageCreate, async (msg) => {
 
   if (estaDurmiendoActual) {
     if (
-      texto.includes("hola") ||
-      texto.includes("holi") ||
-      texto.includes("wena")
+      (texto.includes("hola") && texto.includes("annie")) ||
+      (texto.includes("holi") && texto.includes("annie")) ||
+      (texto.includes("wena") && texto.includes("annie"))
     ) {
       return msg.reply(
         "*(Annie se despereza suave)* Zzz... ¿ah? Wena mi vecin@ lindo/a... ¿qué necesitas tan tempranito? 💤🌸",
       );
     }
-    if (texto.includes("gracias") || texto.includes("vale")) {
+    if ((texto.includes("gracias") || texto.includes("vale")) && texto.includes("annie")) {
       return msg.reply(
         "*(susurra dormida)* De nada po, corazón... Zzz... siempre aquí para ti 💕",
       );
@@ -936,20 +936,20 @@ client.on(Events.MessageCreate, async (msg) => {
     }
   } else {
     if (
-      texto.includes("hola") ||
-      texto.includes("holi") ||
-      texto.includes("wena")
+      (texto.includes("hola") && texto.includes("annie")) ||
+      (texto.includes("holi") && texto.includes("annie")) ||
+      (texto.includes("wena") && texto.includes("annie"))
     ) {
       return msg.reply(
         `¡Wena, wena mi vecin@ lindo/a! ✨ ¿Cómo estás hoy, corazón? Pasa no más, estoy con tecito dulce ☕💕`,
       );
     }
-    if (texto.includes("gracias") || texto.includes("vale")) {
+    if ((texto.includes("gracias") || texto.includes("vale")) && texto.includes("annie")) {
       return msg.reply(
         `¡De nada po, mi alegría! Siempre aquí para ti, ¿ya? 💖✨`,
       );
     }
-    if (texto.includes("chao") || texto.includes("adios")) {
+    if ((texto.includes("chao") || texto.includes("adios")) && texto.includes("annie")) {
       return msg.reply(
         `¡Chao, corazón! Cuídate harto y vuelve prontito, ¿ya? 👋🌸`,
       );
@@ -1935,6 +1935,7 @@ http
   })
   .listen(8000);
 client.login(CONFIG.TOKEN);
+
 
 
 
