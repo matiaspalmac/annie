@@ -187,7 +187,7 @@ const CLIMA_PUEBLO = {
   ],
 };
 
-// Configuración de IA Generativa
+/* // Configuración de IA Generativa
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
@@ -266,7 +266,7 @@ const modelIA = genAI.getGenerativeModel({
   - Siempre responde como Annie, la vecina amable y entusiasta del pueblo.
   - Responde siempre de forma breve, dulce y usa emojis como 🌸, ✉️, ✨, 💖.`
 });
-
+ */
 // Variables globales
 let ultimaRutina = null;
 let historialMensajes = [];
@@ -960,7 +960,7 @@ client.on(Events.MessageCreate, async (msg) => {
     }
   }
 
-     if (msg.mentions.has(client.user) || texto.includes("annie")) {
+/*   if (msg.mentions.has(client.user) || texto.includes("annie")) {
     await msg.channel.sendTyping();
     try {
       const result = await modelIA.generateContent(msg.content);
@@ -970,7 +970,7 @@ client.on(Events.MessageCreate, async (msg) => {
       console.error("Error de IA:", e);
       return msg.reply("¡Ay! Se me volaron los papeles con el viento... ¿Podrías repetirme eso, vecino? 🌸"); 
     }
-  }
+  } */
 });
 
 function normalize(str) {
@@ -1939,6 +1939,7 @@ http
   })
   .listen(8000);
 client.login(CONFIG.TOKEN);
+
 
 
 
