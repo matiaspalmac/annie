@@ -161,13 +161,10 @@ const FRASES_ANNIE = [
 
 const CLIMA_PUEBLO = {
   hoy: {
-    tipo: "☀️ Día Despejado en el Pueblo",
+    tipo: "🌨️  Día de Nevada leve en el Pueblo",
     descripcion:
-      "¡Feliz miércoles, vecino! El cielo se ha despejado por completo y el sol brilla con fuerza. Es un día maravilloso para salir a recolectar conchas a la orilla del mar o regar las flores. ¡No olvides disfrutar de este clima tan radiante! ☀️🌻",
-      eventos: [
-      { hora: 13, evento: "Sol máximo", icono: "☀️" },
-      { hora: 21, evento: "Cielo estrellado", icono: "✨" }
-    ],
+      "¡Feliz jueves, vecino! El cielo se encuentra nublado con una nevada leve. Es un día maravilloso para salir a construir muñecos de nieve o ir a patinar con amigo. ¡No olvides disfrutar de este clima helado! ❄️ ☃️ ",
+      eventos: [],
     timeline: [
       { hora: 20, icono: "🌙", texto: "Noche despejada y tranquila" },
       { hora: 2, icono: "🌙✨", texto: "Cielo despejado por la madrugada" },
@@ -177,13 +174,13 @@ const CLIMA_PUEBLO = {
     ],
   },
     proximos: [
-    { dia: "Jueves", icono: "🌧️", clima: "Lluvia ligera" },
     { dia: "Viernes", icono: "☀️", clima: "Soleado y despejado" },
     { dia: "Sábado", icono: "🌠", clima: "Noche de estrellas fugaces" },
     { dia: "Domingo", icono: "☀️", clima: "Soleado y despejado" },
     { dia: "Lunes", icono: "🌧️", clima: "Lluvia ligera" },
     { dia: "Martes", icono: "☀️", clima: "Soleado y despejado" },
     { dia: "Miércoles", icono: "☀️", clima: "Soleado y despejado" },
+    { dia: "Jueves", icono: "☀️", clima: "Soleado y despejado" },
   ],
 };
 
