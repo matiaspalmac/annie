@@ -707,7 +707,6 @@ client.once("clientReady", async () => {
           .setAutocomplete(true)
           .setRequired(true),
       ),
-  ].map((c) => c.toJSON());
   new SlashCommandBuilder()
   .setName("roles")
   .setDescription("Envía o actualiza el mensaje de selección de roles con Annie")
@@ -717,8 +716,8 @@ client.once("clientReady", async () => {
       .setDescription("Canal donde enviar el mensaje de roles (por defecto: canal actual)")
       .setRequired(false)
   )
-  .setDefaultMemberPermissions("0")
-  .toJSON(),
+  ].map((c) => c.toJSON());
+    
 
 const scheduleUpdate = () => {
     const now = new Date();
@@ -2021,6 +2020,7 @@ http
   })
   .listen(8000);
 client.login(CONFIG.TOKEN);
+
 
 
 
