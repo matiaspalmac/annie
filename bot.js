@@ -49,7 +49,8 @@ const CONFIG = {
     "🦆": "1465882906881818654",
     "🎣": "1465883005162885445",
     "🪺": "1465883082824483060",
-    "💐": "1465928627123257550",
+    "💐": "1465928627123257550"
+    "🌠": "1469838445865079009",
   },
 };
 
@@ -707,6 +708,17 @@ client.once("clientReady", async () => {
           .setRequired(true),
       ),
   ].map((c) => c.toJSON());
+  new SlashCommandBuilder()
+  .setName("roles")
+  .setDescription("Envía o actualiza el mensaje de selección de roles con Annie")
+  .addChannelOption(option =>
+    option
+      .setName("canal")
+      .setDescription("Canal donde enviar el mensaje de roles (por defecto: canal actual)")
+      .setRequired(false)
+  )
+  .setDefaultMemberPermissions("0")
+  .toJSON(),
 
 const scheduleUpdate = () => {
     const now = new Date();
@@ -1930,6 +1942,76 @@ client.on(Events.InteractionCreate, async (int) => {
 
     return int.reply({ content: bostezo, embeds: [embed] });
   }
+  if (int.commandName === "roles") {
+  if (!int.member.permissions.has("ManageRoles")) {
+    return int.reply({
+      content: "Ay, tesorito... este comando es solo para quienes cuidan el pueblito (necesitas permiso de gestionar roles) 💕",
+      ephemeral: true
+    });
+  }
+
+  const canalObjetivo = int.options.getChannel("canal") || int.channel;
+
+  if (!canalObjetivo.isTextBased()) {
+    return int.reply({
+      content: "Ese canal no es de texto, corazoncito... elige uno donde pueda escribir Annie 📮",
+      ephemeral: true
+    });
+  }
+
+  const embedRoles = new EmbedBuilder()
+    .setColor("#FFB7C5")
+    .setTitle("📮 Oficinita de Annie — ¡Elige tus roles con cariño, vecin@ lindo/a!")
+    .setThumbnail(CONFIG.ANNIE_IMG)
+    .setDescription(
+      "¡Wena, corazoncitos del pueblito! Soy Annie, tu carterita favorita ✉️💕\n\n" +
+      "Reacciona con los emojis que más te gusten para recibir notificaciones dulces " +
+      "de los eventos que te hagan ilusión. Cada reacción te pone un rol especial " +
+      "para que no te pierdas nada lindo que pase en el pueblo 🌸\n\n" +
+      "**Lista de roles con cariño:**\n" +
+      "🪲 → Atraer Bichos\n" +
+      "🫧 → Lanzador de Burbujas\n" +
+      "🦆 → Pato Amarillo\n" +
+      "🎣 → Pesca Marina\n" +
+      "🪺 → Nido de las Aves\n" +
+      "💐 → Ramo de Flores Arcoíris\n\n" +
+      " 🌠 → Lluvia de Estrellas\n\n" +
+      "Reacciona con el emoji que quieras → te pongo el rol con cariño 💖\n" +
+      "Si quitas la reacción → te lo quito, sin drama po 😌\n\n" +
+      "¡Elige los que más te hagan sonreír, tesorito! Annie los espera con abrazos 🤗"
+    )
+    .setFooter({
+      text: "v1.1 • Heartopia 💖 • ¡Te quiero mucho!",
+      iconURL: int.guild.iconURL({ size: 32 })
+    })
+    .setTimestamp();
+
+  try {
+    const mensajeEnviado = await canalObjetivo.send({
+      content: "📮 **¡Reacciona abajo para elegir tus roles, vecinitos lindos!** ✨",
+      embeds: [embedRoles]
+    });
+
+    const emojis = ["🪲", "🫧", "🦆", "🎣", "🪺", "💐","🌠"];
+    for (const emoji of emojis) {
+      await mensajeEnviado.react(emoji);
+    }
+
+    await int.reply({
+      content: `¡Listo, corazoncito! El mensajito de roles quedó publicado en ${canalObjetivo} 📮💕\n\n**ID del mensaje:** \`${mensajeEnviado.id}\`\n(Guárdalo si quieres actualizarlo después)`,
+      ephemeral: true
+    });
+
+    console.log(`[Roles] Nuevo mensaje de roles creado → ID: ${mensajeEnviado.id}`);
+
+  } catch (err) {
+    console.error("Error enviando mensaje de roles:", err);
+    await int.reply({
+      content: "Ay no... se me enredó el delantal y no pude enviar el mensaje 😭 ¿Me ayudas a revisar permisos en ese canal, tesoro?",
+      ephemeral: true
+    });
+  }
+}
 });
 
 http
@@ -1939,6 +2021,7 @@ http
   })
   .listen(8000);
 client.login(CONFIG.TOKEN);
+
 
 
 
