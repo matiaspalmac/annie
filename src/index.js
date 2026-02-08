@@ -476,7 +476,11 @@ client.on(Events.MessageCreate, async (msg) => {
 // Evento: Interacciones (autocomplete + comandos)
 // ============================================================
 client.on(Events.InteractionCreate, async (interaction) => {
-  if (interaction.isAutocomplete()) return handleAutocomplete(interaction);
+  if (interaction.isAutocomplete()) {
+    handleAutocomplete(interaction).catch(err => {
+      console.error('Unhandled en autocomplete:', err);
+    });
+  }
   if (interaction.isChatInputCommand()) return handleCommand(interaction);
 });
 
