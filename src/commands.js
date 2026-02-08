@@ -532,7 +532,7 @@ async function cmdLogros(int, bostezo) {
       content: bostezo,
       renderItem: ([nombre, info]) => ({
         name: `${em.icono} ${nombre}`,
-        value: `\uD83C\uDFF7\uFE0F Categoria: ${info.categoria}\n\uD83D\uDCCB Requisito: ${info.requisito}\n\uD83C\uDFC5 Titulo: ${info.titulo} (${info.nota})`,
+        value: `\uD83C\uDFF7\uFE0F Categoria: ${info.categoria}\n\uD83D\uDCCB Requisito: ${info.requisito}\n\uD83C\uDFC5 Titulo: ${info.titulo} (${info.nota || "—"})`,
       }),
     });
   }
@@ -547,7 +547,7 @@ async function cmdLogros(int, bostezo) {
     .addFields(
       { name: "\uD83D\uDCCB Requisito", value: info.requisito, inline: false },
       { name: "\uD83C\uDFC5 Titulo obtenido", value: `${info.titulo}`, inline: true },
-      { name: "\uD83D\uDCDD Nota", value: info.nota, inline: true },
+      { name: "\uD83D\uDCDD Nota", value: info.nota || "—", inline: true },
     );
   agregarNarrativa(embed, "logros");
   return int.reply({ content: bostezo, embeds: [embed] });
