@@ -516,7 +516,6 @@ async function cmdHabitantes(int, bostezo) {
 
 // --- /logros ---
 async function cmdLogros(int, bostezo) {
-  await int.deferReply({ ephemeral: false });
   const input = int.options.getString("nombre")?.trim() || "";
   const color = CONFIG.COLORES.DORADO;
   const em = EMOJI_CATEGORIA.logros;
@@ -539,7 +538,10 @@ async function cmdLogros(int, bostezo) {
   }
 
   const result = buscarItem(LOGROS, input);
-  if (!result) return int.editReply({ embeds: [crearEmbedError("logros", input)], ephemeral: true });
+  if (!result) {
+    await int.reply({ embeds: [crearEmbedError("logros", input)], ephemeral: true });
+    return;
+  }
 
   const { nombre, data: info } = result;
   const embed = crearEmbed(color)
@@ -551,7 +553,7 @@ async function cmdLogros(int, bostezo) {
       { name: "\uD83D\uDCDD Nota", value: info.nota || "—", inline: true },
     );
   agregarNarrativa(embed, "logros");
-  return int.editReply({ content: bostezo, embeds: [embed] });
+  return int.reply({ content: bostezo, embeds: [embed] });
 }
 
 // --- /codigos ---
