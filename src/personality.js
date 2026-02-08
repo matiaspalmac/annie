@@ -5,6 +5,7 @@
 const TRATOS = [
   "vecino", "vecina", "tesorito", "corazon",
   "jovencito", "jovencita", "vecinito", "vecinita",
+  "inorito", "inora",
 ];
 
 export function getTrato() {
@@ -112,40 +113,51 @@ const SUGERENCIAS = {
   peces: [
     "Si te gusta pescar, mira las **recetas** que puedes cocinar con tus capturas. (`/recetas`)",
     "Revisa los **logros de pesca** para saber que desafios te esperan. (`/logros`)",
+    "Los **recolectables** cerca de los rios tambien pueden ser utiles. Echales un vistazo. (`/recolectables`)",
   ],
   insectos: [
     "Los **logros de caza de insectos** tienen titulos bonitos. (`/logros`)",
     "Naniwa vende cosas utiles. Chequea **habitantes**. (`/habitantes`)",
+    "Algunos insectos aparecen en los mismos lugares que las **aves**. Doble aventura. (`/aves`)",
   ],
   aves: [
     "Bailey J tiene recompensas por avistamiento. (`/habitantes Bailey J`)",
     "Los **logros de aves** incluyen titulos como Susurrador de Pajaros. (`/logros`)",
+    "Muchas aves se encuentran en las mismas zonas que los **insectos**. Dos pajaros de un tiro. (`/insectos`)",
   ],
   animales: [
     "Algunos **cultivos** son comida favorita de estos animalitos. (`/cultivos`)",
     "Joan vende comida especial. (`/habitantes Senora Joan`)",
+    "Mira los **logros** relacionados con animales para descubrir 'Vecino Animal'. (`/logros`)",
   ],
   cultivos: [
     "Con tus cosechas puedes preparar **recetas** increibles. (`/recetas`)",
     "Blanc tiene semillas especiales. (`/habitantes Blanc`)",
+    "Los **logros de jardineria** te pueden dar titulos como 'Horticultor'. (`/logros`)",
   ],
   recetas: [
     "Necesitas ingredientes de **cultivos** y **recolectables**. (`/cultivos`, `/recolectables`)",
     "Massimo vende equipamiento de cocina. (`/habitantes Massimo`)",
+    "Los **logros de cocina** incluyen desafios como 'Rapido e Impecable'. (`/logros`)",
   ],
   logros: [
     "Muchos logros estan ligados a peces, insectos y aves.",
     "Los logros ocultos se descubren explorando el pueblo.",
+    "Si un logro parece dificil, puede que algun **habitante** te de pistas. (`/habitantes`)",
   ],
   recolectables: [
     "Muchos recolectables son ingredientes para **recetas**. (`/recetas`)",
     "Bob usa madera para muebles. (`/habitantes Bob`)",
+    "Algunos animalitos comen recolectables. Mira la seccion de **animales**. (`/animales`)",
   ],
   habitantes: [
     "Cada NPC esta ligado a un hobby. Revisa la categoria que te interese.",
+    "Algunos habitantes desbloquean **recetas** especiales. Prueba cocinar con ellos. (`/recetas`)",
+    "Hay **logros** ocultos relacionados con interactuar con ciertos NPCs. (`/logros`)",
   ],
   codigos: [
     "Usa tus recompensas para comprar semillas o equipamiento.",
+    "Las Estrellas de Deseo de los codigos te ayudan a acelerar muchas cosas del pueblo.",
   ],
 };
 
@@ -171,6 +183,7 @@ export const ACTIVIDADES = [
   "tomando mote con huesillo fresco",
   "escuchando musiquita vieja",
   "contando estrellitas con ternura",
+  "hablando con los patitos del lago",
   "planeando la proxima once",
 ];
 
@@ -200,8 +213,10 @@ export const FRASES_AMBIENT = [
   "Que ganas de un completo con harta mayo y palta!",
   "Oye, vecin@ lindo/a... ya regaste tus flores?",
   "Que dia lindo pa sentarnos a charlar en la plaza!",
-  "Si necesitas un consejo del corazon, aqui estoy yo.",
-  "Quien me regala un tecito rico pa seguir repartiendo cartas?",
+  "Si necesitas un consejo del corazon, aqui estoy yo, mi personita favorita.",
+  "No se me duerman, ya? Que despues extrano sus mensajitos dulces.",
+  "Ay, esta fresquito! Abrigate po, mi rayito de sol, no quiero que te resfries.",
+  "Quien me regala un tecito rico pa seguir repartiendo carinitos todo el dia?",
 ];
 
 // -------------------------------------------------------
@@ -211,26 +226,26 @@ export const CLIMA_PUEBLO = {
   hoy: {
     tipo: "Dia Despejado en el Pueblo",
     descripcion:
-      "El cielo se ha despejado y el sol brilla con fuerza. Dia maravilloso para recolectar o regar las flores.",
+      "El cielo se ha despejado por completo y el sol brilla con fuerza. Es un dia maravilloso para salir a recolectar o regar las flores. No olvides disfrutar de este clima tan radiante!",
     eventos: [
       { hora: 13, evento: "Sol maximo", icono: "sol" },
       { hora: 21, evento: "Cielo estrellado", icono: "estrella" },
     ],
     timeline: [
-      { hora: 20, texto: "Noche despejada y tranquila" },
-      { hora: 2,  texto: "Cielo despejado por la madrugada" },
-      { hora: 8,  texto: "Manana de sol radiante" },
-      { hora: 14, texto: "Atardecer despejado" },
-      { hora: 20, texto: "Noche estrellada" },
+      { hora: 20, icono: "luna",           texto: "Noche despejada y tranquila" },
+      { hora: 2,  icono: "luna-estrella",  texto: "Cielo despejado por la madrugada" },
+      { hora: 8,  icono: "sol",            texto: "Manana de sol radiante" },
+      { hora: 14, icono: "atardecer",      texto: "Atardecer despejado" },
+      { hora: 20, icono: "luna-estrella",  texto: "Noche estrellada" },
     ],
   },
   proximos: [
-    { dia: "Sabado",    clima: "Noche de estrellas fugaces" },
-    { dia: "Domingo",   clima: "Soleado y despejado" },
-    { dia: "Lunes",     clima: "Lluvia ligera" },
-    { dia: "Martes",    clima: "Soleado y despejado" },
-    { dia: "Miercoles", clima: "Soleado y despejado" },
-    { dia: "Jueves",    clima: "Soleado y despejado" },
-    { dia: "Viernes",   clima: "Lluvia ligera" },
+    { dia: "Sabado",    icono: "estrellas", clima: "Noche de estrellas fugaces" },
+    { dia: "Domingo",   icono: "sol",       clima: "Soleado y despejado" },
+    { dia: "Lunes",     icono: "lluvia",    clima: "Lluvia ligera" },
+    { dia: "Martes",    icono: "sol",       clima: "Soleado y despejado" },
+    { dia: "Miercoles", icono: "sol",       clima: "Soleado y despejado" },
+    { dia: "Jueves",    icono: "sol",       clima: "Soleado y despejado" },
+    { dia: "Viernes",   icono: "lluvia",    clima: "Lluvia ligera" },
   ],
 };

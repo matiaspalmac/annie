@@ -12,6 +12,36 @@ import { CONFIG } from "./config.js";
 import { getTrato, getFraseAnnie, debeSugerir, getSugerencia } from "./personality.js";
 
 // -------------------------------------------------------
+// Emojis tematicos por categoria (personalidad de Annie)
+// -------------------------------------------------------
+export const EMOJI_CATEGORIA = {
+  peces:         { icono: "\uD83D\uDC1F", titulo: "\uD83D\uDC1F", clima: "\uD83C\uDF27\uFE0F", horario: "\u23F0" },
+  insectos:      { icono: "\uD83E\uDD8B", titulo: "\uD83E\uDD8B", clima: "\uD83C\uDF27\uFE0F", horario: "\u23F0" },
+  aves:          { icono: "\uD83D\uDC26", titulo: "\uD83D\uDC26", clima: "\uD83C\uDF27\uFE0F", horario: "\u23F0" },
+  animales:      { icono: "\uD83D\uDC3E", titulo: "\uD83D\uDC3E", clima: "\u2600\uFE0F", horario: "\u23F0" },
+  cultivos:      { icono: "\uD83C\uDF31", titulo: "\uD83C\uDF31", clima: "\u2600\uFE0F", horario: "\u23F0" },
+  recolectables: { icono: "\uD83C\uDF44", titulo: "\uD83C\uDF44", clima: "\u2600\uFE0F", horario: "\u23F0" },
+  recetas:       { icono: "\uD83C\uDF73", titulo: "\uD83C\uDF73", clima: "\u2600\uFE0F", horario: "\u23F0" },
+  habitantes:    { icono: "\uD83C\uDFE1", titulo: "\uD83C\uDFE1", clima: "\u2600\uFE0F", horario: "\u23F0" },
+  logros:        { icono: "\uD83C\uDFC6", titulo: "\uD83C\uDFC6", clima: "\u2600\uFE0F", horario: "\u23F0" },
+  codigos:       { icono: "\uD83C\uDF81", titulo: "\uD83C\uDF81", clima: "\u2600\uFE0F", horario: "\u23F0" },
+  precio:        { icono: "\uD83D\uDCB0", titulo: "\uD83D\uDCB0", clima: "\u2600\uFE0F", horario: "\u23F0" },
+  venta:         { icono: "\uD83D\uDCB0", titulo: "\uD83D\uDCB0", clima: "\u2600\uFE0F", horario: "\u23F0" },
+  clima:         { icono: "\u2601\uFE0F", titulo: "\u2601\uFE0F", clima: "\u2600\uFE0F", horario: "\u23F0" },
+  general:       { icono: "\u2764\uFE0F", titulo: "\u2764\uFE0F", clima: "\u2600\uFE0F", horario: "\u23F0" },
+};
+
+// Footers carinositos que rotan aleatoriamente
+const FOOTERS_ANNIE = [
+  "Hecho con amor por Annie \uD83C\uDF38",
+  "Con carinito de tu carterita \u2764\uFE0F",
+  "Annie te manda un abrazote \uD83C\uDF3C",
+  "De la oficinita con ternura \u2615",
+  "Annie siempre cuida del pueblito \uD83C\uDF3B",
+  "Preparado con tecito y amor \uD83C\uDF75",
+];
+
+// -------------------------------------------------------
 // Obtener hora en Chile
 // -------------------------------------------------------
 export function getHoraChile() {
@@ -34,10 +64,16 @@ export function setDurmiendo(val) { _estaDurmiendo = val; }
 // -------------------------------------------------------
 // Construir embed base con colores y thumbnail de Annie
 // -------------------------------------------------------
-export function crearEmbed(color) {
-  return new EmbedBuilder()
+export function crearEmbed(color, categoria) {
+  const embed = new EmbedBuilder()
     .setColor(color || CONFIG.COLORES.ROSA)
     .setThumbnail(CONFIG.ANNIE_IMG);
+  // Footer default con personalidad segun estado de sueno
+  const footerText = _estaDurmiendo
+    ? "Zzz... Annie te cuida desde la oficinita \u2661"
+    : FOOTERS_ANNIE[Math.floor(Math.random() * FOOTERS_ANNIE.length)];
+  embed.setFooter({ text: footerText, iconURL: CONFIG.ANNIE_IMG });
+  return embed;
 }
 
 // -------------------------------------------------------
@@ -55,13 +91,14 @@ export function getBostezo() {
 // -------------------------------------------------------
 export function agregarNarrativa(embed, categoria) {
   const frase = getFraseAnnie(categoria);
-  embed.addFields({ name: "\u200B", value: `*${frase}*`, inline: false });
+  const em = EMOJI_CATEGORIA[categoria] || EMOJI_CATEGORIA.general;
+  embed.addFields({ name: "\u200B", value: `${em.icono} *${frase}* \u2764\uFE0F`, inline: false });
 
   if (debeSugerir()) {
     const sug = getSugerencia(categoria);
     if (sug) {
       embed.addFields({
-        name: "Quizas te interese...",
+        name: "\uD83D\uDCA1 Quizas te interese...",
         value: sug,
         inline: false,
       });
@@ -74,14 +111,15 @@ export function agregarNarrativa(embed, categoria) {
 // -------------------------------------------------------
 export function crearEmbedError(categoria, itemBuscado) {
   const color = CONFIG.COLORES[categoria?.toUpperCase()] || CONFIG.COLORES.ROSA;
+  const em = EMOJI_CATEGORIA[categoria] || EMOJI_CATEGORIA.general;
   const embed = crearEmbed(color)
-    .setTitle(`Ay, corazoncito!`)
+    .setTitle(`${em.icono} Ay, corazoncito!`)
     .setDescription(
       _estaDurmiendo
         ? `*(Annie busca con ojitos cerrados)* Zzz... no encuentro "${itemBuscado}" en mi libretita...`
         : `Ay, ${getTrato()}! No tengo anotado "${itemBuscado}" todavia... seguro que se escribe asi, tesoro?`
     )
-    .setFooter({ text: "Annie busca mejor con cafecito y carino" });
+    .setFooter({ text: "\u2615 Annie busca mejor con cafecito y carino" });
   return embed;
 }
 

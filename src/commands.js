@@ -7,12 +7,14 @@ import { CONFIG } from "./config.js";
 import {
   PECES, ANIMALES, AVES, INSECTOS, CULTIVOS, RECOLECTABLES,
   HABITANTES, RECETAS, LOGROS, CODIGOS, PRECIOS,
+  AUTOCOMPLETE_CACHE,
   buscarItem, esTodos, normalize,
 } from "./data.js";
 import { getTrato, getSaludoHora, getFraseAnnie, CLIMA_PUEBLO } from "./personality.js";
 import {
   crearEmbed, crearEmbedError, agregarNarrativa, getBostezo,
   enviarPaginado, getHoraChile, estaDurmiendo,
+  EMOJI_CATEGORIA,
 } from "./utils.js";
 
 // -------------------------------------------------------
@@ -109,42 +111,62 @@ export const COMMAND_DEFS = [
 ].map(c => c.toJSON());
 
 // -------------------------------------------------------
-// Fuentes de autocompletado por comando
+// Fuentes de autocompletado por comando (usa cache precomputado)
 // -------------------------------------------------------
-const AUTOCOMPLETE_SOURCES = {
-  peces:         () => Object.keys(PECES),
-  insectos:      () => Object.keys(INSECTOS),
-  aves:          () => Object.keys(AVES),
-  animales:      () => Object.keys(ANIMALES),
-  cultivos:      () => Object.keys(CULTIVOS),
-  recolectables: () => Object.keys(RECOLECTABLES),
-  recetas:       () => Object.keys(RECETAS),
-  habitantes:    () => Object.keys(HABITANTES),
-  logros:        () => Object.keys(LOGROS),
-  precio:        () => Object.keys(PRECIOS),
-  venta:         () => Object.keys(PRECIOS),
-};
+const CMDS_CON_TODOS = new Set(["peces","insectos","aves","animales","cultivos","recolectables","recetas","habitantes","logros"]);
 
-const CMDS_CON_TODOS = ["peces","insectos","aves","animales","cultivos","recolectables","recetas","habitantes","logros"];
+export async function handleAutocomplete(interaction) {
+  const start = Date.now();
+  const cmd = interaction.commandName;
 
-export function handleAutocomplete(interaction) {
-  const focused = interaction.options.getFocused(true).value.trim();
-  const norm = normalize(focused);
-  const sourceGen = AUTOCOMPLETE_SOURCES[interaction.commandName];
-  if (!sourceGen) return interaction.respond([]);
+  try {
+    const cache = AUTOCOMPLETE_CACHE[cmd];
+    if (!cache) {
+      await interaction.respond([]).catch(() => {});
+      return;
+    }
 
-  const source = sourceGen();
-  let matches = source.filter(i => normalize(i).includes(norm));
-  if (matches.length === 0 && norm === "") matches = source.slice(0, 25);
-  matches = matches.slice(0, 25);
+    const focused = interaction.options.getFocused(true).value.trim();
+    const norm = focused
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
 
-  const opciones = matches.map(i => ({ name: i, value: i }));
-  if (opciones.length < 25 && CMDS_CON_TODOS.includes(interaction.commandName)) {
-    opciones.unshift({ name: "Todos los items (* / todos)", value: "todos" });
+    let matches;
+    if (norm === "") {
+      matches = cache.slice(0, 25);
+    } else {
+      matches = [];
+      for (let i = 0; i < cache.length && matches.length < 25; i++) {
+        if (cache[i].normalized.includes(norm)) {
+          matches.push(cache[i]);
+        }
+      }
+    }
+
+    const opciones = matches.map(m => ({ name: m.original, value: m.original }));
+
+    if (opciones.length < 25 && CMDS_CON_TODOS.has(cmd)) {
+      opciones.unshift({ name: "Todos los items (* / todos)", value: "todos" });
+    }
+    if (opciones.length > 25) opciones.length = 25;
+
+    await interaction.respond(opciones).catch(err => {
+      const code = err?.code ?? err?.rawError?.code;
+      if (code === 10062) {
+        console.warn(`[Autocomplete] /${cmd} expirado (10062) tras ${Date.now() - start}ms`);
+      } else {
+        console.error(`[Autocomplete] /${cmd} error en respond:`, err);
+      }
+    });
+
+    console.log(`[Autocomplete] /${cmd} OK en ${Date.now() - start}ms (${opciones.length} opciones)`);
+  } catch (err) {
+    console.error(`[Autocomplete] /${cmd} error general tras ${Date.now() - start}ms:`, err);
+    await interaction.respond([]).catch(() => {});
   }
-  if (opciones.length > 25) opciones.length = 25;
-
-  return interaction.respond(opciones);
 }
 
 // -------------------------------------------------------
@@ -192,6 +214,7 @@ export async function handleCommand(interaction) {
 async function cmdPeces(int, bostezo) {
   const input = int.options.getString("nombre")?.trim() || "";
   const color = CONFIG.COLORES.VERDE;
+  const em = EMOJI_CATEGORIA.peces;
 
   if (esTodos(input)) {
     const items = Object.entries(PECES).sort((a, b) => a[0].localeCompare(b[0], "es"));
@@ -200,12 +223,12 @@ async function cmdPeces(int, bostezo) {
       baseEmbed: crearEmbed(color),
       items,
       itemsPorPagina: 12,
-      titulo: "Todos los peces del pueblito",
+      titulo: `${em.titulo} Todos los peces del pueblito ${em.titulo}`,
       descripcion: "Mira que lindos estan todos reuniditos... Annie los quiere muchisimo.\nVen a pescar con amor cuando los veas.",
       content: bostezo,
       renderItem: ([nombre, pez]) => ({
-        name: `${nombre}`,
-        value: `**${pez.ubicacion}** | Nivel ${pez.nivel ?? "--"} | Tipo: ${pez.tipo ?? "--"}\nClima: ${pez.clima?.join(", ") || "--"} | Horario: ${pez.horario?.join(", ") || "--"}`,
+        name: `${em.icono} ${nombre}`,
+        value: `**${pez.ubicacion}** | Nivel ${pez.nivel ?? "--"} | Tipo: ${pez.tipo ?? "--"}\n${em.clima} Clima: ${pez.clima?.join(", ") || "--"} | ${em.horario} Horario: ${pez.horario?.join(", ") || "--"}`,
       }),
     });
   }
@@ -215,12 +238,12 @@ async function cmdPeces(int, bostezo) {
 
   const { nombre, data: pez } = result;
   const embed = crearEmbed(color)
-    .setTitle(`${nombre}`)
+    .setTitle(`${em.titulo} ${nombre}`)
     .setDescription(`**${pez.tipo || "--"}** en **${pez.ubicacion}**`)
     .addFields(
-      { name: "Nivel", value: String(pez.nivel ?? "--"), inline: true },
-      { name: "Clima", value: pez.clima?.join(", ") || "--", inline: true },
-      { name: "Horario", value: pez.horario?.join(", ") || "--", inline: true },
+      { name: "\u2B50 Nivel", value: String(pez.nivel ?? "--"), inline: true },
+      { name: `${em.clima} Clima`, value: pez.clima?.join(", ") || "--", inline: true },
+      { name: `${em.horario} Horario`, value: pez.horario?.join(", ") || "--", inline: true },
     );
   agregarNarrativa(embed, "peces");
   return int.reply({ content: bostezo, embeds: [embed] });
@@ -230,6 +253,7 @@ async function cmdPeces(int, bostezo) {
 async function cmdInsectos(int, bostezo) {
   const input = int.options.getString("nombre")?.trim() || "";
   const color = CONFIG.COLORES.INSECTO;
+  const em = EMOJI_CATEGORIA.insectos;
 
   if (esTodos(input)) {
     const items = Object.entries(INSECTOS).sort((a, b) => a[0].localeCompare(b[0], "es"));
@@ -238,12 +262,12 @@ async function cmdInsectos(int, bostezo) {
       baseEmbed: crearEmbed(color),
       items,
       itemsPorPagina: 12,
-      titulo: "Insectos del pueblito",
+      titulo: `${em.titulo} Insectos del pueblito ${em.titulo}`,
       descripcion: "Todos los bichitos que Annie ha visto. Red lista y a buscar.",
       content: bostezo,
       renderItem: ([nombre, data]) => ({
-        name: `${nombre}`,
-        value: `**${data.ubicacion}**\nNivel ${data.nivel} | ${data.tipo}\nClima: ${data.clima?.join(", ") || "--"} | Horario: ${data.horario?.join(", ") || "--"}`,
+        name: `${em.icono} ${nombre}`,
+        value: `**${data.ubicacion}**\nNivel ${data.nivel} | ${data.tipo}\n${em.clima} Clima: ${data.clima?.join(", ") || "--"} | ${em.horario} Horario: ${data.horario?.join(", ") || "--"}`,
       }),
     });
   }
@@ -253,13 +277,13 @@ async function cmdInsectos(int, bostezo) {
 
   const { nombre, data } = result;
   const embed = crearEmbed(color)
-    .setTitle(`${nombre}`)
+    .setTitle(`${em.titulo} ${nombre}`)
     .setDescription(`**Ubicacion:** ${data.ubicacion}`)
     .addFields(
-      { name: "Nivel", value: String(data.nivel), inline: true },
-      { name: "Tipo", value: data.tipo, inline: true },
-      { name: "Clima", value: data.clima?.join(", ") || "--", inline: true },
-      { name: "Horario", value: data.horario?.join(", ") || "--", inline: true },
+      { name: "\u2B50 Nivel", value: String(data.nivel), inline: true },
+      { name: "\uD83C\uDFAF Tipo", value: data.tipo, inline: true },
+      { name: `${em.clima} Clima`, value: data.clima?.join(", ") || "--", inline: true },
+      { name: `${em.horario} Horario`, value: data.horario?.join(", ") || "--", inline: true },
     );
   agregarNarrativa(embed, "insectos");
   return int.reply({ content: bostezo, embeds: [embed] });
@@ -269,6 +293,7 @@ async function cmdInsectos(int, bostezo) {
 async function cmdAves(int, bostezo) {
   const input = int.options.getString("nombre")?.trim() || "";
   const color = CONFIG.COLORES.AZUL;
+  const em = EMOJI_CATEGORIA.aves;
 
   if (esTodos(input)) {
     const items = Object.entries(AVES).sort((a, b) => a[0].localeCompare(b[0], "es"));
@@ -277,12 +302,12 @@ async function cmdAves(int, bostezo) {
       baseEmbed: crearEmbed(color),
       items,
       itemsPorPagina: 10,
-      titulo: "Aves del pueblito",
+      titulo: `${em.titulo} Aves del pueblito ${em.titulo}`,
       descripcion: "Todas las pajaritas anotaditas con carino.\nSal a buscarlas cuando el clima este rico.",
       content: bostezo,
       renderItem: ([nombre, data]) => ({
-        name: `${nombre}`,
-        value: `**${data.ubicacion}**\nNivel ${data.nivel} | ${data.actividad}\nClima: ${data.clima?.join(", ") || "--"} | Horario: ${data.horario?.join(", ") || "--"}`,
+        name: `${em.icono} ${nombre}`,
+        value: `**${data.ubicacion}**\nNivel ${data.nivel} | ${data.actividad}\n${em.clima} Clima: ${data.clima?.join(", ") || "--"} | ${em.horario} Horario: ${data.horario?.join(", ") || "--"}`,
       }),
     });
   }
@@ -292,13 +317,13 @@ async function cmdAves(int, bostezo) {
 
   const { nombre, data } = result;
   const embed = crearEmbed(color)
-    .setTitle(`${nombre}`)
+    .setTitle(`${em.titulo} ${nombre}`)
     .setDescription(`**Ubicacion:** ${data.ubicacion}`)
     .addFields(
-      { name: "Nivel", value: String(data.nivel), inline: true },
-      { name: "Actividad", value: data.actividad || "--", inline: true },
-      { name: "Clima", value: data.clima?.join(", ") || "--", inline: true },
-      { name: "Horario", value: data.horario?.join(", ") || "--", inline: true },
+      { name: "\u2B50 Nivel", value: String(data.nivel), inline: true },
+      { name: "\uD83C\uDFB5 Actividad", value: data.actividad || "--", inline: true },
+      { name: `${em.clima} Clima`, value: data.clima?.join(", ") || "--", inline: true },
+      { name: `${em.horario} Horario`, value: data.horario?.join(", ") || "--", inline: true },
     );
   agregarNarrativa(embed, "aves");
   return int.reply({ content: bostezo, embeds: [embed] });
@@ -308,6 +333,7 @@ async function cmdAves(int, bostezo) {
 async function cmdAnimales(int, bostezo) {
   const input = int.options.getString("nombre")?.trim() || "";
   const color = CONFIG.COLORES.ROSA;
+  const em = EMOJI_CATEGORIA.animales;
 
   if (esTodos(input)) {
     const items = Object.entries(ANIMALES).sort((a, b) => a[0].localeCompare(b[0], "es"));
@@ -316,12 +342,12 @@ async function cmdAnimales(int, bostezo) {
       baseEmbed: crearEmbed(color),
       items,
       itemsPorPagina: 8,
-      titulo: "Todos los animalitos del pueblito",
+      titulo: `${em.titulo} Todos los animalitos del pueblito ${em.titulo}`,
       descripcion: "Mira que lindos estan todos reuniditos... Annie los quiere muchisimo y los cuida con carinito.\nVen a darles su comidita favorita cuando los veas.",
       content: bostezo,
       renderItem: ([nombre, data]) => ({
-        name: `${nombre}`,
-        value: `**${data.ubicacion}**\nComida favorita: ${data.comida_favorita?.join(", ") || "--"}\nClima preferido: ${data.clima_preferido?.join(", ") || "--"}`,
+        name: `${em.icono} ${nombre}`,
+        value: `**${data.ubicacion}**\n\uD83C\uDF72 Comida favorita: ${data.comida_favorita?.join(", ") || "--"}\n${em.clima} Clima preferido: ${data.clima_preferido?.join(", ") || "--"}`,
       }),
     });
   }
@@ -331,11 +357,11 @@ async function cmdAnimales(int, bostezo) {
 
   const { nombre, data } = result;
   const embed = crearEmbed(color)
-    .setTitle(`${nombre}`)
+    .setTitle(`${em.titulo} ${nombre}`)
     .setDescription(`**Ubicacion:** ${data.ubicacion}`)
     .addFields(
-      { name: "Comida favorita", value: data.comida_favorita?.join(", ") || "--", inline: false },
-      { name: "Clima preferido", value: data.clima_preferido?.join(", ") || "--", inline: false },
+      { name: "\uD83C\uDF72 Comida favorita", value: data.comida_favorita?.join(", ") || "--", inline: false },
+      { name: `${em.clima} Clima preferido`, value: data.clima_preferido?.join(", ") || "--", inline: false },
     );
   agregarNarrativa(embed, "animales");
   return int.reply({ content: bostezo, embeds: [embed] });
@@ -345,6 +371,7 @@ async function cmdAnimales(int, bostezo) {
 async function cmdCultivos(int, bostezo) {
   const input = int.options.getString("nombre")?.trim() || "";
   const color = CONFIG.COLORES.NARANJA;
+  const em = EMOJI_CATEGORIA.cultivos;
 
   if (esTodos(input)) {
     const items = Object.entries(CULTIVOS).sort((a, b) => a[0].localeCompare(b[0], "es"));
@@ -353,12 +380,12 @@ async function cmdCultivos(int, bostezo) {
       baseEmbed: crearEmbed(color),
       items,
       itemsPorPagina: 12,
-      titulo: "Cultivos del pueblito",
+      titulo: `${em.titulo} Cultivos del pueblito ${em.titulo}`,
       descripcion: "Planta con amor y cosecha con paciencia.",
       content: bostezo,
       renderItem: ([nombre, info]) => ({
-        name: `${nombre}`,
-        value: `Tiempo: ${info.tiempo_crecimiento} | Nivel: ${info.nivel_jardineria}\nVenta semilla: ${info.venta_semilla} | Compra semilla: ${info.compra_semilla}`,
+        name: `${em.icono} ${nombre}`,
+        value: `\u23F3 Tiempo: ${info.tiempo_crecimiento} | \u2B50 Nivel: ${info.nivel_jardineria}\n\uD83D\uDCB0 Venta semilla: ${info.venta_semilla} | \uD83D\uDED2 Compra semilla: ${info.compra_semilla}`,
       }),
     });
   }
@@ -368,12 +395,12 @@ async function cmdCultivos(int, bostezo) {
 
   const { nombre, data: info } = result;
   const embed = crearEmbed(color)
-    .setTitle(`${nombre}`)
+    .setTitle(`${em.titulo} ${nombre}`)
     .addFields(
-      { name: "Tiempo", value: String(info.tiempo_crecimiento), inline: true },
-      { name: "Nivel jardineria", value: String(info.nivel_jardineria), inline: true },
-      { name: "Venta semilla", value: String(info.venta_semilla), inline: true },
-      { name: "Compra semilla", value: String(info.compra_semilla), inline: true },
+      { name: "\u23F3 Tiempo", value: String(info.tiempo_crecimiento), inline: true },
+      { name: "\u2B50 Nivel jardineria", value: String(info.nivel_jardineria), inline: true },
+      { name: "\uD83D\uDCB0 Venta semilla", value: String(info.venta_semilla), inline: true },
+      { name: "\uD83D\uDED2 Compra semilla", value: String(info.compra_semilla), inline: true },
     );
   agregarNarrativa(embed, "cultivos");
   return int.reply({ content: bostezo, embeds: [embed] });
@@ -383,6 +410,7 @@ async function cmdCultivos(int, bostezo) {
 async function cmdRecolectables(int, bostezo) {
   const input = int.options.getString("nombre")?.trim() || "";
   const color = CONFIG.COLORES.OLIVA;
+  const em = EMOJI_CATEGORIA.recolectables;
 
   if (esTodos(input)) {
     const items = Object.entries(RECOLECTABLES).sort((a, b) => a[0].localeCompare(b[0], "es"));
@@ -391,12 +419,12 @@ async function cmdRecolectables(int, bostezo) {
       baseEmbed: crearEmbed(color),
       items,
       itemsPorPagina: 12,
-      titulo: "Recolectables del pueblito",
+      titulo: `${em.titulo} Recolectables del pueblito ${em.titulo}`,
       descripcion: "Todo lo que puedes juntar con tus manitos.",
       content: bostezo,
       renderItem: ([nombre, info]) => ({
-        name: `${nombre}`,
-        value: `Ubicacion: ${info.ubicacion}\nPrecio venta: ${info.precio_venta} | Energia: ${info.ganancia_energia ?? "--"}`,
+        name: `${em.icono} ${nombre}`,
+        value: `\uD83D\uDCCD Ubicacion: ${info.ubicacion}\n\uD83D\uDCB0 Precio venta: ${info.precio_venta} | \u26A1 Energia: ${info.ganancia_energia ?? "--"}`,
       }),
     });
   }
@@ -406,20 +434,21 @@ async function cmdRecolectables(int, bostezo) {
 
   const { nombre, data: info } = result;
   const embed = crearEmbed(color)
-    .setTitle(`${nombre}`)
+    .setTitle(`${em.titulo} ${nombre}`)
     .addFields(
-      { name: "Ubicacion", value: info.ubicacion, inline: false },
-      { name: "Precio venta", value: String(info.precio_venta), inline: true },
-      { name: "Energia", value: String(info.ganancia_energia ?? "--"), inline: true },
+      { name: "\uD83D\uDCCD Ubicacion", value: info.ubicacion, inline: false },
+      { name: "\uD83D\uDCB0 Precio venta", value: String(info.precio_venta), inline: true },
+      { name: "\u26A1 Energia", value: String(info.ganancia_energia ?? "--"), inline: true },
     );
   agregarNarrativa(embed, "recolectables");
   return int.reply({ content: bostezo, embeds: [embed] });
 }
 
-// --- /recetas (NUEVO) ---
+// --- /recetas ---
 async function cmdRecetas(int, bostezo) {
   const input = int.options.getString("nombre")?.trim() || "";
   const color = CONFIG.COLORES.NARANJA;
+  const em = EMOJI_CATEGORIA.recetas;
 
   if (esTodos(input)) {
     const items = Object.entries(RECETAS).sort((a, b) => a[0].localeCompare(b[0], "es"));
@@ -428,14 +457,14 @@ async function cmdRecetas(int, bostezo) {
       baseEmbed: crearEmbed(color),
       items,
       itemsPorPagina: 8,
-      titulo: "Recetas del pueblito",
+      titulo: `${em.titulo} Recetas del pueblito ${em.titulo}`,
       descripcion: "Cocinar es como escribir una carta: hay que ponerle amor en cada paso.",
       content: bostezo,
       renderItem: ([nombre, r]) => {
         const vals = r.valores ? `${r.valores[0]} ~ ${r.valores[4]}` : "--";
         return {
-          name: `${nombre} (${r.rareza})`,
-          value: `Nivel: ${r.nivel_receta} | Ingredientes: ${r.ingredientes}\nValor: ${vals} | Costo: ${r.costo ?? "--"} | Energia: ${r.energia?.[0] ?? "--"}-${r.energia?.[4] ?? "--"}`,
+          name: `${em.icono} ${nombre} (${r.rareza})`,
+          value: `\u2B50 Nivel: ${r.nivel_receta} | \uD83E\uDDC2 Ingredientes: ${r.ingredientes}\n\uD83D\uDCB0 Valor: ${vals} | \uD83D\uDCB2 Costo: ${r.costo ?? "--"} | \u26A1 Energia: ${r.energia?.[0] ?? "--"}-${r.energia?.[4] ?? "--"}`,
         };
       },
     });
@@ -445,26 +474,27 @@ async function cmdRecetas(int, bostezo) {
   if (!result) return int.reply({ embeds: [crearEmbedError("recetas", input)], ephemeral: true });
 
   const { nombre, data: r } = result;
-  const stars = ["1 estrella", "2 estrellas", "3 estrellas", "4 estrellas", "5 estrellas"];
+  const stars = ["\u2B50", "\u2B50\u2B50", "\u2B50\u2B50\u2B50", "\u2B50\u2B50\u2B50\u2B50", "\u2B50\u2B50\u2B50\u2B50\u2B50"];
   const valoresStr = r.valores ? r.valores.map((v, i) => `${stars[i]}: ${v.toLocaleString("es-CL")}`).join("\n") : "--";
 
   const embed = crearEmbed(color)
-    .setTitle(`${nombre}`)
+    .setTitle(`${em.titulo} ${nombre}`)
     .setDescription(`**Rareza:** ${r.rareza} | **Nivel receta:** ${r.nivel_receta}`)
     .addFields(
-      { name: "Ingredientes", value: r.ingredientes, inline: false },
-      { name: "Valores de venta", value: valoresStr, inline: true },
-      { name: "Costo", value: String(r.costo ?? "Requiere recetas previas"), inline: true },
-      { name: "Energia", value: r.energia ? r.energia.join(" / ") : "--", inline: true },
+      { name: "\uD83E\uDDC2 Ingredientes", value: r.ingredientes, inline: false },
+      { name: "\uD83D\uDCB0 Valores de venta", value: valoresStr, inline: true },
+      { name: "\uD83D\uDCB2 Costo", value: String(r.costo ?? "Requiere recetas previas"), inline: true },
+      { name: "\u26A1 Energia", value: r.energia ? r.energia.join(" / ") : "--", inline: true },
     );
   agregarNarrativa(embed, "recetas");
   return int.reply({ content: bostezo, embeds: [embed] });
 }
 
-// --- /habitantes (NUEVO) ---
+// --- /habitantes ---
 async function cmdHabitantes(int, bostezo) {
   const input = int.options.getString("nombre")?.trim() || "";
   const color = CONFIG.COLORES.ROSA;
+  const em = EMOJI_CATEGORIA.habitantes;
 
   if (esTodos(input)) {
     const items = Object.entries(HABITANTES).sort((a, b) => a[0].localeCompare(b[0], "es"));
@@ -473,12 +503,12 @@ async function cmdHabitantes(int, bostezo) {
       baseEmbed: crearEmbed(color),
       items,
       itemsPorPagina: 10,
-      titulo: "Habitantes del pueblito",
+      titulo: `${em.titulo} Habitantes del pueblito ${em.titulo}`,
       descripcion: "Cada habitante tiene algo especial que ofrecer. Solo hay que visitarlos.",
       content: bostezo,
       renderItem: ([nombre, npc]) => ({
-        name: `${nombre} — ${npc.rol}`,
-        value: `${npc.descripcion}\nUbicacion: ${npc.ubicacion}`,
+        name: `${em.icono} ${nombre} \u2014 ${npc.rol}`,
+        value: `${npc.descripcion}\n\uD83D\uDCCD Ubicacion: ${npc.ubicacion}`,
       }),
     });
   }
@@ -488,11 +518,11 @@ async function cmdHabitantes(int, bostezo) {
 
   const { nombre, data: npc } = result;
   const embed = crearEmbed(color)
-    .setTitle(`${nombre}`)
+    .setTitle(`${em.titulo} ${nombre}`)
     .setDescription(`**${npc.rol}**`)
     .addFields(
-      { name: "Descripcion", value: npc.descripcion, inline: false },
-      { name: "Ubicacion", value: npc.ubicacion, inline: true },
+      { name: "\uD83D\uDCDD Descripcion", value: npc.descripcion, inline: false },
+      { name: "\uD83D\uDCCD Ubicacion", value: npc.ubicacion, inline: true },
     );
   agregarNarrativa(embed, "habitantes");
   return int.reply({ content: bostezo, embeds: [embed] });
@@ -502,6 +532,7 @@ async function cmdHabitantes(int, bostezo) {
 async function cmdLogros(int, bostezo) {
   const input = int.options.getString("nombre")?.trim() || "";
   const color = CONFIG.COLORES.DORADO;
+  const em = EMOJI_CATEGORIA.logros;
 
   if (esTodos(input)) {
     const items = Object.entries(LOGROS).sort((a, b) => a[0].localeCompare(b[0], "es"));
@@ -510,12 +541,12 @@ async function cmdLogros(int, bostezo) {
       baseEmbed: crearEmbed(color),
       items,
       itemsPorPagina: 5,
-      titulo: "Logros del pueblito",
+      titulo: `${em.titulo} Logros del pueblito ${em.titulo}`,
       descripcion: "Cada esfuerzo cuenta, vecino. Annie esta orgullosa de ti.",
       content: bostezo,
       renderItem: ([nombre, info]) => ({
-        name: `${nombre}`,
-        value: `Categoria: ${info.categoria}\nRequisito: ${info.requisito}\nTitulo: ${info.titulo} (${info.nota})`,
+        name: `${em.icono} ${nombre}`,
+        value: `\uD83C\uDFF7\uFE0F Categoria: ${info.categoria}\n\uD83D\uDCCB Requisito: ${info.requisito}\n\uD83C\uDFC5 Titulo: ${info.titulo} (${info.nota})`,
       }),
     });
   }
@@ -525,20 +556,21 @@ async function cmdLogros(int, bostezo) {
 
   const { nombre, data: info } = result;
   const embed = crearEmbed(color)
-    .setTitle(`${nombre}`)
+    .setTitle(`${em.titulo} ${nombre}`)
     .setDescription(`**Categoria:** ${info.categoria}`)
     .addFields(
-      { name: "Requisito", value: info.requisito, inline: false },
-      { name: "Titulo obtenido", value: `${info.titulo}`, inline: true },
-      { name: "Nota", value: info.nota, inline: true },
+      { name: "\uD83D\uDCCB Requisito", value: info.requisito, inline: false },
+      { name: "\uD83C\uDFC5 Titulo obtenido", value: `${info.titulo}`, inline: true },
+      { name: "\uD83D\uDCDD Nota", value: info.nota, inline: true },
     );
   agregarNarrativa(embed, "logros");
   return int.reply({ content: bostezo, embeds: [embed] });
 }
 
-// --- /codigos (NUEVO) ---
+// --- /codigos ---
 async function cmdCodigos(int, bostezo) {
   const color = CONFIG.COLORES.DORADO;
+  const em = EMOJI_CATEGORIA.codigos;
   const ahora = new Date();
   const activos = Object.entries(CODIGOS).filter(([, c]) => {
     if (c.status !== "active") return false;
@@ -548,20 +580,20 @@ async function cmdCodigos(int, bostezo) {
 
   if (activos.length === 0) {
     const embed = crearEmbed(color)
-      .setTitle("Codigos de Recompensa")
+      .setTitle(`${em.titulo} Codigos de Recompensa`)
       .setDescription("Ay, corazon... ahora mismo no tengo ningun codigo activo en mi libretita. Vuelve prontito que siempre llegan nuevos.");
     agregarNarrativa(embed, "codigos");
     return int.reply({ content: bostezo, embeds: [embed] });
   }
 
   const embed = crearEmbed(color)
-    .setTitle("Codigos de Recompensa Activos")
+    .setTitle(`${em.titulo} Codigos de Recompensa Activos ${em.titulo}`)
     .setDescription("Aqui te dejo los codigos vigentes, tesoro. Aprovechalos antes de que expiren.");
 
   activos.forEach(([codigo, data]) => {
     embed.addFields({
-      name: `${codigo}`,
-      value: `Recompensas: ${data.rewards.join(", ")}\nExpira: ${data.expirationDate || "Sin fecha"}`,
+      name: `\uD83D\uDD11 ${codigo}`,
+      value: `\uD83C\uDF81 Recompensas: ${data.rewards.join(", ")}\n\u23F3 Expira: ${data.expirationDate || "Sin fecha"}`,
       inline: false,
     });
   });
@@ -578,6 +610,7 @@ async function cmdCodigos(int, bostezo) {
 async function cmdPrecio(int, bostezo) {
   const input = int.options.getString("item")?.trim() || "";
   const color = CONFIG.COLORES.AMARILLO;
+  const em = EMOJI_CATEGORIA.precio;
 
   if (esTodos(input)) {
     const items = Object.entries(PRECIOS).sort((a, b) => a[0].localeCompare(b[0], "es"));
@@ -586,13 +619,13 @@ async function cmdPrecio(int, bostezo) {
       baseEmbed: crearEmbed(color),
       items,
       itemsPorPagina: 15,
-      titulo: "Libreta de Precios",
+      titulo: `${em.titulo} Libreta de Precios ${em.titulo}`,
       descripcion: "Aqui va uno por uno, bien clarito y con carino.",
       content: bostezo,
       renderItem: ([nombre, valores]) => {
-        const stars = ["1*", "2*", "3*", "4*", "5*"];
+        const stars = ["\u2B50", "\u2B50\u2B50", "\u2B50\u2B50\u2B50", "\u2B50\u2B50\u2B50\u2B50", "\u2B50\u2B50\u2B50\u2B50\u2B50"];
         const preciosStr = valores.map((v, i) => v > 0 ? `${stars[i]}: ${v.toLocaleString("es-CL")}` : "").filter(Boolean).join(" | ") || "Sin precio";
-        return { name: `${nombre}`, value: preciosStr };
+        return { name: `${em.icono} ${nombre}`, value: preciosStr };
       },
     });
   }
@@ -602,10 +635,10 @@ async function cmdPrecio(int, bostezo) {
 
   const { nombre, data: precios } = result;
   const embed = crearEmbed(color)
-    .setTitle(`Precio de ${nombre}`)
+    .setTitle(`${em.titulo} Precio de ${nombre}`)
     .setDescription("Mire cuanto pagan segun las estrellitas, vecino.");
 
-  const stars = ["1 estrella", "2 estrellas", "3 estrellas", "4 estrellas", "5 estrellas"];
+  const stars = ["\u2B50 1 estrella", "\u2B50\u2B50 2 estrellas", "\u2B50\u2B50\u2B50 3 estrellas", "\u2B50\u2B50\u2B50\u2B50 4 estrellas", "\u2B50\u2B50\u2B50\u2B50\u2B50 5 estrellas"];
   precios.forEach((v, i) => {
     if (v > 0) {
       embed.addFields({ name: stars[i], value: `\`${v.toLocaleString("es-CL")}\``, inline: true });
@@ -642,12 +675,13 @@ async function cmdVenta(int, bostezo) {
   }
 
   const total = precioUnitario * cant;
+  const em = EMOJI_CATEGORIA.venta;
   const embed = crearEmbed(color)
-    .setTitle("Calculo de venta")
-    .setDescription(`Por **${cant}** de **${nombre}** (${est} estrellas)`)
+    .setTitle(`${em.titulo} Calculo de venta`)
+    .setDescription(`Por **${cant}** de **${nombre}** (${"\u2B50".repeat(est)} ${est} estrellas)`)
     .addFields(
-      { name: "Precio unitario", value: `${precioUnitario.toLocaleString("es-CL")}`, inline: true },
-      { name: "Total", value: `**${total.toLocaleString("es-CL")}** moneditas`, inline: true },
+      { name: "\uD83D\uDCB0 Precio unitario", value: `${precioUnitario.toLocaleString("es-CL")}`, inline: true },
+      { name: "\uD83D\uDCB5 Total", value: `**${total.toLocaleString("es-CL")}** moneditas`, inline: true },
     );
   return int.reply({ content: bostezo, embeds: [embed] });
 }
@@ -663,25 +697,25 @@ async function cmdRecordar(int, bostezo) {
   const color = estaDurmiendo() ? CONFIG.COLORES.AZUL : CONFIG.COLORES.ROSA;
 
   const embed = crearEmbed(color)
-    .setTitle(estaDurmiendo() ? "Notita anotada... Zzz" : "Recadito guardado con carino!")
+    .setTitle(estaDurmiendo() ? "\uD83D\uDCA4 Notita anotada... Zzz" : "\uD83D\uDCDD Recadito guardado con carino!")
     .setDescription(
       estaDurmiendo()
         ? "*(Annie escribe suave con ojitos cerrados)* Zzz... ya esta en mi libretita, no me despiertes mucho, ya?"
         : `Listo, ${getTrato()}! Te guardo tu recadito y te despierto en **${min}** minutitos. No se te olvide, corazon.`
     )
-    .addFields({ name: "Tu mensajito guardado", value: `**${mensaje}**` });
+    .addFields({ name: "\uD83D\uDCE8 Tu mensajito guardado", value: `**${mensaje}**` });
 
   await int.reply({ embeds: [embed], ephemeral: true });
 
   setTimeout(() => {
     const embedRecordatorio = crearEmbed(color)
-      .setTitle(estaDurmiendo() ? "Shhh... recadito nocturnito!" : "Oiga, corazoncito! Hora de recordar")
+      .setTitle(estaDurmiendo() ? "\uD83D\uDCA4 Shhh... recadito nocturnito!" : "\u23F0 Oiga, corazoncito! Hora de recordar")
       .setDescription(
         estaDurmiendo()
           ? `*(Annie se despierta suave y busca su libretita)* Uy! Casi se me olvida... pero aqui esta, ${int.user}:`
           : `Despierta po, ${getTrato()}! Aqui te traigo tu recadito dulce con carino.`
       )
-      .addFields({ name: "Lo que tenias que recordar", value: `**${mensaje}**` });
+      .addFields({ name: "\uD83D\uDCCC Lo que tenias que recordar", value: `**${mensaje}**` });
 
     int.channel.send({ content: `${int.user}`, embeds: [embedRecordatorio] }).catch(console.error);
   }, min * 60000);
@@ -690,6 +724,7 @@ async function cmdRecordar(int, bostezo) {
 // --- /clima ---
 async function cmdClima(int, bostezo) {
   const hoy = CLIMA_PUEBLO.hoy;
+  const em = EMOJI_CATEGORIA.clima;
 
   const getSmartTimestamp = (horaRef) => {
     const ahora = new Date(new Date().toLocaleString("en-US", { timeZone: CONFIG.TIMEZONE }));
@@ -700,15 +735,15 @@ async function cmdClima(int, bostezo) {
   };
 
   const embed = crearEmbed(hoy.eventos?.length > 0 ? CONFIG.COLORES.DORADO : CONFIG.COLORES.CIELO)
-    .setTitle(`${hoy.tipo.toUpperCase()}`)
+    .setTitle(`${em.titulo} ${hoy.tipo.toUpperCase()}`)
     .setDescription(hoy.descripcion);
 
   if (hoy.eventos?.length > 0) {
-    embed.addFields({ name: "AVISOS IMPORTANTES", value: "\u200B", inline: false });
+    embed.addFields({ name: "\u26A0\uFE0F AVISOS IMPORTANTES", value: "\u200B", inline: false });
     hoy.eventos.forEach(ev => {
       const ts = getSmartTimestamp(ev.hora);
       embed.addFields({
-        name: `${ev.evento}`,
+        name: `\uD83D\uDD14 ${ev.evento}`,
         value: `Hora: <t:${ts}:t> | Inicia: <t:${ts}:R>`,
         inline: true,
       });
@@ -717,26 +752,27 @@ async function cmdClima(int, bostezo) {
 
   const textoTimeline = hoy.timeline.map(e => {
     const ts = getSmartTimestamp(e.hora);
-    return `<t:${ts}:t> -- ${e.texto}`;
+    return `<t:${ts}:t> \u2014 ${e.texto}`;
   }).join("\n");
 
   embed.addFields(
-    { name: "Cronologia del tiempo", value: textoTimeline, inline: false },
+    { name: "\uD83D\uDD52 Cronologia del tiempo", value: textoTimeline, inline: false },
     {
-      name: "Proximos dias",
+      name: "\uD83D\uDCC5 Proximos dias",
       value: "```\n" + CLIMA_PUEBLO.proximos.map(d => `${d.dia.padEnd(10)} | ${d.clima}`).join("\n") + "\n```",
       inline: false,
     },
   );
 
-  embed.setFooter({ text: "Pronostico hecho con mucho amor | Disfruta el clima, vecino!" });
+  embed.setFooter({ text: "\u2600\uFE0F Pronostico hecho con mucho amor | Disfruta el clima, vecino!" });
   return int.reply({ content: bostezo, embeds: [embed] });
 }
 
 // --- /help y /annie ---
 async function cmdHelp(int, bostezo) {
   const embed = crearEmbed(CONFIG.COLORES.ROSA)
-    .setTitle("Oficinita dulce de Annie")
+    .setThumbnail(CONFIG.ANNIE_IMG_BIG || CONFIG.ANNIE_IMG)
+    .setTitle("\uD83C\uDF38 Oficinita dulce de Annie \uD83C\uDF38")
     .setDescription(
       estaDurmiendo()
         ? "*(Bosteza suave y se frota los ojitos)*\nZzz... Hola corazoncito, soy Annie. Aunque este medio dormidita, aqui tienes mi libretita de ayuda con mucho carino."
@@ -744,39 +780,39 @@ async function cmdHelp(int, bostezo) {
     )
     .addFields(
       {
-        name: "Economia y Utilidad",
+        name: "\uD83D\uDCB0 Economia y Utilidad",
         value:
-          "`/precio` <item> -- Revisa la libretita de precios.\n" +
-          "`/venta` <item> <estrellas> <qty> -- Calcula tus ganancias.\n" +
-          "`/recordar` <tiempo> <msg> -- Te aviso con carino.\n" +
-          "`/clima` -- Pronostico del pueblito.",
+          "`/precio` <item> \u2014 Revisa la libretita de precios.\n" +
+          "`/venta` <item> <estrellas> <qty> \u2014 Calcula tus ganancias.\n" +
+          "`/recordar` <tiempo> <msg> \u2014 Te aviso con carino.\n" +
+          "`/clima` \u2014 Pronostico del pueblito.",
         inline: false,
       },
       {
-        name: "Enciclopedia del Pueblo",
+        name: "\uD83D\uDCD6 Enciclopedia del Pueblo",
         value:
           "```\n/peces       /insectos    /aves\n/animales    /cultivos    /recolectables\n/recetas     /habitantes  /logros\n/codigos```\n" +
           "Usa `<nombre>` o `todos` despues de cada comando.",
         inline: false,
       },
       {
-        name: "Comunidad",
+        name: "\uD83C\uDF08 Comunidad",
         value:
           "Roles: Reacciona en el canal de roles.\n" +
           "Voz: Entra a mi oficina y pasare a saludarte!\n" +
-          "`/wiki` -- Enlace a la wiki completa.",
+          "`/wiki` \u2014 Enlace a la wiki completa.",
         inline: false,
       },
       {
-        name: "Horarios de Annie",
+        name: "\u23F0 Horarios de Annie",
         value:
-          "Sueno: 23:00 - 08:00 (Chile)\n" +
-          "Boletin del clima: 19:00 cada dia",
+          "\uD83D\uDCA4 Sueno: 23:00 - 08:00 (Chile)\n" +
+          "\u2601\uFE0F Boletin del clima: 19:00 cada dia",
         inline: true,
       },
     )
     .setFooter({
-      text: `Annie v2.0 | ${estaDurmiendo() ? "Zzz... suenen bonito" : "Hecho con amor para Heartopia"}`,
+      text: `Annie v2.0 | ${estaDurmiendo() ? "\uD83D\uDCA4 Zzz... suenen bonito" : "\uD83C\uDF38 Hecho con amor para Heartopia"}`,
       iconURL: int.guild?.iconURL() ?? undefined,
     })
     .setTimestamp();
@@ -784,10 +820,10 @@ async function cmdHelp(int, bostezo) {
   return int.reply({ content: bostezo, embeds: [embed] });
 }
 
-// --- /wiki (NUEVO) ---
+// --- /wiki ---
 async function cmdWiki(int, bostezo) {
   const embed = crearEmbed(CONFIG.COLORES.ROSA)
-    .setTitle("Wiki de Heartopia")
+    .setTitle("\uD83D\uDCD6 Wiki de Heartopia \u2764\uFE0F")
     .setDescription(`Aqui tienes el enlace a la wiki completa del pueblito, corazon.\n\n**${CONFIG.WIKI_URL}**\n\nToda la informacion esta ahi, organizada con carino por Annie y los vecinos.`);
   agregarNarrativa(embed, "general");
   return int.reply({ content: bostezo, embeds: [embed] });
@@ -809,7 +845,7 @@ async function cmdRoles(int) {
   }
 
   const embed = crearEmbed(CONFIG.COLORES.ROSA)
-    .setTitle("Oficinita de Annie -- Elige tus roles con carino, vecino!")
+    .setTitle("\uD83C\uDF08 Oficinita de Annie \u2014 Elige tus roles con carino, vecino!")
     .setDescription(
       "Wena, corazoncitos del pueblito! Soy Annie, tu carterita favorita.\n\n" +
       "Reacciona con los emojis que mas te gusten para recibir notificaciones dulces " +

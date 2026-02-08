@@ -439,12 +439,12 @@ client.on(Events.MessageCreate, async (msg) => {
   }
 
   // --- Easter eggs numericos (mantenidos del bot original) ---
-  if (texto === "11") return msg.reply("Chupalo entonces, corazon!");
-  if (texto === "5")  return msg.reply("Por el culo te la hinco con carino!");
-  if (texto === "13") return msg.reply("Mas me crece de ternura!");
-  if (texto === "8")  return msg.reply("El culo te abrocho con amor!");
-  if (texto === "4")  return msg.reply("En tu culo mi aparatito dulce!");
-  if (texto.startsWith("me gusta")) return msg.reply("Y el pico? Acuerdese que soy de campo, vecino lindo!");
+  if (texto === "11") return msg.reply("Chupalo entonces, corazon!").catch(err => console.warn("Fallo envio easter egg:", err.message));
+  if (texto === "5")  return msg.reply("Por el culo te la hinco con carino!").catch(err => console.warn("Fallo envio easter egg:", err.message));
+  if (texto === "13") return msg.reply("Mas me crece de ternura!").catch(err => console.warn("Fallo envio easter egg:", err.message));
+  if (texto === "8")  return msg.reply("El culo te abrocho con amor!").catch(err => console.warn("Fallo envio easter egg:", err.message));
+  if (texto === "4")  return msg.reply("En tu culo mi aparatito dulce!").catch(err => console.warn("Fallo envio easter egg:", err.message));
+  if (texto.startsWith("me gusta")) return msg.reply("Y el pico? Acuerdese que soy de campo, vecino lindo!").catch(err => console.warn("Fallo envio easter egg:", err.message));
 
   // --- Respuestas contextuales a Annie ---
   const mencionaAnnie = texto.includes("annie");
@@ -477,9 +477,17 @@ client.on(Events.MessageCreate, async (msg) => {
 // ============================================================
 client.on(Events.InteractionCreate, async (interaction) => {
   if (interaction.isAutocomplete()) {
-    handleAutocomplete(interaction).catch(err => {
-      console.error('Unhandled en autocomplete:', err);
-    });
+    try {
+      await handleAutocomplete(interaction);
+    } catch (err) {
+      const code = err?.code ?? err?.rawError?.code;
+      if (code === 10062) {
+        console.warn(`[InteractionCreate] Autocomplete expirado (10062) para /${interaction.commandName}`);
+      } else {
+        console.error(`[InteractionCreate] Error no manejado en autocomplete /${interaction.commandName}:`, err);
+      }
+    }
+    return;
   }
   if (interaction.isChatInputCommand()) return handleCommand(interaction);
 });
