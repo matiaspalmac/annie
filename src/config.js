@@ -30,7 +30,7 @@ export const CONFIG = {
   // Annie
   ANNIE_IMG: "https://imgur.com/pCWlxKG.png",
   ANNIE_IMG_BIG: "https://imgur.com/pCWlxKG.png",
-  WIKI_URL: "https://heartopia-wiki.vercel.app",
+  WIKI_URL: "https://heartopiachile.vercel.app/",
   HORA_DORMIR: 23,
   HORA_DESPERTAR: 8,
 
