@@ -25,8 +25,6 @@ export const EMOJI_CATEGORIA = {
   habitantes:    { icono: "\uD83C\uDFE1", titulo: "\uD83C\uDFE1", clima: "\u2600\uFE0F", horario: "\u23F0" },
   logros:        { icono: "\uD83C\uDFC6", titulo: "\uD83C\uDFC6", clima: "\u2600\uFE0F", horario: "\u23F0" },
   codigos:       { icono: "\uD83C\uDF81", titulo: "\uD83C\uDF81", clima: "\u2600\uFE0F", horario: "\u23F0" },
-  precio:        { icono: "\uD83D\uDCB0", titulo: "\uD83D\uDCB0", clima: "\u2600\uFE0F", horario: "\u23F0" },
-  venta:         { icono: "\uD83D\uDCB0", titulo: "\uD83D\uDCB0", clima: "\u2600\uFE0F", horario: "\u23F0" },
   clima:         { icono: "\u2601\uFE0F", titulo: "\u2601\uFE0F", clima: "\u2600\uFE0F", horario: "\u23F0" },
   general:       { icono: "\u2764\uFE0F", titulo: "\u2764\uFE0F", clima: "\u2600\uFE0F", horario: "\u23F0" },
 };

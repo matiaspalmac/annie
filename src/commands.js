@@ -6,7 +6,7 @@ import { SlashCommandBuilder } from "discord.js";
 import { CONFIG } from "./config.js";
 import {
   PECES, ANIMALES, AVES, INSECTOS, CULTIVOS, RECOLECTABLES,
-  HABITANTES, RECETAS, LOGROS, CODIGOS, PRECIOS,
+  HABITANTES, RECETAS, LOGROS, CODIGOS,
   AUTOCOMPLETE_CACHE,
   buscarItem, esTodos, normalize,
 } from "./data.js";
@@ -69,18 +69,6 @@ export const COMMAND_DEFS = [
   new SlashCommandBuilder()
     .setName("codigos")
     .setDescription("Muestra los codigos de recompensa activos"),
-
-  new SlashCommandBuilder()
-    .setName("precio")
-    .setDescription("Consulta la libreta de precios de Annie")
-    .addStringOption(o => o.setName("item").setDescription("Nombre del item").setAutocomplete(true).setRequired(true)),
-
-  new SlashCommandBuilder()
-    .setName("venta")
-    .setDescription("Calcula cuanto ganas vendiendo un item")
-    .addStringOption(o => o.setName("item").setDescription("Nombre del item").setAutocomplete(true).setRequired(true))
-    .addIntegerOption(o => o.setName("estrellas").setDescription("Calidad (1-5 estrellas)").setRequired(true))
-    .addIntegerOption(o => o.setName("cantidad").setDescription("Cantidad a vender").setRequired(true)),
 
   new SlashCommandBuilder()
     .setName("recordar")
@@ -188,8 +176,6 @@ export async function handleCommand(interaction) {
       case "habitantes":    return await cmdHabitantes(interaction, bostezo);
       case "logros":        return await cmdLogros(interaction, bostezo);
       case "codigos":       return await cmdCodigos(interaction, bostezo);
-      case "precio":        return await cmdPrecio(interaction, bostezo);
-      case "venta":         return await cmdVenta(interaction, bostezo);
       case "recordar":      return await cmdRecordar(interaction, bostezo);
       case "clima":         return await cmdClima(interaction, bostezo);
       case "help":
@@ -603,90 +589,6 @@ async function cmdCodigos(int, bostezo) {
 }
 
 // ====================================================================
-// COMANDOS DE ECONOMIA
-// ====================================================================
-
-// --- /precio ---
-async function cmdPrecio(int, bostezo) {
-  const input = int.options.getString("item")?.trim() || "";
-  const color = CONFIG.COLORES.AMARILLO;
-  const em = EMOJI_CATEGORIA.precio;
-
-  if (esTodos(input)) {
-    const items = Object.entries(PRECIOS).sort((a, b) => a[0].localeCompare(b[0], "es"));
-    return enviarPaginado({
-      interaction: int,
-      baseEmbed: crearEmbed(color),
-      items,
-      itemsPorPagina: 15,
-      titulo: `${em.titulo} Libreta de Precios ${em.titulo}`,
-      descripcion: "Aqui va uno por uno, bien clarito y con carino.",
-      content: bostezo,
-      renderItem: ([nombre, valores]) => {
-        const stars = ["\u2B50", "\u2B50\u2B50", "\u2B50\u2B50\u2B50", "\u2B50\u2B50\u2B50\u2B50", "\u2B50\u2B50\u2B50\u2B50\u2B50"];
-        const preciosStr = valores.map((v, i) => v > 0 ? `${stars[i]}: ${v.toLocaleString("es-CL")}` : "").filter(Boolean).join(" | ") || "Sin precio";
-        return { name: `${em.icono} ${nombre}`, value: preciosStr };
-      },
-    });
-  }
-
-  const result = buscarItem(PRECIOS, input);
-  if (!result) return int.reply({ embeds: [crearEmbedError("precio", input)], ephemeral: true });
-
-  const { nombre, data: precios } = result;
-  const embed = crearEmbed(color)
-    .setTitle(`${em.titulo} Precio de ${nombre}`)
-    .setDescription("Mire cuanto pagan segun las estrellitas, vecino.");
-
-  const stars = ["\u2B50 1 estrella", "\u2B50\u2B50 2 estrellas", "\u2B50\u2B50\u2B50 3 estrellas", "\u2B50\u2B50\u2B50\u2B50 4 estrellas", "\u2B50\u2B50\u2B50\u2B50\u2B50 5 estrellas"];
-  precios.forEach((v, i) => {
-    if (v > 0) {
-      embed.addFields({ name: stars[i], value: `\`${v.toLocaleString("es-CL")}\``, inline: true });
-    }
-  });
-  return int.reply({ content: bostezo, embeds: [embed] });
-}
-
-// --- /venta ---
-async function cmdVenta(int, bostezo) {
-  const input = int.options.getString("item")?.trim() || "";
-  const est = int.options.getInteger("estrellas");
-  const cant = int.options.getInteger("cantidad");
-  const color = CONFIG.COLORES.AMARILLO;
-
-  if (est < 1 || est > 5) {
-    const embed = crearEmbed(color)
-      .setTitle("Ojo, corazoncito!")
-      .setDescription(`Las estrellitas van de 1 a 5 nomas, ${getTrato()}. No me inventes calidades nuevas, tesoro.`);
-    return int.reply({ embeds: [embed], ephemeral: true });
-  }
-
-  const result = buscarItem(PRECIOS, input);
-  if (!result) return int.reply({ embeds: [crearEmbedError("precio", input)], ephemeral: true });
-
-  const { nombre, data: precios } = result;
-  const precioUnitario = precios[est - 1] || 0;
-
-  if (precioUnitario === 0) {
-    const embed = crearEmbed(color)
-      .setTitle("Uy, tesorito!")
-      .setDescription(`Ese item "${nombre}" no tiene precio para ${est} estrellas. Prueba con otra calidad, corazon.`);
-    return int.reply({ embeds: [embed], ephemeral: true });
-  }
-
-  const total = precioUnitario * cant;
-  const em = EMOJI_CATEGORIA.venta;
-  const embed = crearEmbed(color)
-    .setTitle(`${em.titulo} Calculo de venta`)
-    .setDescription(`Por **${cant}** de **${nombre}** (${"\u2B50".repeat(est)} ${est} estrellas)`)
-    .addFields(
-      { name: "\uD83D\uDCB0 Precio unitario", value: `${precioUnitario.toLocaleString("es-CL")}`, inline: true },
-      { name: "\uD83D\uDCB5 Total", value: `**${total.toLocaleString("es-CL")}** moneditas`, inline: true },
-    );
-  return int.reply({ content: bostezo, embeds: [embed] });
-}
-
-// ====================================================================
 // COMANDOS DE UTILIDAD
 // ====================================================================
 
@@ -780,10 +682,8 @@ async function cmdHelp(int, bostezo) {
     )
     .addFields(
       {
-        name: "\uD83D\uDCB0 Economia y Utilidad",
+        name: "\uD83D\uDCB0 Utilidad",
         value:
-          "`/precio` <item> \u2014 Revisa la libretita de precios.\n" +
-          "`/venta` <item> <estrellas> <qty> \u2014 Calcula tus ganancias.\n" +
           "`/recordar` <tiempo> <msg> \u2014 Te aviso con carino.\n" +
           "`/clima` \u2014 Pronostico del pueblito.",
         inline: false,

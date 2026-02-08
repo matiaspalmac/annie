@@ -1006,12 +1006,4 @@ export const AUTOCOMPLETE_CACHE = {
     original: key,
     normalized: normalize(key)
   })),
-  precio: Object.keys(PRECIOS).sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' })).map(key => ({
-    original: key,
-    normalized: normalize(key)
-  })),
-  venta: Object.keys(PRECIOS).sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' })).map(key => ({
-    original: key,
-    normalized: normalize(key)
-  })),
 };
