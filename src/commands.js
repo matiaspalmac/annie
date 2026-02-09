@@ -598,10 +598,11 @@ async function cmdClima(int, bostezo) {
   const hoy = CLIMA_PUEBLO.hoy;
   const em = EMOJI_CATEGORIA.clima;
 
-  const getSmartTimestamp = (horaRef) => {
-    const ahora = new Date(new Date().toLocaleString("en-US", { timeZone: CONFIG.TIMEZONE }));
+  const ahora = new Date(new Date().toLocaleString("en-US", { timeZone: CONFIG.TIMEZONE }));
+  
+  const getSmartTimestamp = (horaRef, plusDays = 0) => {
     const res = new Date(ahora);
-    if (horaRef < ahora.getHours()) res.setDate(ahora.getDate() + 1);
+    res.setDate(ahora.getDate() + plusDays);
     res.setHours(horaRef, 0, 0, 0);
     return Math.floor(res.getTime() / 1000);
   };
@@ -611,32 +612,44 @@ async function cmdClima(int, bostezo) {
     .setDescription(hoy.descripcion);
 
   if (hoy.eventos?.length > 0) {
-    embed.addFields({ name: "\u26A0\uFE0F AVISOS IMPORTANTES", value: "\u200B", inline: false });
+    embed.addFields({ name: "⚠️ AVISOS IMPORTANTES", value: "\u200B", inline: false });
+    
     hoy.eventos.forEach(ev => {
-      const ts = getSmartTimestamp(ev.hora);
+      const dayOffset = ev.hora < ahora.getHours() ? 1 : 0;
+      const ts = getSmartTimestamp(ev.hora, dayOffset);
+      
       embed.addFields({
-        name: `\uD83D\uDD14 ${ev.evento}`,
-        value: `Hora: <t:${ts}:t> | Inicia: <t:${ts}:R>`,
+        name: `🔔 ${ev.evento}`,
+        value: `Hora: <t:${ts}:t> | <t:${ts}:R>`,
         inline: true,
       });
     });
   }
 
+  let diaExtra = 0;
+  let ultimaHoraProcesada = -1;
+
   const textoTimeline = hoy.timeline.map(e => {
-    const ts = getSmartTimestamp(e.hora);
-    return `<t:${ts}:t> \u2014 ${e.texto}`;
+    if (e.hora < ultimaHoraProcesada) {
+      diaExtra++;
+    }
+    ultimaHoraProcesada = e.hora;
+
+    const ts = getSmartTimestamp(e.hora, diaExtra);
+    return `<t:${ts}:t> — ${e.texto}`;
   }).join("\n");
 
   embed.addFields(
-    { name: "\uD83D\uDD52 Cronologia del tiempo", value: textoTimeline, inline: false },
+    { name: "🕒 Cronologia del tiempo", value: textoTimeline, inline: false },
     {
-      name: "\uD83D\uDCC5 Proximos dias",
+      name: "📅 Proximos dias",
       value: "```\n" + CLIMA_PUEBLO.proximos.map(d => `${d.dia.padEnd(10)} | ${d.clima}`).join("\n") + "\n```",
       inline: false,
     },
   );
 
-  embed.setFooter({ text: "\u2600\uFE0F Pronostico hecho con mucho amor | Disfruta el clima, vecino!" });
+  embed.setFooter({ text: "☀️ Pronostico hecho con mucho amor | Disfruta el clima, vecino!" });
+  
   return int.reply({ content: bostezo, embeds: [embed] });
 }
 
