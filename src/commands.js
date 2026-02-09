@@ -593,24 +593,19 @@ async function cmdRecordar(int, bostezo) {
     int.channel.send({ content: `${int.user}`, embeds: [embedRecordatorio] }).catch(console.error);
   }, min * 60000);
 }
+
 async function cmdClima(int, bostezo) {
   const hoy = CLIMA_PUEBLO.hoy;
   const em = EMOJI_CATEGORIA.clima;
 
-  const obtenerFechaSTGO = () => {
-    const stringFecha = new Date().toLocaleString("en-US", { timeZone: "America/Santiago" });
-    return new Date(stringFecha);
-  };
-
-  const ahora = obtenerFechaSTGO();
+  const ahoraChile = new Date(new Date().toLocaleString("en-US", { timeZone: CONFIG.TIMEZONE }));
   
-  const getSmartTimestamp = (horaRef, plusDays = 0) => {
-    const res = obtenerFechaSTGO();
-    res.setDate(res.getDate() + plusDays);
-    res.setHours(horaRef, 0, 0, 0);
+  const getUnixTimestamp = (horaRef, plusDays = 0) => {
+    const fecha = new Date(new Date().toLocaleString("en-US", { timeZone: CONFIG.TIMEZONE }));
+    fecha.setDate(fecha.getDate() + plusDays);
+    fecha.setHours(horaRef, 0, 0, 0);
     
-    const offset = new Date().getTimezoneOffset() * 60000;
-    return Math.floor(res.getTime() / 1000);
+    return Math.floor(fecha.getTime() / 1000);
   };
 
   const embed = crearEmbed(hoy.eventos?.length > 0 ? CONFIG.COLORES.DORADO : CONFIG.COLORES.CIELO)
@@ -621,8 +616,7 @@ async function cmdClima(int, bostezo) {
     embed.addFields({ name: "⚠️ AVISOS IMPORTANTES", value: "\u200B", inline: false });
     
     hoy.eventos.forEach(ev => {
-      const dayOffset = ev.hora < ahora.getHours() ? 1 : 0;
-      const ts = getSmartTimestamp(ev.hora, dayOffset);
+      const ts = getUnixTimestamp(ev.hora, 0); 
       
       embed.addFields({
         name: `🔔 ${ev.evento}`,
@@ -641,7 +635,7 @@ async function cmdClima(int, bostezo) {
     }
     ultimaHoraProcesada = e.hora;
 
-    const ts = getSmartTimestamp(e.hora, diaExtra);
+    const ts = getUnixTimestamp(e.hora, diaExtra);
     return `<t:${ts}:t> — ${e.texto}`;
   }).join("\n");
 
