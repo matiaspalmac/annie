@@ -593,17 +593,23 @@ async function cmdRecordar(int, bostezo) {
     int.channel.send({ content: `${int.user}`, embeds: [embedRecordatorio] }).catch(console.error);
   }, min * 60000);
 }
-
 async function cmdClima(int, bostezo) {
   const hoy = CLIMA_PUEBLO.hoy;
   const em = EMOJI_CATEGORIA.clima;
 
-  const ahora = new Date(new Date().toLocaleString("en-US", { timeZone: CONFIG.TIMEZONE }));
+  const obtenerFechaSTGO = () => {
+    const stringFecha = new Date().toLocaleString("en-US", { timeZone: "America/Santiago" });
+    return new Date(stringFecha);
+  };
+
+  const ahora = obtenerFechaSTGO();
   
   const getSmartTimestamp = (horaRef, plusDays = 0) => {
-    const res = new Date(ahora);
-    res.setDate(ahora.getDate() + plusDays);
+    const res = obtenerFechaSTGO();
+    res.setDate(res.getDate() + plusDays);
     res.setHours(horaRef, 0, 0, 0);
+    
+    const offset = new Date().getTimezoneOffset() * 60000;
     return Math.floor(res.getTime() / 1000);
   };
 
@@ -640,15 +646,15 @@ async function cmdClima(int, bostezo) {
   }).join("\n");
 
   embed.addFields(
-    { name: "🕒 Cronologia del tiempo", value: textoTimeline, inline: false },
+    { name: "🕒 Cronología del tiempo", value: textoTimeline, inline: false },
     {
-      name: "📅 Proximos dias",
+      name: "📅 Próximos días",
       value: "```\n" + CLIMA_PUEBLO.proximos.map(d => `${d.dia.padEnd(10)} | ${d.clima}`).join("\n") + "\n```",
       inline: false,
     },
   );
 
-  embed.setFooter({ text: "☀️ Pronostico hecho con mucho amor | Disfruta el clima, vecino!" });
+  embed.setFooter({ text: "☀️ Pronóstico hecho con mucho amor | Disfruta el clima, vecino!" });
   
   return int.reply({ content: bostezo, embeds: [embed] });
 }
