@@ -1,7 +1,3 @@
-// ============================================================
-// Utilidades de Discord (embeds, paginacion, helpers)
-// ============================================================
-
 import {
   EmbedBuilder,
   ActionRowBuilder,
@@ -11,9 +7,6 @@ import {
 import { CONFIG } from "./config.js";
 import { getTrato, getFraseAnnie, debeSugerir, getSugerencia } from "./personality.js";
 
-// -------------------------------------------------------
-// Emojis tematicos por categoria (personalidad de Annie)
-// -------------------------------------------------------
 export const EMOJI_CATEGORIA = {
   peces:         { icono: "\uD83D\uDC1F", titulo: "\uD83D\uDC1F", clima: "\uD83C\uDF27\uFE0F", horario: "\u23F0" },
   insectos:      { icono: "\uD83E\uDD8B", titulo: "\uD83E\uDD8B", clima: "\uD83C\uDF27\uFE0F", horario: "\u23F0" },
@@ -29,7 +22,6 @@ export const EMOJI_CATEGORIA = {
   general:       { icono: "\u2764\uFE0F", titulo: "\u2764\uFE0F", clima: "\u2600\uFE0F", horario: "\u23F0" },
 };
 
-// Footers carinositos que rotan aleatoriamente
 const FOOTERS_ANNIE = [
   "Hecho con amor por Annie \uD83C\uDF38",
   "Con carinito de tu carterita \u2764\uFE0F",
@@ -39,9 +31,6 @@ const FOOTERS_ANNIE = [
   "Preparado con tecito y amor \uD83C\uDF75",
 ];
 
-// -------------------------------------------------------
-// Obtener hora en Chile
-// -------------------------------------------------------
 export function getHoraChile() {
   return parseInt(
     new Date().toLocaleString("en-US", {
@@ -52,21 +41,14 @@ export function getHoraChile() {
   );
 }
 
-// -------------------------------------------------------
-// Estado de sueno global
-// -------------------------------------------------------
 let _estaDurmiendo = false;
 export function estaDurmiendo() { return _estaDurmiendo; }
 export function setDurmiendo(val) { _estaDurmiendo = val; }
 
-// -------------------------------------------------------
-// Construir embed base con colores y thumbnail de Annie
-// -------------------------------------------------------
 export function crearEmbed(color, categoria) {
   const embed = new EmbedBuilder()
     .setColor(color || CONFIG.COLORES.ROSA)
     .setThumbnail(CONFIG.ANNIE_IMG);
-  // Footer default con personalidad segun estado de sueno
   const footerText = _estaDurmiendo
     ? "Zzz... Annie te cuida desde la oficinita \u2661"
     : FOOTERS_ANNIE[Math.floor(Math.random() * FOOTERS_ANNIE.length)];
@@ -74,9 +56,6 @@ export function crearEmbed(color, categoria) {
   return embed;
 }
 
-// -------------------------------------------------------
-// Prefijo narrativo de Annie segun estado
-// -------------------------------------------------------
 export function getBostezo() {
   if (_estaDurmiendo) {
     return "*(Bostezo suave)* Ya po... aqui tiene, corazon, pero no me despierte mucho, ya?\n\n";
@@ -84,9 +63,6 @@ export function getBostezo() {
   return `Wena, ${getTrato()}! Aqui le traigo su cosita con carino.\n\n`;
 }
 
-// -------------------------------------------------------
-// Agregar footer narrativo a un embed (frase + sugerencia)
-// -------------------------------------------------------
 export function agregarNarrativa(embed, categoria) {
   const frase = getFraseAnnie(categoria);
   const em = EMOJI_CATEGORIA[categoria] || EMOJI_CATEGORIA.general;
@@ -104,9 +80,6 @@ export function agregarNarrativa(embed, categoria) {
   }
 }
 
-// -------------------------------------------------------
-// Error embed bonito de Annie
-// -------------------------------------------------------
 export function crearEmbedError(categoria, itemBuscado) {
   const color = CONFIG.COLORES[categoria?.toUpperCase()] || CONFIG.COLORES.ROSA;
   const em = EMOJI_CATEGORIA[categoria] || EMOJI_CATEGORIA.general;
@@ -121,9 +94,6 @@ export function crearEmbedError(categoria, itemBuscado) {
   return embed;
 }
 
-// -------------------------------------------------------
-// Sistema de paginacion para listas largas
-// -------------------------------------------------------
 export async function enviarPaginado({
   interaction,
   baseEmbed,

@@ -1,8 +1,3 @@
-// ============================================================
-// Annie Bot v2 — Punto de entrada principal
-// Heartopia Wiki Bot (discord.js v14 + ESM)
-// ============================================================
-
 import "dotenv/config";
 import http from "node:http";
 import {
@@ -28,9 +23,6 @@ import {
   crearEmbed, getBostezo,
 } from "./utils.js";
 
-// ============================================================
-// Cliente de Discord
-// ============================================================
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -43,16 +35,9 @@ const client = new Client({
   partials: [Partials.Message, Partials.Channel, Partials.Reaction],
 });
 
-// ============================================================
-// Variables globales
-// ============================================================
 let ultimaRutina = null;
 let historialMensajes = [];
 let ultimoChisme = 0;
-
-// ============================================================
-// Funciones de ciclo de vida
-// ============================================================
 
 function getCanalGeneral() {
   const guild = client.guilds.cache.get(CONFIG.GUILD_ID);
@@ -81,9 +66,6 @@ function gestionarSueno() {
   }
 }
 
-// ============================================================
-// Conexion a canal de voz (oficinita de Annie)
-// ============================================================
 async function conectarOficina() {
   if (!CONFIG.CANAL_VOZ_DORMIR_ID) return;
 
@@ -108,9 +90,6 @@ async function conectarOficina() {
   }
 }
 
-// ============================================================
-// Anuncio de clima (diario a las 19:00)
-// ============================================================
 async function anunciarClima(forzado = false) {
   const hora = getHoraChile();
   if (!forzado && hora !== 19) return;
@@ -131,9 +110,6 @@ async function anunciarClima(forzado = false) {
   await canal.send({ content: "Annie les trae el clima con amor:", embeds: [embed] }).catch(console.error);
 }
 
-// ============================================================
-// Rutinas diarias (frases por hora)
-// ============================================================
 function ejecutarRutinaDiaria() {
   if (estaDurmiendo()) return;
   const hora = getHoraChile();
@@ -147,9 +123,6 @@ function ejecutarRutinaDiaria() {
   canal.send(rutina.mensaje).catch(console.error);
 }
 
-// ============================================================
-// Actualizar nombre de canal de hora y clima
-// ============================================================
 async function updateTimeChannel() {
   if (!CONFIG.CANAL_HORA_ID) return;
   try {
@@ -196,9 +169,6 @@ async function updateWeatherChannel() {
   }
 }
 
-// ============================================================
-// Mencion random a vecino (cada 90 min, con proteccion de sueno)
-// ============================================================
 async function mencionarVecinoRandom() {
   if (estaDurmiendo()) return;
 
@@ -220,16 +190,12 @@ async function mencionarVecinoRandom() {
   canal.send(`*Annie asoma la cabecita con carino:* ${frases[Math.floor(Math.random() * frases.length)]}`).catch(console.error);
 }
 
-// ============================================================
-// Evento: Bot listo
-// ============================================================
 client.once("clientReady", async () => {
   console.log(`Annie v2 conectada: ${client.user.tag}`);
 
   conectarOficina();
   actualizarEstado();
 
-  // Cachear mensaje de roles
   if (CONFIG.MENSAJE_ROLES_ID) {
     client.guilds.cache.forEach(async (guild) => {
       guild.channels.cache.forEach(async (channel) => {
@@ -240,7 +206,6 @@ client.once("clientReady", async () => {
     });
   }
 
-  // Registrar slash commands
   const rest = new REST({ version: "10" }).setToken(CONFIG.TOKEN);
   try {
     await rest.put(
@@ -252,7 +217,6 @@ client.once("clientReady", async () => {
     console.error("Error registrando commands:", e);
   }
 
-  // Programar actualizacion de canales cada 5 min
   const scheduleUpdate = () => {
     const now = new Date();
     const ms = (5 - (now.getMinutes() % 5)) * 60000 - now.getSeconds() * 1000 - now.getMilliseconds();
@@ -266,38 +230,26 @@ client.once("clientReady", async () => {
   updateWeatherChannel();
   scheduleUpdate();
 
-  // Gestion de sueno (check cada minuto)
   gestionarSueno();
   setInterval(gestionarSueno, 60000);
 
-  // Actualizar presencia cada 10 min
   setInterval(actualizarEstado, 600000);
 });
 
-// ============================================================
-// Intervalos ambientales
-// ============================================================
-// Frase ambient cada 90 min
 setInterval(() => {
   if (estaDurmiendo()) return;
   const canal = getCanalGeneral();
   if (!canal) return;
   const frase = FRASES_AMBIENT[Math.floor(Math.random() * FRASES_AMBIENT.length)];
   canal.send(`*Annie comenta con carino:* ${frase}`).catch(console.error);
-}, 1000 * 60 * 90);
+}, 1000 * 60 * 120);
 
-// Rutinas diarias cada 5 min
 setInterval(ejecutarRutinaDiaria, 1000 * 60 * 5);
 
-// Mencion random cada 90 min
 setInterval(mencionarVecinoRandom, 1000 * 60 * 90);
 
-// Boletin del clima cada 2 horas
 setInterval(anunciarClima, 1000 * 60 * 120);
 
-// ============================================================
-// Evento: Nuevo miembro
-// ============================================================
 client.on(Events.GuildMemberAdd, async (member) => {
   try {
     const canal = await member.guild.channels.fetch(CONFIG.CANAL_GENERAL_ID);
@@ -318,11 +270,7 @@ client.on(Events.GuildMemberAdd, async (member) => {
   }
 });
 
-// ============================================================
-// Evento: Voice state (reconexion + saludo)
-// ============================================================
 client.on(Events.VoiceStateUpdate, async (oldState, newState) => {
-  // Reconexion automatica si Annie es desconectada
   if (
     oldState.member?.id === client.user.id &&
     oldState.channelId &&
@@ -332,7 +280,6 @@ client.on(Events.VoiceStateUpdate, async (oldState, newState) => {
     return setTimeout(conectarOficina, 5000);
   }
 
-  // Saludo cuando alguien entra a un voice
   if (!oldState.channelId && newState.channelId && !newState.member.user.bot) {
     const canalTexto = newState.guild.channels.cache.get(CONFIG.CANAL_GENERAL_ID);
     if (!canalTexto) return;
@@ -356,9 +303,6 @@ client.on(Events.VoiceStateUpdate, async (oldState, newState) => {
   }
 });
 
-// ============================================================
-// Evento: Reacciones para roles
-// ============================================================
 client.on("messageReactionAdd", async (reaction, user) => {
   if (user.bot) return;
   if (reaction.message.id !== CONFIG.MENSAJE_ROLES_ID) return;
@@ -402,15 +346,11 @@ client.on("messageReactionRemove", async (reaction, user) => {
   }
 });
 
-// ============================================================
-// Evento: Mensajes de texto (chisme + respuestas contextuales)
-// ============================================================
 client.on(Events.MessageCreate, async (msg) => {
   if (msg.author.bot) return;
   const texto = msg.content.toLowerCase();
   const ahora = Date.now();
 
-  // --- Sistema de chisme (mucha actividad en general) ---
   if (msg.channel.id === CONFIG.CANAL_GENERAL_ID) {
     historialMensajes.push(ahora);
     historialMensajes = historialMensajes.filter(m => ahora - m < CONFIG.VENTANA_CHISME);
@@ -438,7 +378,6 @@ client.on(Events.MessageCreate, async (msg) => {
     }
   }
 
-  // --- Easter eggs numericos (mantenidos del bot original) ---
   if (texto === "11") return msg.reply("Chupalo entonces, corazon!").catch(err => console.warn("Fallo envio easter egg:", err.message));
   if (texto === "5")  return msg.reply("Por el culo te la hinco con carino!").catch(err => console.warn("Fallo envio easter egg:", err.message));
   if (texto === "13") return msg.reply("Mas me crece de ternura!").catch(err => console.warn("Fallo envio easter egg:", err.message));
@@ -446,7 +385,6 @@ client.on(Events.MessageCreate, async (msg) => {
   if (texto === "4")  return msg.reply("En tu culo mi aparatito dulce!").catch(err => console.warn("Fallo envio easter egg:", err.message));
   if (texto.startsWith("me gusta")) return msg.reply("Y el pico? Acuerdese que soy de campo, vecino lindo!").catch(err => console.warn("Fallo envio easter egg:", err.message));
 
-  // --- Respuestas contextuales a Annie ---
   const mencionaAnnie = texto.includes("annie");
 
   if (estaDurmiendo()) {
@@ -472,9 +410,6 @@ client.on(Events.MessageCreate, async (msg) => {
   }
 });
 
-// ============================================================
-// Evento: Interacciones (autocomplete + comandos)
-// ============================================================
 client.on(Events.InteractionCreate, async (interaction) => {
   if (interaction.isAutocomplete()) {
     try {
@@ -492,15 +427,9 @@ client.on(Events.InteractionCreate, async (interaction) => {
   if (interaction.isChatInputCommand()) return handleCommand(interaction);
 });
 
-// ============================================================
-// Servidor HTTP (keep-alive para hosting)
-// ============================================================
 http.createServer((req, res) => {
   res.writeHead(200);
   res.end("Annie v2 is live");
 }).listen(8000);
 
-// ============================================================
-// Login
-// ============================================================
 client.login(CONFIG.TOKEN);

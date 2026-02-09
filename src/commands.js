@@ -1,7 +1,3 @@
-// ============================================================
-// Annie Bot v2 — Definiciones de Slash Commands + Handlers
-// ============================================================
-
 import { SlashCommandBuilder } from "discord.js";
 import { CONFIG } from "./config.js";
 import {
@@ -17,9 +13,6 @@ import {
   EMOJI_CATEGORIA,
 } from "./utils.js";
 
-// -------------------------------------------------------
-// Definiciones de comandos (para registrar en Discord)
-// -------------------------------------------------------
 export const COMMAND_DEFS = [
   new SlashCommandBuilder()
     .setName("peces")
@@ -98,9 +91,6 @@ export const COMMAND_DEFS = [
     .addChannelOption(o => o.setName("canal").setDescription("Canal donde enviar (por defecto: canal actual)").setRequired(false)),
 ].map(c => c.toJSON());
 
-// -------------------------------------------------------
-// Fuentes de autocompletado por comando (usa cache precomputado)
-// -------------------------------------------------------
 const CMDS_CON_TODOS = new Set(["peces","insectos","aves","animales","cultivos","recolectables","recetas","habitantes","logros"]);
 
 export async function handleAutocomplete(interaction) {
@@ -157,9 +147,6 @@ export async function handleAutocomplete(interaction) {
   }
 }
 
-// -------------------------------------------------------
-// Handler principal de comandos
-// -------------------------------------------------------
 export async function handleCommand(interaction) {
   const cmd = interaction.commandName;
   const bostezo = getBostezo();
@@ -192,11 +179,6 @@ export async function handleCommand(interaction) {
   }
 }
 
-// ====================================================================
-// COMANDOS DE ENCICLOPEDIA (patron unificado)
-// ====================================================================
-
-// --- /peces ---
 async function cmdPeces(int, bostezo) {
   const input = int.options.getString("nombre")?.trim() || "";
   const color = CONFIG.COLORES.VERDE;
@@ -235,7 +217,6 @@ async function cmdPeces(int, bostezo) {
   return int.reply({ content: bostezo, embeds: [embed] });
 }
 
-// --- /insectos ---
 async function cmdInsectos(int, bostezo) {
   const input = int.options.getString("nombre")?.trim() || "";
   const color = CONFIG.COLORES.INSECTO;
@@ -275,7 +256,6 @@ async function cmdInsectos(int, bostezo) {
   return int.reply({ content: bostezo, embeds: [embed] });
 }
 
-// --- /aves ---
 async function cmdAves(int, bostezo) {
   const input = int.options.getString("nombre")?.trim() || "";
   const color = CONFIG.COLORES.AZUL;
@@ -315,7 +295,6 @@ async function cmdAves(int, bostezo) {
   return int.reply({ content: bostezo, embeds: [embed] });
 }
 
-// --- /animales ---
 async function cmdAnimales(int, bostezo) {
   const input = int.options.getString("nombre")?.trim() || "";
   const color = CONFIG.COLORES.ROSA;
@@ -353,7 +332,6 @@ async function cmdAnimales(int, bostezo) {
   return int.reply({ content: bostezo, embeds: [embed] });
 }
 
-// --- /cultivos ---
 async function cmdCultivos(int, bostezo) {
   const input = int.options.getString("nombre")?.trim() || "";
   const color = CONFIG.COLORES.NARANJA;
@@ -392,7 +370,6 @@ async function cmdCultivos(int, bostezo) {
   return int.reply({ content: bostezo, embeds: [embed] });
 }
 
-// --- /recolectables ---
 async function cmdRecolectables(int, bostezo) {
   const input = int.options.getString("nombre")?.trim() || "";
   const color = CONFIG.COLORES.OLIVA;
@@ -430,7 +407,6 @@ async function cmdRecolectables(int, bostezo) {
   return int.reply({ content: bostezo, embeds: [embed] });
 }
 
-// --- /recetas ---
 async function cmdRecetas(int, bostezo) {
   const input = int.options.getString("nombre")?.trim() || "";
   const color = CONFIG.COLORES.NARANJA;
@@ -476,7 +452,6 @@ async function cmdRecetas(int, bostezo) {
   return int.reply({ content: bostezo, embeds: [embed] });
 }
 
-// --- /habitantes ---
 async function cmdHabitantes(int, bostezo) {
   const input = int.options.getString("nombre")?.trim() || "";
   const color = CONFIG.COLORES.ROSA;
@@ -514,7 +489,6 @@ async function cmdHabitantes(int, bostezo) {
   return int.reply({ content: bostezo, embeds: [embed] });
 }
 
-// --- /logros ---
 async function cmdLogros(int, bostezo) {
   const input = int.options.getString("nombre")?.trim() || "";
   const color = CONFIG.COLORES.DORADO;
@@ -556,7 +530,6 @@ async function cmdLogros(int, bostezo) {
   return int.reply({ content: bostezo, embeds: [embed] });
 }
 
-// --- /codigos ---
 async function cmdCodigos(int, bostezo) {
   const color = CONFIG.COLORES.DORADO;
   const em = EMOJI_CATEGORIA.codigos;
@@ -591,11 +564,6 @@ async function cmdCodigos(int, bostezo) {
   return int.reply({ content: bostezo, embeds: [embed] });
 }
 
-// ====================================================================
-// COMANDOS DE UTILIDAD
-// ====================================================================
-
-// --- /recordar ---
 async function cmdRecordar(int, bostezo) {
   const min = int.options.getInteger("minutos");
   const mensaje = int.options.getString("mensaje");
@@ -626,7 +594,6 @@ async function cmdRecordar(int, bostezo) {
   }, min * 60000);
 }
 
-// --- /clima ---
 async function cmdClima(int, bostezo) {
   const hoy = CLIMA_PUEBLO.hoy;
   const em = EMOJI_CATEGORIA.clima;
@@ -673,7 +640,6 @@ async function cmdClima(int, bostezo) {
   return int.reply({ content: bostezo, embeds: [embed] });
 }
 
-// --- /help y /annie ---
 async function cmdHelp(int, bostezo) {
   const embed = crearEmbed(CONFIG.COLORES.ROSA)
     .setThumbnail(CONFIG.ANNIE_IMG_BIG || CONFIG.ANNIE_IMG)
@@ -723,7 +689,6 @@ async function cmdHelp(int, bostezo) {
   return int.reply({ content: bostezo, embeds: [embed] });
 }
 
-// --- /wiki ---
 async function cmdWiki(int, bostezo) {
   const embed = crearEmbed(CONFIG.COLORES.ROSA)
     .setTitle("\uD83D\uDCD6 Wiki de Heartopia \u2764\uFE0F")
@@ -732,7 +697,6 @@ async function cmdWiki(int, bostezo) {
   return int.reply({ content: bostezo, embeds: [embed] });
 }
 
-// --- /roles ---
 async function cmdRoles(int) {
   await int.deferReply({ ephemeral: true });
   if (!int.member.permissions.has("ManageRoles")) {

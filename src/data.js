@@ -964,7 +964,6 @@ export function buscarItem(diccionario, input) {
   return null;
 }
 
-// Verificar si es "todos"
 export function esTodos(input) {
   return ["*", "todos", "todo", "all"].includes((input || "").toLowerCase().trim());
 }

@@ -1,7 +1,3 @@
-// ============================================================
-// Annie — Personalidad, frases, estados y tono narrativo
-// ============================================================
-
 const TRATOS = [
   "vecino", "vecina", "tesorito", "corazon",
   "jovencito", "jovencita", "vecinito", "vecinita",
@@ -22,9 +18,6 @@ export function debeSugerir() {
   return Math.random() < 0.25;
 }
 
-// -------------------------------------------------------
-// Frases narrativas de Annie por categoria
-// -------------------------------------------------------
 const FRASES = {
   peces: [
     "Me encanta cuando el rio suena suavecito por la manana... si te acercas, puede que escuches un pececito saltando.",
@@ -106,9 +99,6 @@ export function getFraseAnnie(categoria) {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
-// -------------------------------------------------------
-// Sugerencias de contenido relacionado
-// -------------------------------------------------------
 const SUGERENCIAS = {
   peces: [
     "Si te gusta pescar, mira las **recetas** que puedes cocinar con tus capturas. (`/recetas`)",
@@ -167,9 +157,6 @@ export function getSugerencia(categoria) {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
-// -------------------------------------------------------
-// Actividades de estado (presence)
-// -------------------------------------------------------
 export const ACTIVIDADES = [
   "repartiendo cartas con amor",
   "buscando sellitos en la oficinita",
@@ -187,9 +174,6 @@ export const ACTIVIDADES = [
   "planeando la proxima once",
 ];
 
-// -------------------------------------------------------
-// Rutinas diarias
-// -------------------------------------------------------
 export const RUTINAS = [
   { hora: 8,  mensaje: "*Annie abre la oficinita con carino:* Buenos dias, pueblito lindo! Ya llego el pancito para compartir" },
   { hora: 9,  mensaje: "*Annie se prepara su tecito:* Wena de nuevo, corazones... quien quiere acompanarme con un sorbito?" },
@@ -201,9 +185,6 @@ export const RUTINAS = [
   { hora: 23, mensaje: "*Annie se acurruca:* Buenas noches, mi pueblito lindo... suenen bonito y abriguense, ya?" },
 ];
 
-// -------------------------------------------------------
-// Frases ambient
-// -------------------------------------------------------
 export const FRASES_AMBIENT = [
   "Ay, vecin@ lindo/a! Que alegria verte por aqui hoy... como estas, corazon?",
   "No se te olvide regar tus plantitas, ya?",
@@ -219,33 +200,30 @@ export const FRASES_AMBIENT = [
   "Quien me regala un tecito rico pa seguir repartiendo carinitos todo el dia?",
 ];
 
-// -------------------------------------------------------
-// Clima del pueblo
-// -------------------------------------------------------
 export const CLIMA_PUEBLO = {
   hoy: {
-    tipo: "Dia Despejado en el Pueblo",
+    tipo: "Nevada moderada ❄️",
     descripcion:
-      "El cielo se ha despejado por completo y el sol brilla con fuerza. Es un dia maravilloso para salir a recolectar o regar las flores. No olvides disfrutar de este clima tan radiante!",
+      "El pueblo está cubierto por un manto blanco. La nieve cae con intensidad moderada, creando un paisaje invernal perfecto. ¡Abrígate bien antes de salir a jugar en la nieve!",
     eventos: [
-      { hora: 13, evento: "Sol maximo", icono: "sol" },
-      { hora: 21, evento: "Cielo estrellado", icono: "estrella" },
+      { hora: 14, evento: "Nieve intensa 🌨️" },
+      { hora: 20, evento: "Nevada persistente ❄️" },
     ],
     timeline: [
-      { hora: 20, icono: "luna",           texto: "Noche despejada y tranquila" },
-      { hora: 2,  icono: "luna-estrella",  texto: "Cielo despejado por la madrugada" },
-      { hora: 8,  icono: "sol",            texto: "Manana de sol radiante" },
-      { hora: 14, icono: "atardecer",      texto: "Atardecer despejado" },
-      { hora: 20, icono: "luna-estrella",  texto: "Noche estrellada" },
+      { hora: 14, texto: "Nubes de nieve ☁️❄️" },
+      { hora: 20, texto: "Nevada moderada 🌨️" },
+      { hora: 2, texto: "Luna despejada 🌙" },
+      { hora: 8, texto: "Mañana soleada ☀️" },
+      { hora: 14, texto: "Sol de mediodía ☀️" },
     ],
   },
   proximos: [
-    { dia: "Sabado",    icono: "estrellas", clima: "Noche de estrellas fugaces" },
-    { dia: "Domingo",   icono: "sol",       clima: "Soleado y despejado" },
-    { dia: "Lunes",     icono: "lluvia",    clima: "Lluvia ligera" },
-    { dia: "Martes",    icono: "sol",       clima: "Soleado y despejado" },
-    { dia: "Miercoles", icono: "sol",       clima: "Soleado y despejado" },
-    { dia: "Jueves",    icono: "sol",       clima: "Soleado y despejado" },
-    { dia: "Viernes",   icono: "lluvia",    clima: "Lluvia ligera" },
+    { dia: "Martes", clima: "Soleado y despejado ☀️" },
+    { dia: "Miércoles", clima: "Soleado y despejado ☀️" },
+    { dia: "Jueves", clima: "Soleado y despejado ☀️" },
+    { dia: "Viernes", clima: "Lluvia ligera 🌧️" },
+    { dia: "Sábado", clima: "Noche con nubes y luna 🌙☁️" },
+    { dia: "Domingo", clima: "Soleado y despejado ☀️" },
+    { dia: "Lunes", clima: "Lluvia ligera 🌧️" },
   ],
 };
