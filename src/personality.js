@@ -1,5 +1,5 @@
 const TRATOS = [
-  "vecino", "vecina", "tesorito", "corazon",
+  "vecino", "vecina", "tesorito", "corazón",
   "jovencito", "jovencita", "vecinito", "vecinita",
   "iñorito", "iñora",
 ];
@@ -27,7 +27,7 @@ const FRASES = {
     "Si vas a pescar, llevate algo abrigadito... el viento del lago puede ser traicionero.",
   ],
   insectos: [
-    "Naniwa me enseno que cada bichito tiene su momento perfecto para aparecer. Paciencia, corazon.",
+    "Naniwa me enseñó que cada bichito tiene su momento perfecto para aparecer. Paciencia, corazón.",
     "Una vez vi un Morpho Azul volando cerca de mi oficinita... casi se me cae el tecito de la emocion.",
     "Los insectos del bosque son timidos, pero si te quedas quietito, se acercan solos.",
     "Ayer vi una mariposa gigante cerca del molino... estaba tan bonita que me quede mirandola un rato.",
@@ -36,7 +36,7 @@ const FRASES = {
   aves: [
     "Bailey J me dijo que las aves mas raras solo se dejan ver cuando el cielo esta de buen humor.",
     "Si escuchas un canto bonito desde el bosque... quedate quietita y mira para arriba.",
-    "Los flamencos del campo de flores son mi debilidad. Son tan elegantes, corazon.",
+    "Los flamencos del campo de flores son mi debilidad. Son tan elegantes, corazón.",
     "Una vez un pajarito se poso en mi ventanita de la oficina. Estuvimos un rato mirandonos.",
     "Para avistar aves, lo mejor es ir tempranito, antes de que el pueblito despierte.",
   ],
@@ -48,7 +48,7 @@ const FRASES = {
     "Los conejitos del camino son los mas tiernos del pueblito. Siempre me hacen sonreir.",
   ],
   cultivos: [
-    "Blanc me enseno que cada semilla necesita su tiempo y carinito para crecer fuerte.",
+    "Blanc me enseñó que cada semilla necesita su tiempo y cariñito para crecer fuerte.",
     "Las flores toman mas tiempo, pero cuando florecen... ay, no hay nada mas lindo.",
     "Recuerda regar tus plantitas, tesoro. Un jardin sin agua es como una carta sin sello.",
     "Los cultivos de nivel alto necesitan paciencia, pero la cosecha vale la pena, creeme.",
@@ -57,9 +57,9 @@ const FRASES = {
   recetas: [
     "Massimo me dejo probar su Tiramisu una vez... casi me desmayo de lo rico que estaba.",
     "Cocinar es como escribir una carta: hay que ponerle amor en cada paso.",
-    "Si te sale una Comida Extrana, no te preocupes... a todos nos pasa la primera vez.",
+    "Si te sale una Comida Extraña, no te preocupes... a todos nos pasa la primera vez.",
     "Las recetas Legendarias son dificiles, pero imaginate servir un Set de Picnic a tus amigos.",
-    "Mi sueno es aprender a cocinar la Pasta de Trufa. Algun dia, corazon.",
+    "Mi sueño es aprender a cocinar la Pasta de Trufa. Algun dia, corazón.",
   ],
   logros: [
     "Cada logro del pueblito es una historia. No te apures, disfrutalos.",
@@ -80,12 +80,12 @@ const FRASES = {
     "Doris cambia lo que vende segun el clima... es toda una comerciante estelar.",
     "Bob es el abuelito que todo el mundo necesita. Hace los muebles mas lindos.",
     "Vanya sabe todo sobre peces. Si ella no sabe, nadie sabe.",
-    "Massimo es serio cocinando, pero tiene un corazon enorme detras de ese delantal.",
+    "Massimo es serio cocinando, pero tiene un corazón enorme detras de ese delantal.",
   ],
   codigos: [
     "Los codigos son como cartitas sorpresa. Aprovechalos antes de que expiren.",
     "Siempre anoto los codigos nuevos en mi libretita para que nadie se los pierda.",
-    "Un buen codigo puede darte Estrellas de Deseo, Oro y mas... no los dejes pasar.",
+    "Un buen código puede darte Estrellas de Deseo, Oro y mas... no los dejes pasar.",
   ],
   general: [
     "Que lindo dia para explorar el pueblito. No te olvides de disfrutar cada pasito.",
@@ -164,7 +164,7 @@ export const ACTIVIDADES = [
   "persiguiendo mariposas suaves",
   "ordenando paquetitos con ternura",
   "mirando nubecitas con los vecinos",
-  "comiendo una sopapillita rica",
+  "comiendo una sopaipillita rica",
   "charlando con la vecinita de al lado",
   "regando sus plantitas con besitos",
   "tomando mote con huesillo fresco",
@@ -176,17 +176,17 @@ export const ACTIVIDADES = [
 
 export const RUTINAS = [
   { hora: 8,  mensaje: "*Annie abre la oficinita con cariño:* Buenos dias, pueblito lindo! Ya llego el pancito para compartir" },
-  { hora: 9,  mensaje: "*Annie se prepara su tecito:* Wena de nuevo, corazones... quien quiere acompanarme con un sorbito?" },
+  { hora: 9,  mensaje: "*Annie se prepara su tecito:* Wena de nuevo, corazónes... quien quiere acompanarme con un sorbito?" },
   { hora: 13, mensaje: "*Hora de almuerzo:* Annie se va a comer algo rico, pero igual escucha sus cositas con amor" },
   { hora: 15, mensaje: "*Once dulce:* Alguien comparte un pedacito de empanadita conmigo, tesoritos?" },
   { hora: 18, mensaje: "*La tarde se pone suave:* El pueblito esta mas tranquilo... Annie tambien se relaja con ustedes" },
   { hora: 20, mensaje: "*Annie mira las estrellitas:* Que cielo tan bonito hoy, vecinitos... lo estan viendo conmigo?" },
-  { hora: 22, mensaje: "*Annie bosteza suave:* Ya voy cerrando la oficinita, corazones... a descansar juntitos!" },
+  { hora: 22, mensaje: "*Annie bosteza suave:* Ya voy cerrando la oficinita, corazónes... a descansar juntitos!" },
   { hora: 23, mensaje: "*Annie se acurruca:* Buenas noches, mi pueblito lindo... suenen bonito y abriguense, ya?" },
 ];
 
 export const FRASES_AMBIENT = [
-  "Ay, vecin@ lindo/a! Que alegria verte por aqui hoy... como estas, corazon?",
+  "Ay, vecin@ lindo/a! Que alegria verte por aqui hoy... como estas, corazón?",
   "No se te olvide regar tus plantitas, ya?",
   "Wena, mi alegria! Ese look te queda precioso hoy.",
   "Holi, holi, tesoro! Solo pasaba a decirte que eres lo mas lindo del pueblo.",
@@ -194,10 +194,10 @@ export const FRASES_AMBIENT = [
   "Que ganas de un completo con harta mayo y palta!",
   "Oye, vecin@ lindo/a... ya regaste tus flores?",
   "Que dia lindo pa sentarnos a charlar en la plaza!",
-  "Si necesitas un consejo del corazon, aqui estoy yo, mi personita favorita.",
+  "Si necesitas un consejo del corazón, aqui estoy yo, mi personita favorita.",
   "No se me duerman, ya? Que despues extrano sus mensajitos dulces.",
-  "Ay, esta fresquito! Abrigate po, mi rayito de sol, no quiero que te resfries.",
-  "Quien me regala un tecito rico pa seguir repartiendo carinitos todo el dia?",
+  "Ay, esta fresquito! Abrígate po, mi rayito de sol, no quiero que te resfries.",
+  "Quien me regala un tecito rico pa seguir repartiendo cariñitos todo el dia?",
 ];
 
 export const CLIMA_PUEBLO = {
@@ -217,7 +217,7 @@ export const CLIMA_PUEBLO = {
       { hora: 14, texto: "Sol de mediodía ☀️" },
     ],
   },
-  proximos: [
+  próximos: [
     { dia: "Martes", clima: "Soleado y despejado ☀️" },
     { dia: "Miércoles", clima: "Soleado y despejado ☀️" },
     { dia: "Jueves", clima: "Soleado y despejado ☀️" },

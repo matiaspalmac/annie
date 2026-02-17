@@ -71,7 +71,7 @@ export const COMMAND_DEFS = [
 
   new SlashCommandBuilder()
     .setName("clima")
-    .setDescription("Muestra el clima del pueblito hoy y proximos dias"),
+    .setDescription("Muestra el clima del pueblito hoy y próximos dias"),
 
   new SlashCommandBuilder()
     .setName("help")
@@ -174,7 +174,7 @@ export async function handleCommand(interaction) {
   } catch (err) {
     console.error(`Error en comando /${cmd}:`, err);
     if (!interaction.replied && !interaction.deferred) {
-      await interaction.reply({ content: "Ay, se me enredaron los papelitos... intentalo otra vez, corazon.", ephemeral: true });
+      await interaction.reply({ content: "Ay, se me enredaron los papelitos... intentalo otra vez, corazón.", ephemeral: true });
     }
   }
 }
@@ -192,7 +192,7 @@ async function cmdPeces(int, bostezo) {
       items,
       itemsPorPagina: 12,
       titulo: `${em.titulo} Todos los peces del pueblito ${em.titulo}`,
-      descripcion: "Mira que lindos estan todos reuniditos... Annie los quiere muchisimo.\nVen a pescar con amor cuando los veas.",
+      descripcion: "Mira que lindos estan todos reuniditos... Annie los quiere muchísimo.\nVen a pescar con amor cuando los veas.",
       content: bostezo,
       renderItem: ([nombre, pez]) => ({
         name: `${em.icono} ${nombre}`,
@@ -308,7 +308,7 @@ async function cmdAnimales(int, bostezo) {
       items,
       itemsPorPagina: 8,
       titulo: `${em.titulo} Todos los animalitos del pueblito ${em.titulo}`,
-      descripcion: "Mira que lindos estan todos reuniditos... Annie los quiere muchisimo y los cuida con carinito.\nVen a darles su comidita favorita cuando los veas.",
+      descripcion: "Mira que lindos estan todos reuniditos... Annie los quiere muchísimo y los cuida con cariñito.\nVen a darles su comidita favorita cuando los veas.",
       content: bostezo,
       renderItem: ([nombre, data]) => ({
         name: `${em.icono} ${nombre}`,
@@ -543,7 +543,7 @@ async function cmdCodigos(int, bostezo) {
   if (activos.length === 0) {
     const embed = crearEmbed(color)
       .setTitle(`${em.titulo} Codigos de Recompensa`)
-      .setDescription("Ay, corazon... ahora mismo no tengo ningun codigo activo en mi libretita. Vuelve prontito que siempre llegan nuevos.");
+      .setDescription("Ay, corazón... ahora mismo no tengo ningún código activo en mi libretita. Vuelve prontito que siempre llegan nuevos.");
     agregarNarrativa(embed, "codigos");
     return int.reply({ content: bostezo, embeds: [embed] });
   }
@@ -552,9 +552,9 @@ async function cmdCodigos(int, bostezo) {
     .setTitle(`${em.titulo} Codigos de Recompensa Activos ${em.titulo}`)
     .setDescription("Aqui te dejo los codigos vigentes, tesoro. Aprovechalos antes de que expiren.");
 
-  activos.forEach(([codigo, data]) => {
+  activos.forEach(([código, data]) => {
     embed.addFields({
-      name: `\uD83D\uDD11 ${codigo}`,
+      name: `\uD83D\uDD11 ${código}`,
       value: `\uD83C\uDF81 Recompensas: ${data.rewards.join(", ")}\n\u23F3 Expira: ${data.expirationDate || "Sin fecha"}`,
       inline: false,
     });
@@ -574,7 +574,7 @@ async function cmdRecordar(int, bostezo) {
     .setDescription(
       estaDurmiendo()
         ? "*(Annie escribe suave con ojitos cerrados)* Zzz... ya esta en mi libretita, no me despiertes mucho, ya?"
-        : `Listo, ${getTrato()}! Te guardo tu recadito y te despierto en **${min}** minutitos. No se te olvide, corazon.`
+        : `Listo, ${getTrato()}! Te guardo tu recadito y te despierto en **${min}** minutitos. No se te olvide, corazón.`
     )
     .addFields({ name: "\uD83D\uDCE8 Tu mensajito guardado", value: `**${mensaje}**` });
 
@@ -582,7 +582,7 @@ async function cmdRecordar(int, bostezo) {
 
   setTimeout(() => {
     const embedRecordatorio = crearEmbed(color)
-      .setTitle(estaDurmiendo() ? "\uD83D\uDCA4 Shhh... recadito nocturnito!" : "\u23F0 Oiga, corazoncito! Hora de recordar")
+      .setTitle(estaDurmiendo() ? "\uD83D\uDCA4 Shhh... recadito nocturnito!" : "\u23F0 Oiga, corazóncito! Hora de recordar")
       .setDescription(
         estaDurmiendo()
           ? `*(Annie se despierta suave y busca su libretita)* Uy! Casi se me olvida... pero aqui esta, ${int.user}:`
@@ -643,7 +643,7 @@ async function cmdClima(int, bostezo) {
     { name: "🕒 Cronología del tiempo", value: textoTimeline, inline: false },
     {
       name: "📅 Próximos días",
-      value: "```\n" + CLIMA_PUEBLO.proximos.map(d => `${d.dia.padEnd(10)} | ${d.clima}`).join("\n") + "\n```",
+      value: "```\n" + CLIMA_PUEBLO.próximos.map(d => `${d.dia.padEnd(10)} | ${d.clima}`).join("\n") + "\n```",
       inline: false,
     },
   );
@@ -659,7 +659,7 @@ async function cmdHelp(int, bostezo) {
     .setTitle("\uD83C\uDF38 Oficinita dulce de Annie \uD83C\uDF38")
     .setDescription(
       estaDurmiendo()
-        ? "*(Bosteza suave y se frota los ojitos)*\nZzz... Hola corazoncito, soy Annie. Aunque este medio dormidita, aqui tienes mi libretita de ayuda con mucho cariño."
+        ? "*(Bosteza suave y se frota los ojitos)*\nZzz... Hola corazóncito, soy Annie. Aunque este medio dormidita, aqui tienes mi libretita de ayuda con mucho cariño."
         : `Wena, ${getTrato()}!\nSoy **Annie**, la carterita del pueblito. Entre repartos y chismecitos, aqui te dejo mis cositas para ayudarte.`
     )
     .addFields(
@@ -705,7 +705,7 @@ async function cmdHelp(int, bostezo) {
 async function cmdWiki(int, bostezo) {
   const embed = crearEmbed(CONFIG.COLORES.ROSA)
     .setTitle("\uD83D\uDCD6 Wiki de Heartopia \u2764\uFE0F")
-    .setDescription(`Aqui tienes el enlace a la wiki completa del pueblito, corazon.\n\n**${CONFIG.WIKI_URL}**\n\nToda la informacion esta ahi, organizada con cariño por Annie y los vecinos.`);
+    .setDescription(`Aqui tienes el enlace a la wiki completa del pueblito, corazón.\n\n**${CONFIG.WIKI_URL}**\n\nToda la informacion esta ahi, organizada con cariño por Annie y los vecinos.`);
   agregarNarrativa(embed, "general");
   return int.reply({ content: bostezo, embeds: [embed] });
 }
@@ -721,13 +721,13 @@ async function cmdRoles(int) {
 
   const canalObjetivo = int.options.getChannel("canal") || int.channel;
   if (!canalObjetivo.isTextBased()) {
-    return int.reply({ content: "Ese canal no es de texto, corazoncito... elige uno donde pueda escribir Annie.", ephemeral: true });
+    return int.reply({ content: "Ese canal no es de texto, corazóncito... elige uno donde pueda escribir Annie.", ephemeral: true });
   }
 
   const embed = crearEmbed(CONFIG.COLORES.ROSA)
     .setTitle("\uD83C\uDF08 Oficinita de Annie \u2014 Elige tus roles con cariño, vecino!")
     .setDescription(
-      "Wena, corazoncitos del pueblito! Soy Annie, tu carterita favorita.\n\n" +
+      "Wena, corazóncitos del pueblito! Soy Annie, tu carterita favorita.\n\n" +
       "Reacciona con los emojis que mas te gusten para recibir notificaciones dulces " +
       "de los eventos que te hagan ilusion.\n\n" +
       "**Lista de roles:**\n" +
@@ -746,7 +746,7 @@ async function cmdRoles(int) {
     for (const emoji of emojis) await msg.react(emoji);
 
     await int.editReply({
-      content: `Listo, corazoncito! El mensajito de roles quedo publicado en ${canalObjetivo}.\n**ID del mensaje:** \`${msg.id}\``,
+      content: `Listo, corazóncito! El mensajito de roles quedo publicado en ${canalObjetivo}.\n**ID del mensaje:** \`${msg.id}\``,
     });
   } catch (err) {
     console.error("Error enviando mensaje de roles:", err);

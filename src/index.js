@@ -184,7 +184,7 @@ async function mencionarVecinoRandom() {
     `Ay, ${vecino}... hace ratito que no te veia por aqui.`,
     `${vecino} sabe algo dulce... yo no digo nada, pero...`,
     `Y ${vecino}? Siempre aparece cuando hay cositas lindas que contar.`,
-    `${vecino}, ven a charlar un ratito conmigo, corazon po.`,
+    `${vecino}, ven a charlar un ratito conmigo, corazón po.`,
   ];
 
   canal.send(`*Annie asoma la cabecita con cariño:* ${frases[Math.floor(Math.random() * frases.length)]}`).catch(console.error);
@@ -256,7 +256,7 @@ client.on(Events.GuildMemberAdd, async (member) => {
     if (!canal) return;
 
     const embed = crearEmbed(CONFIG.COLORES.ROSA)
-      .setTitle("Un nuevo corazoncito llego al pueblito!")
+      .setTitle("Un nuevo corazóncito llego al pueblito!")
       .setDescription(
         `Bienvenid@, **${member.user.username}** a Heartopia! Pasa por la oficinita cuando quieras, te espero con tecito y abrazos.`
       );
@@ -364,12 +364,12 @@ client.on(Events.MessageCreate, async (msg) => {
 
       const frasesChismeDia = [
         `Ay, vecino lindo... se me pararon las orejititas curiosas con tanto mensajito. Que paso po? Cuentame todo con cariño...`,
-        `Uy, uy, tesoro! El chat esta lleno de cositas lindas... que paso? No me dejes con la intriga, corazon.`,
+        `Uy, uy, tesoro! El chat esta lleno de cositas lindas... que paso? No me dejes con la intriga, corazón.`,
         `Mi vecino precioso! Se siente olor a chismecito dulce... me cuentas con ternura?`,
       ];
       const frasesChismeNoche = [
         `*(Annie abre un ojito)* Ay, vecino lindo... que paso po? Se me pararon las orejititas curiosas... cuentame bajito.`,
-        `*(susurra somnolienta)* Zzz... chismecito? Ay, no me dejes con la intriga, corazon... que paso?`,
+        `*(susurra somnolienta)* Zzz... chismecito? Ay, no me dejes con la intriga, corazón... que paso?`,
         `*(bosteza lindo)* Uf... desperte por el ruido dulce... que cosita linda paso?`,
       ];
 
@@ -378,7 +378,7 @@ client.on(Events.MessageCreate, async (msg) => {
     }
   }
 
-  if (texto === "11") return msg.reply("Chupalo entonces, corazon!").catch(err => console.warn("Fallo envio easter egg:", err.message));
+  if (texto === "11") return msg.reply("Chupalo entonces, corazón!").catch(err => console.warn("Fallo envio easter egg:", err.message));
   if (texto === "5")  return msg.reply("Por el culo te la hinco con cariño!").catch(err => console.warn("Fallo envio easter egg:", err.message));
   if (texto === "13") return msg.reply("Mas me crece de ternura!").catch(err => console.warn("Fallo envio easter egg:", err.message));
   if (texto === "8")  return msg.reply("El culo te abrocho con amor!").catch(err => console.warn("Fallo envio easter egg:", err.message));
@@ -392,20 +392,20 @@ client.on(Events.MessageCreate, async (msg) => {
       return msg.reply("*(Annie se despereza suave)* Zzz... ah? Wena mi vecino lindo... que necesitas tan tempranito?");
     }
     if ((texto.includes("gracias") || texto.includes("vale")) && mencionaAnnie) {
-      return msg.reply("*(susurra dormida)* De nada po, corazon... Zzz... siempre aqui para ti.");
+      return msg.reply("*(susurra dormida)* De nada po, corazón... Zzz... siempre aqui para ti.");
     }
     if (texto.includes("chao") || texto.includes("buenas noches")) {
       return msg.reply("Buenas noches, mi vecino precioso... suena bonito y abrigate, ya? Zzz...");
     }
   } else {
     if ((texto.includes("hola") || texto.includes("holi") || texto.includes("wena")) && mencionaAnnie) {
-      return msg.reply(`Wena, wena mi vecino lindo! Como estas hoy, corazon? Pasa no mas, estoy con tecito dulce.`);
+      return msg.reply(`Wena, wena mi vecino lindo! Como estas hoy, corazón? Pasa no mas, estoy con tecito dulce.`);
     }
     if ((texto.includes("gracias") || texto.includes("vale")) && mencionaAnnie) {
       return msg.reply("De nada po, mi alegria! Siempre aqui para ti, ya?");
     }
     if ((texto.includes("chao") || texto.includes("adios")) && mencionaAnnie) {
-      return msg.reply("Chao, corazon! Cuidate harto y vuelve prontito, ya?");
+      return msg.reply("Chao, corazón! Cuidate harto y vuelve prontito, ya?");
     }
   }
 });

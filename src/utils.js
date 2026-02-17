@@ -24,7 +24,7 @@ export const EMOJI_CATEGORIA = {
 
 const FOOTERS_ANNIE = [
   "Hecho con amor por Annie \uD83C\uDF38",
-  "Con carinito de tu carterita \u2764\uFE0F",
+  "Con cariñito de tu carterita \u2764\uFE0F",
   "Annie te manda un abrazote \uD83C\uDF3C",
   "De la oficinita con ternura \u2615",
   "Annie siempre cuida del pueblito \uD83C\uDF3B",
@@ -58,7 +58,7 @@ export function crearEmbed(color, categoria) {
 
 export function getBostezo() {
   if (_estaDurmiendo) {
-    return "*(Bostezo suave)* Ya po... aqui tiene, corazon, pero no me despierte mucho, ya?\n\n";
+    return "*(Bostezo suave)* Ya po... aqui tiene, corazón, pero no me despierte mucho, ya?\n\n";
   }
   return `Wena, ${getTrato()}! Aqui le traigo su cosita con cariño.\n\n`;
 }
@@ -84,7 +84,7 @@ export function crearEmbedError(categoria, itemBuscado) {
   const color = CONFIG.COLORES[categoria?.toUpperCase()] || CONFIG.COLORES.ROSA;
   const em = EMOJI_CATEGORIA[categoria] || EMOJI_CATEGORIA.general;
   const embed = crearEmbed(color)
-    .setTitle(`${em.icono} Ay, corazoncito!`)
+    .setTitle(`${em.icono} Ay, corazóncito!`)
     .setDescription(
       _estaDurmiendo
         ? `*(Annie busca con ojitos cerrados)* Zzz... no encuentro "${itemBuscado}" en mi libretita...`
