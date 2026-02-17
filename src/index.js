@@ -90,6 +90,7 @@ async function conectarOficina() {
   }
 }
 
+/* 
 async function anunciarClima(forzado = false) {
   const hora = getHoraChile();
   if (!forzado && hora !== 19) return;
@@ -108,7 +109,7 @@ async function anunciarClima(forzado = false) {
     .setFooter({ text: "Pronostico hecho con amor | Annie" });
 
   await canal.send({ content: "Annie les trae el clima con amor:", embeds: [embed] }).catch(console.error);
-}
+} */
 
 function ejecutarRutinaDiaria() {
   if (estaDurmiendo()) return;
@@ -148,6 +149,7 @@ async function updateTimeChannel() {
   }
 }
 
+/* 
 async function updateWeatherChannel() {
   if (!CONFIG.CANAL_CLIMA_ID) return;
   try {
@@ -168,6 +170,7 @@ async function updateWeatherChannel() {
     if (e.status !== 429) console.error("Error actualizando canal de clima:", e.message);
   }
 }
+ */
 
 async function mencionarVecinoRandom() {
   if (estaDurmiendo()) return;
@@ -248,7 +251,7 @@ setInterval(ejecutarRutinaDiaria, 1000 * 60 * 5);
 
 setInterval(mencionarVecinoRandom, 1000 * 60 * 360);
 
-setInterval(anunciarClima, 1000 * 60 * 120);
+/* setInterval(anunciarClima, 1000 * 60 * 120); */
 
 client.on(Events.GuildMemberAdd, async (member) => {
   try {

@@ -199,6 +199,7 @@ export const FRASES_AMBIENT = [
   "Quien me regala un tecito rico pa seguir repartiendo cariñitos todo el dia?",
 ];
 
+/* 
 export const CLIMA_PUEBLO = {
   hoy: {
     tipo: "Nevada moderada ❄️",
@@ -226,3 +227,4 @@ export const CLIMA_PUEBLO = {
     { dia: "Lunes", clima: "Lluvia ligera 🌧️" },
   ],
 };
+ */

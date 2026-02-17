@@ -69,9 +69,11 @@ export const COMMAND_DEFS = [
     .addIntegerOption(o => o.setName("minutos").setDescription("En cuantos minutos te recuerdo").setRequired(true))
     .addStringOption(o => o.setName("mensaje").setDescription("Que necesitas recordar").setRequired(true)),
 
+/* 
   new SlashCommandBuilder()
     .setName("clima")
     .setDescription("Muestra el clima del pueblito hoy y próximos dias"),
+ */
 
   new SlashCommandBuilder()
     .setName("help")
@@ -594,6 +596,7 @@ async function cmdRecordar(int, bostezo) {
   }, min * 60000);
 }
 
+/* 
 async function cmdClima(int, bostezo) {
   const hoy = CLIMA_PUEBLO.hoy;
   const em = EMOJI_CATEGORIA.clima;
@@ -651,7 +654,7 @@ async function cmdClima(int, bostezo) {
   embed.setFooter({ text: "☀️ Pronóstico hecho con mucho amor | Disfruta el clima, vecino!" });
   
   return int.reply({ content: bostezo, embeds: [embed] });
-}
+} */
 
 async function cmdHelp(int, bostezo) {
   const embed = crearEmbed(CONFIG.COLORES.ROSA)
