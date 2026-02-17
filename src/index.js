@@ -102,7 +102,7 @@ async function anunciarClima(forzado = false) {
     .setTitle(`Clima del Pueblito -- Hoy`)
     .setDescription(`**${hoy.tipo}**\n${hoy.descripcion}`)
     .addFields({
-      name: "Horarios con carino",
+      name: "Horarios con cariño",
       value: hoy.timeline.map(h => `${h.hora}:00 -- ${h.texto}`).join("\n"),
     })
     .setFooter({ text: "Pronostico hecho con amor | Annie" });
@@ -187,7 +187,7 @@ async function mencionarVecinoRandom() {
     `${vecino}, ven a charlar un ratito conmigo, corazon po.`,
   ];
 
-  canal.send(`*Annie asoma la cabecita con carino:* ${frases[Math.floor(Math.random() * frases.length)]}`).catch(console.error);
+  canal.send(`*Annie asoma la cabecita con cariño:* ${frases[Math.floor(Math.random() * frases.length)]}`).catch(console.error);
 }
 
 client.once("clientReady", async () => {
@@ -241,7 +241,7 @@ setInterval(() => {
   const canal = getCanalGeneral();
   if (!canal) return;
   const frase = FRASES_AMBIENT[Math.floor(Math.random() * FRASES_AMBIENT.length)];
-  canal.send(`*Annie comenta con carino:* ${frase}`).catch(console.error);
+  canal.send(`*Annie comenta con cariño:* ${frase}`).catch(console.error);
 }, 1000 * 60 * 120);
 
 setInterval(ejecutarRutinaDiaria, 1000 * 60 * 5);
@@ -318,7 +318,7 @@ client.on("messageReactionAdd", async (reaction, user) => {
     if (role) {
       await member.roles.add(role);
       console.log(`Rol ${role.name} asignado a ${user.tag}`);
-      try { await user.send(`Te puse el rol **${role.name}** con carino, vecino.`); } catch {}
+      try { await user.send(`Te puse el rol **${role.name}** con cariño, vecino.`); } catch {}
     }
   } catch (e) {
     console.error("Error dando rol:", e.message);
@@ -339,7 +339,7 @@ client.on("messageReactionRemove", async (reaction, user) => {
     if (role) {
       await member.roles.remove(role);
       console.log(`Rol ${role.name} quitado a ${user.tag}`);
-      try { await user.send(`Te quite el rol **${role.name}** con carino, vecino... si lo quieres de vuelta, solo reacciona otra vez.`); } catch {}
+      try { await user.send(`Te quite el rol **${role.name}** con cariño, vecino... si lo quieres de vuelta, solo reacciona otra vez.`); } catch {}
     }
   } catch (e) {
     console.error("Error quitando rol:", e.message);
@@ -363,7 +363,7 @@ client.on(Events.MessageCreate, async (msg) => {
       historialMensajes = [];
 
       const frasesChismeDia = [
-        `Ay, vecino lindo... se me pararon las orejititas curiosas con tanto mensajito. Que paso po? Cuentame todo con carino...`,
+        `Ay, vecino lindo... se me pararon las orejititas curiosas con tanto mensajito. Que paso po? Cuentame todo con cariño...`,
         `Uy, uy, tesoro! El chat esta lleno de cositas lindas... que paso? No me dejes con la intriga, corazon.`,
         `Mi vecino precioso! Se siente olor a chismecito dulce... me cuentas con ternura?`,
       ];
@@ -374,12 +374,12 @@ client.on(Events.MessageCreate, async (msg) => {
       ];
 
       const pool = estaDurmiendo() ? frasesChismeNoche : frasesChismeDia;
-      await msg.channel.send(`*Annie asoma la cabecita con carino:* "${pool[Math.floor(Math.random() * pool.length)]}"`).catch(console.error);
+      await msg.channel.send(`*Annie asoma la cabecita con cariño:* "${pool[Math.floor(Math.random() * pool.length)]}"`).catch(console.error);
     }
   }
 
   if (texto === "11") return msg.reply("Chupalo entonces, corazon!").catch(err => console.warn("Fallo envio easter egg:", err.message));
-  if (texto === "5")  return msg.reply("Por el culo te la hinco con carino!").catch(err => console.warn("Fallo envio easter egg:", err.message));
+  if (texto === "5")  return msg.reply("Por el culo te la hinco con cariño!").catch(err => console.warn("Fallo envio easter egg:", err.message));
   if (texto === "13") return msg.reply("Mas me crece de ternura!").catch(err => console.warn("Fallo envio easter egg:", err.message));
   if (texto === "8")  return msg.reply("El culo te abrocho con amor!").catch(err => console.warn("Fallo envio easter egg:", err.message));
   if (texto === "4")  return msg.reply("En tu culo mi aparatito dulce!").catch(err => console.warn("Fallo envio easter egg:", err.message));

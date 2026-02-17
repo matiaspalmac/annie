@@ -1,7 +1,7 @@
 const TRATOS = [
   "vecino", "vecina", "tesorito", "corazon",
   "jovencito", "jovencita", "vecinito", "vecinita",
-  "inorito", "inora",
+  "iñorito", "iñora",
 ];
 
 export function getTrato() {
@@ -175,7 +175,7 @@ export const ACTIVIDADES = [
 ];
 
 export const RUTINAS = [
-  { hora: 8,  mensaje: "*Annie abre la oficinita con carino:* Buenos dias, pueblito lindo! Ya llego el pancito para compartir" },
+  { hora: 8,  mensaje: "*Annie abre la oficinita con cariño:* Buenos dias, pueblito lindo! Ya llego el pancito para compartir" },
   { hora: 9,  mensaje: "*Annie se prepara su tecito:* Wena de nuevo, corazones... quien quiere acompanarme con un sorbito?" },
   { hora: 13, mensaje: "*Hora de almuerzo:* Annie se va a comer algo rico, pero igual escucha sus cositas con amor" },
   { hora: 15, mensaje: "*Once dulce:* Alguien comparte un pedacito de empanadita conmigo, tesoritos?" },

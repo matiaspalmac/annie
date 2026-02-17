@@ -269,7 +269,7 @@ async function cmdAves(int, bostezo) {
       items,
       itemsPorPagina: 10,
       titulo: `${em.titulo} Aves del pueblito ${em.titulo}`,
-      descripcion: "Todas las pajaritas anotaditas con carino.\nSal a buscarlas cuando el clima este rico.",
+      descripcion: "Todas las pajaritas anotaditas con cariño.\nSal a buscarlas cuando el clima este rico.",
       content: bostezo,
       renderItem: ([nombre, data]) => ({
         name: `${em.icono} ${nombre}`,
@@ -570,7 +570,7 @@ async function cmdRecordar(int, bostezo) {
   const color = estaDurmiendo() ? CONFIG.COLORES.AZUL : CONFIG.COLORES.ROSA;
 
   const embed = crearEmbed(color)
-    .setTitle(estaDurmiendo() ? "\uD83D\uDCA4 Notita anotada... Zzz" : "\uD83D\uDCDD Recadito guardado con carino!")
+    .setTitle(estaDurmiendo() ? "\uD83D\uDCA4 Notita anotada... Zzz" : "\uD83D\uDCDD Recadito guardado con cariño!")
     .setDescription(
       estaDurmiendo()
         ? "*(Annie escribe suave con ojitos cerrados)* Zzz... ya esta en mi libretita, no me despiertes mucho, ya?"
@@ -586,7 +586,7 @@ async function cmdRecordar(int, bostezo) {
       .setDescription(
         estaDurmiendo()
           ? `*(Annie se despierta suave y busca su libretita)* Uy! Casi se me olvida... pero aqui esta, ${int.user}:`
-          : `Despierta po, ${getTrato()}! Aqui te traigo tu recadito dulce con carino.`
+          : `Despierta po, ${getTrato()}! Aqui te traigo tu recadito dulce con cariño.`
       )
       .addFields({ name: "\uD83D\uDCCC Lo que tenias que recordar", value: `**${mensaje}**` });
 
@@ -659,14 +659,14 @@ async function cmdHelp(int, bostezo) {
     .setTitle("\uD83C\uDF38 Oficinita dulce de Annie \uD83C\uDF38")
     .setDescription(
       estaDurmiendo()
-        ? "*(Bosteza suave y se frota los ojitos)*\nZzz... Hola corazoncito, soy Annie. Aunque este medio dormidita, aqui tienes mi libretita de ayuda con mucho carino."
+        ? "*(Bosteza suave y se frota los ojitos)*\nZzz... Hola corazoncito, soy Annie. Aunque este medio dormidita, aqui tienes mi libretita de ayuda con mucho cariño."
         : `Wena, ${getTrato()}!\nSoy **Annie**, la carterita del pueblito. Entre repartos y chismecitos, aqui te dejo mis cositas para ayudarte.`
     )
     .addFields(
       {
         name: "\uD83D\uDCB0 Utilidad",
         value:
-          "`/recordar` <tiempo> <msg> \u2014 Te aviso con carino.\n" +
+          "`/recordar` <tiempo> <msg> \u2014 Te aviso con cariño.\n" +
           "`/clima` \u2014 Pronostico del pueblito.",
         inline: false,
       },
@@ -705,7 +705,7 @@ async function cmdHelp(int, bostezo) {
 async function cmdWiki(int, bostezo) {
   const embed = crearEmbed(CONFIG.COLORES.ROSA)
     .setTitle("\uD83D\uDCD6 Wiki de Heartopia \u2764\uFE0F")
-    .setDescription(`Aqui tienes el enlace a la wiki completa del pueblito, corazon.\n\n**${CONFIG.WIKI_URL}**\n\nToda la informacion esta ahi, organizada con carino por Annie y los vecinos.`);
+    .setDescription(`Aqui tienes el enlace a la wiki completa del pueblito, corazon.\n\n**${CONFIG.WIKI_URL}**\n\nToda la informacion esta ahi, organizada con cariño por Annie y los vecinos.`);
   agregarNarrativa(embed, "general");
   return int.reply({ content: bostezo, embeds: [embed] });
 }
@@ -725,7 +725,7 @@ async function cmdRoles(int) {
   }
 
   const embed = crearEmbed(CONFIG.COLORES.ROSA)
-    .setTitle("\uD83C\uDF08 Oficinita de Annie \u2014 Elige tus roles con carino, vecino!")
+    .setTitle("\uD83C\uDF08 Oficinita de Annie \u2014 Elige tus roles con cariño, vecino!")
     .setDescription(
       "Wena, corazoncitos del pueblito! Soy Annie, tu carterita favorita.\n\n" +
       "Reacciona con los emojis que mas te gusten para recibir notificaciones dulces " +
@@ -735,7 +735,7 @@ async function cmdRoles(int) {
         const nombres = { "\uD83E\uDEB2": "Atraer Bichos", "\uD83E\uDEE7": "Lanzador de Burbujas", "\uD83E\uDD86": "Pato Amarillo", "\uD83C\uDFA3": "Pesca Marina", "\uD83E\uDEBA": "Nido de las Aves", "\uD83D\uDC90": "Ramo de Flores Arcoiris", "\uD83C\uDF20": "Lluvia de Estrellas" };
         return `${emoji} -- ${nombres[emoji] || "Rol"}`;
       }).join("\n") +
-      "\n\nReacciona con el emoji que quieras y te pongo el rol con carino.\nSi quitas la reaccion, te lo quito sin drama."
+      "\n\nReacciona con el emoji que quieras y te pongo el rol con cariño.\nSi quitas la reaccion, te lo quito sin drama."
     )
     .setFooter({ text: "v2.0 | Heartopia", iconURL: int.guild?.iconURL({ size: 32 }) })
     .setTimestamp();

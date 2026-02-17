@@ -60,7 +60,7 @@ export function getBostezo() {
   if (_estaDurmiendo) {
     return "*(Bostezo suave)* Ya po... aqui tiene, corazon, pero no me despierte mucho, ya?\n\n";
   }
-  return `Wena, ${getTrato()}! Aqui le traigo su cosita con carino.\n\n`;
+  return `Wena, ${getTrato()}! Aqui le traigo su cosita con cariño.\n\n`;
 }
 
 export function agregarNarrativa(embed, categoria) {
@@ -90,7 +90,7 @@ export function crearEmbedError(categoria, itemBuscado) {
         ? `*(Annie busca con ojitos cerrados)* Zzz... no encuentro "${itemBuscado}" en mi libretita...`
         : `Ay, ${getTrato()}! No tengo anotado "${itemBuscado}" todavia... seguro que se escribe asi, tesoro?`
     )
-    .setFooter({ text: "\u2615 Annie busca mejor con cafecito y carino" });
+    .setFooter({ text: "\u2615 Annie busca mejor con cafecito y cariño" });
   return embed;
 }
 
