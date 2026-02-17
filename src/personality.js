@@ -176,11 +176,10 @@ export const ACTIVIDADES = [
 
 export const RUTINAS = [
   { hora: 8,  mensaje: "*Annie abre la oficinita con cariño:* Buenos dias, pueblito lindo! Ya llego el pancito para compartir" },
-  { hora: 9,  mensaje: "*Annie se prepara su tecito:* Wena de nuevo, corazónes... quien quiere acompanarme con un sorbito?" },
   { hora: 13, mensaje: "*Hora de almuerzo:* Annie se va a comer algo rico, pero igual escucha sus cositas con amor" },
-  { hora: 15, mensaje: "*Once dulce:* Alguien comparte un pedacito de empanadita conmigo, tesoritos?" },
   { hora: 18, mensaje: "*La tarde se pone suave:* El pueblito esta mas tranquilo... Annie tambien se relaja con ustedes" },
   { hora: 20, mensaje: "*Annie mira las estrellitas:* Que cielo tan bonito hoy, vecinitos... lo estan viendo conmigo?" },
+  { hora: 21, mensaje: "*Once dulce:* Alguien comparte un pedacito de empanadita conmigo, tesoritos?" },
   { hora: 22, mensaje: "*Annie bosteza suave:* Ya voy cerrando la oficinita, corazónes... a descansar juntitos!" },
   { hora: 23, mensaje: "*Annie se acurruca:* Buenas noches, mi pueblito lindo... suenen bonito y abriguense, ya?" },
 ];

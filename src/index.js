@@ -242,11 +242,11 @@ setInterval(() => {
   if (!canal) return;
   const frase = FRASES_AMBIENT[Math.floor(Math.random() * FRASES_AMBIENT.length)];
   canal.send(`*Annie comenta con cariño:* ${frase}`).catch(console.error);
-}, 1000 * 60 * 120);
+}, 1000 * 60 * 240);
 
 setInterval(ejecutarRutinaDiaria, 1000 * 60 * 5);
 
-setInterval(mencionarVecinoRandom, 1000 * 60 * 90);
+setInterval(mencionarVecinoRandom, 1000 * 60 * 360);
 
 setInterval(anunciarClima, 1000 * 60 * 120);
 
