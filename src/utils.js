@@ -8,18 +8,18 @@ import { CONFIG } from "./config.js";
 import { getTrato, getFraseAnnie, debeSugerir, getSugerencia } from "./personality.js";
 
 export const EMOJI_CATEGORIA = {
-  peces:         { icono: "\uD83D\uDC1F", titulo: "\uD83D\uDC1F", clima: "\uD83C\uDF27\uFE0F", horario: "\u23F0" },
-  insectos:      { icono: "\uD83E\uDD8B", titulo: "\uD83E\uDD8B", clima: "\uD83C\uDF27\uFE0F", horario: "\u23F0" },
-  aves:          { icono: "\uD83D\uDC26", titulo: "\uD83D\uDC26", clima: "\uD83C\uDF27\uFE0F", horario: "\u23F0" },
-  animales:      { icono: "\uD83D\uDC3E", titulo: "\uD83D\uDC3E", clima: "\u2600\uFE0F", horario: "\u23F0" },
-  cultivos:      { icono: "\uD83C\uDF31", titulo: "\uD83C\uDF31", clima: "\u2600\uFE0F", horario: "\u23F0" },
+  peces: { icono: "\uD83D\uDC1F", titulo: "\uD83D\uDC1F", clima: "\uD83C\uDF27\uFE0F", horario: "\u23F0" },
+  insectos: { icono: "\uD83E\uDD8B", titulo: "\uD83E\uDD8B", clima: "\uD83C\uDF27\uFE0F", horario: "\u23F0" },
+  aves: { icono: "\uD83D\uDC26", titulo: "\uD83D\uDC26", clima: "\uD83C\uDF27\uFE0F", horario: "\u23F0" },
+  animales: { icono: "\uD83D\uDC3E", titulo: "\uD83D\uDC3E", clima: "\u2600\uFE0F", horario: "\u23F0" },
+  cultivos: { icono: "\uD83C\uDF31", titulo: "\uD83C\uDF31", clima: "\u2600\uFE0F", horario: "\u23F0" },
   recolectables: { icono: "\uD83C\uDF44", titulo: "\uD83C\uDF44", clima: "\u2600\uFE0F", horario: "\u23F0" },
-  recetas:       { icono: "\uD83C\uDF73", titulo: "\uD83C\uDF73", clima: "\u2600\uFE0F", horario: "\u23F0" },
-  habitantes:    { icono: "\uD83C\uDFE1", titulo: "\uD83C\uDFE1", clima: "\u2600\uFE0F", horario: "\u23F0" },
-  logros:        { icono: "\uD83C\uDFC6", titulo: "\uD83C\uDFC6", clima: "\u2600\uFE0F", horario: "\u23F0" },
-  codigos:       { icono: "\uD83C\uDF81", titulo: "\uD83C\uDF81", clima: "\u2600\uFE0F", horario: "\u23F0" },
-  clima:         { icono: "\u2601\uFE0F", titulo: "\u2601\uFE0F", clima: "\u2600\uFE0F", horario: "\u23F0" },
-  general:       { icono: "\u2764\uFE0F", titulo: "\u2764\uFE0F", clima: "\u2600\uFE0F", horario: "\u23F0" },
+  recetas: { icono: "\uD83C\uDF73", titulo: "\uD83C\uDF73", clima: "\u2600\uFE0F", horario: "\u23F0" },
+  habitantes: { icono: "\uD83C\uDFE1", titulo: "\uD83C\uDFE1", clima: "\u2600\uFE0F", horario: "\u23F0" },
+  logros: { icono: "\uD83C\uDFC6", titulo: "\uD83C\uDFC6", clima: "\u2600\uFE0F", horario: "\u23F0" },
+  codigos: { icono: "\uD83C\uDF81", titulo: "\uD83C\uDF81", clima: "\u2600\uFE0F", horario: "\u23F0" },
+  clima: { icono: "\u2601\uFE0F", titulo: "\u2601\uFE0F", clima: "\u2600\uFE0F", horario: "\u23F0" },
+  general: { icono: "\u2764\uFE0F", titulo: "\u2764\uFE0F", clima: "\u2600\uFE0F", horario: "\u23F0" },
 };
 
 const FOOTERS_ANNIE = [
@@ -41,9 +41,18 @@ export function getHoraChile() {
   );
 }
 
+export function getCanalGeneral(client) {
+  const guild = client.guilds.cache.get(CONFIG.GUILD_ID);
+  return guild?.channels.cache.get(CONFIG.CANAL_GENERAL_ID) ?? null;
+}
+
 let _estaDurmiendo = false;
 export function estaDurmiendo() { return _estaDurmiendo; }
 export function setDurmiendo(val) { _estaDurmiendo = val; }
+
+let _estrellaActiva = false;
+export function isEstrellaActiva() { return _estrellaActiva; }
+export function setEstrellaActiva(val) { _estrellaActiva = val; }
 
 export function crearEmbed(color, categoria) {
   const embed = new EmbedBuilder()
@@ -180,6 +189,6 @@ export async function enviarPaginado({
       new ButtonBuilder().setCustomId("next").setLabel("Siguiente").setStyle(ButtonStyle.Secondary).setDisabled(true),
       new ButtonBuilder().setCustomId("info").setLabel(`${paginaActual}/${totalPaginas}`).setStyle(ButtonStyle.Primary).setDisabled(true)
     );
-    await interaction.editReply({ components: [disabled] }).catch(() => {});
+    await interaction.editReply({ components: [disabled] }).catch(() => { });
   });
 }

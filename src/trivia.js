@@ -1,0 +1,83 @@
+import { db } from "./db.js";
+import { CONFIG } from "./config.js";
+import { getCanalGeneral, estaDurmiendo, crearEmbed } from "./utils.js";
+
+// Tiempo en milisegundos para que los jugadores respondan a la trivia
+const TIEMPO_TRIVIA_MS = 60000;
+
+export async function lanzarTriviaAleatoria(client) {
+    if (estaDurmiendo()) return;
+
+    const canal = getCanalGeneral(client);
+    if (!canal) return;
+
+    try {
+        // Elegimos un Habitante al azar de la DB
+        const resHabitantes = await db.execute("SELECT id, regalos_favoritos FROM habitantes WHERE regalos_favoritos IS NOT NULL ORDER BY RANDOM() LIMIT 1");
+
+        if (resHabitantes.rows.length === 0) return;
+
+        const habitanteStr = resHabitantes.rows[0].id;
+        const nombreHabitante = String(habitanteStr);
+        const regalosRaw = resHabitantes.rows[0].regalos_favoritos;
+        const regalosObj = JSON.parse(String(regalosRaw));
+
+        // Agarramos uno de los regalos de la lista "Aman" o "Gustan" (Depende del formato que guardamos)
+        // Por simplicidad, buscaremos si podemos extraer un objeto que diga "Aman" o agarraremos el primer value
+        let regaloSeleccionado = "";
+
+        for (const [key, value] of Object.entries(regalosObj)) {
+            if (Array.isArray(value) && value.length > 0) {
+                // Agarramos un item al azar de ese array
+                regaloSeleccionado = value[Math.floor(Math.random() * value.length)];
+                break; // Usamos la primera categoría preferida que encontremos
+            }
+        }
+
+        if (!regaloSeleccionado) return; // Fallback si no había info parseable
+
+        const embedTrivia = crearEmbed(CONFIG.COLORES.DORADO)
+            .setTitle("🧠 ¡Trivias del Pueblito!")
+            .setDescription(`*Annie saca su libretita de secretos...*\n\n¿A qué **Habitante** del pueblito le vuelve loco/a el siguiente regalo?\n🎁 **"${regaloSeleccionado}"**\n\n*(Escribe el nombre correcto en el chat rápido. Tienes 1 minuto)*`);
+
+        await canal.send({ embeds: [embedTrivia] });
+
+        // Activamos un recolector de mensajes en el canal
+        const filter = m => !m.author.bot;
+        const collector = canal.createMessageCollector({ filter, time: TIEMPO_TRIVIA_MS, max: 20 });
+        let ganador = null;
+
+        collector.on("collect", m => {
+            const intento = m.content.trim().toLowerCase();
+            const habitanteFormat = nombreHabitante.toLowerCase();
+
+            if (intento === habitanteFormat || intento.includes(habitanteFormat)) {
+                ganador = m.author;
+                collector.stop("ganador");
+            }
+        });
+
+        collector.on("end", async (collected, reason) => {
+            if (reason === "ganador" && ganador) {
+                // Darle recompensa
+                const xpGanada = 100;
+                const moneditas = 10;
+                await db.execute({
+                    sql: `INSERT INTO usuarios (id, monedas, xp, nivel) 
+                          VALUES (?, ?, ?, 1) 
+                          ON CONFLICT(id) DO UPDATE SET 
+                            xp = usuarios.xp + excluded.xp, 
+                            monedas = usuarios.monedas + excluded.monedas`,
+                    args: [ganador.id, moneditas, xpGanada]
+                });
+
+                canal.send(`🎉 ¡Correcto <@${ganador.id}>! Era **${nombreHabitante}**. ¡Ganaste **${xpGanada} XP** y **${moneditas} moneditas**!`);
+            } else {
+                canal.send(`⏰ ¡Se acabó el tiempo vecinitos! La respuesta correcta era **${nombreHabitante}**. ¡Para la próxima será!`);
+            }
+        });
+
+    } catch (e) {
+        console.error("Error lanzando trivia:", e);
+    }
+}
