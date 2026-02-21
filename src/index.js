@@ -588,7 +588,19 @@ client.on(Events.MessageCreate, async (message) => {
             .setTitle("¡Subiste de Nivel!")
             .setDescription(`¡Felicidades <@${msg.author.id}>! Has alcanzado el **Nivel ${nivelNuevo}** paseando por el pueblito. 🥳`);
 
-          await msg.channel.send({ embeds: [embed] }).catch(() => { });
+          let canalDestino = msg.channel;
+          if (nivelNuevo % 5 === 0) {
+            if (CONFIG.CANAL_GENERAL_ID) {
+              const cGeneral = client.channels.cache.get(CONFIG.CANAL_GENERAL_ID);
+              if (cGeneral) canalDestino = cGeneral;
+            }
+          } else {
+            const canalComandosId = CONFIG.CONFIG_COMANDOS_ID || "1463662463693230110";
+            const cComandos = client.channels.cache.get(canalComandosId);
+            if (cComandos) canalDestino = cComandos;
+          }
+
+          await canalDestino.send({ embeds: [embed] }).catch(() => { });
         }
       }
     } catch (e) {
