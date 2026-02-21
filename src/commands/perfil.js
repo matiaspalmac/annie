@@ -13,11 +13,11 @@ export async function execute(interaction, bostezo) {
     const targetUser = reqUser.bot ? interaction.user : reqUser;
 
     const resDb = await db.execute({
-        sql: "SELECT monedas, xp, nivel, color_rol_id FROM usuarios WHERE id = ?",
+        sql: "SELECT monedas, xp, nivel, color_rol_id, tema_perfil, mascota_activa FROM usuarios WHERE id = ?",
         args: [targetUser.id]
     });
 
-    const userData = resDb.rows.length > 0 ? resDb.rows[0] : { monedas: 0, xp: 0, nivel: 1, color_rol_id: null };
+    const userData = resDb.rows.length > 0 ? resDb.rows[0] : { monedas: 0, xp: 0, nivel: 1, color_rol_id: null, tema_perfil: "default", mascota_activa: null };
     const xp = Number(userData.xp);
     const nivel = Number(userData.nivel);
 
@@ -102,10 +102,23 @@ export async function execute(interaction, bostezo) {
         );
 
     // If they have a custom color role purchased
+    let descExtra = "";
     if (userData.color_rol_id) {
-        embed.setDescription("🎨 Este vecinito tiene un color personalizado en el chat.");
+        descExtra += "🎨 Tiene un color personalizado en el chat.\n";
+    }
+
+    if (userData.tema_perfil && userData.tema_perfil !== "default") {
+        descExtra += `🖼️ Tema Web: **${userData.tema_perfil.replace('tema_', '')}**\n`;
+    }
+
+    if (userData.mascota_activa) {
+        descExtra += `🐾 Mascota Web: **${userData.mascota_activa.replace('mascota_', '')}**\n`;
+    }
+
+    if (descExtra) {
+        embed.setDescription(`Nivel: **${nivel}**\nXP Total: **${xp}**\n\n${descExtra}`);
     } else {
-        embed.setDescription("🌲 Un dulce habitante de nuestro pueblito.");
+        embed.setDescription(`Nivel: **${nivel}**\nXP Total: **${xp}**\n\n🌲 Un dulce habitante de nuestro pueblito.`);
     }
 
     const payload = { content: bostezo, embeds: [embed] };
@@ -145,8 +158,15 @@ export async function execute(interaction, bostezo) {
 function generarBarraProgreso(current, max, length = 10) {
     const fillChar = "🟩";
     const emptyChar = "⬜";
-    const fillCount = Math.round((current / max) * length);
-    const emptyCount = length - fillCount;
+    const safeCurrent = Math.max(0, Math.min(current, max));
+    const safeMax = Math.max(1, max);
 
-    return fillChar.repeat(fillCount) + emptyChar.repeat(emptyCount) + ` (${Math.round((current / max) * 100)}%)`;
+    let fillCount = Math.round((safeCurrent / safeMax) * length);
+    // Extra safety boundary clamping
+    fillCount = Math.max(0, Math.min(fillCount, length));
+
+    const emptyCount = length - fillCount;
+    const percent = Math.round((safeCurrent / safeMax) * 100);
+
+    return fillChar.repeat(fillCount) + emptyChar.repeat(emptyCount) + ` (${percent}%)`;
 }
