@@ -42,7 +42,9 @@ export function getHoraChile() {
 }
 
 export function getCanalGeneral(client) {
-  const guild = client.guilds.cache.get(CONFIG.GUILD_ID);
+  const guild = client.guilds.cache.get(
+
+  );
   return guild?.channels.cache.get(CONFIG.CANAL_GENERAL_ID) ?? null;
 }
 
@@ -63,6 +65,27 @@ export function crearEmbed(color, categoria) {
     : FOOTERS_ANNIE[Math.floor(Math.random() * FOOTERS_ANNIE.length)];
   embed.setFooter({ text: footerText, iconURL: CONFIG.ANNIE_IMG });
   return embed;
+}
+
+export function lanzarEstrellaFugaz(client) {
+  if (estaDurmiendo() || isEstrellaActiva()) return;
+
+  setEstrellaActiva(true);
+  const canal = getCanalGeneral(client);
+  if (canal) {
+    const embed = crearEmbed(CONFIG.COLORES.DORADO)
+      .setTitle("🌠 ¡Una Estrella Fugaz en el cielo!")
+      .setDescription("*Annie se asoma rápido por la ventanita de la oficinita...*\n\n¡Oh! Acabo de ver caer una estrella brillante en el pueblito... **¡El primero que escriba `/deseo` se la lleva!** ✨");
+    canal.send({ embeds: [embed] }).catch(console.error);
+
+    // La estrella caduca en 5 minutos
+    setTimeout(() => {
+      if (isEstrellaActiva()) {
+        setEstrellaActiva(false);
+        canal.send("❄️ La chispita de la estrella se apagó solita... ¡Ojalá para la próxima estemos más atentos!").catch(() => { });
+      }
+    }, 5 * 60 * 1000);
+  }
 }
 
 export function getBostezo() {

@@ -2,17 +2,16 @@ import { db } from "./db.js";
 import { CONFIG } from "./config.js";
 import { getCanalGeneral, estaDurmiendo, crearEmbed } from "./utils.js";
 
-// Tiempo en milisegundos para que los jugadores respondan a la trivia
-const TIEMPO_TRIVIA_MS = 60000;
-
 export async function lanzarTriviaAleatoria(client) {
     if (estaDurmiendo()) return;
+
+    // Tiempo en milisegundos para que los jugadores respondan a la trivia
+    const tiempoTriviaMs = Number(CONFIG.TRIVIA_DURACION_MS) || 60000;
 
     const canal = getCanalGeneral(client);
     if (!canal) return;
 
     try {
-        // Elegimos un Habitante al azar de la DB
         const resHabitantes = await db.execute("SELECT id, regalos_favoritos FROM habitantes WHERE regalos_favoritos IS NOT NULL ORDER BY RANDOM() LIMIT 1");
 
         if (resHabitantes.rows.length === 0) return;
@@ -56,7 +55,7 @@ export async function lanzarTriviaAleatoria(client) {
 
         // Activamos un recolector de mensajes en el canal
         const filter = m => !m.author.bot;
-        const collector = canal.createMessageCollector({ filter, time: TIEMPO_TRIVIA_MS, max: 20 });
+        const collector = canal.createMessageCollector({ filter, time: tiempoTriviaMs, max: 20 });
         let ganador = null;
 
         collector.on("collect", m => {
@@ -72,8 +71,8 @@ export async function lanzarTriviaAleatoria(client) {
         collector.on("end", async (collected, reason) => {
             if (reason === "ganador" && ganador) {
                 // Darle recompensa
-                const xpGanada = 100;
-                const moneditas = 10;
+                const xpGanada = Number(CONFIG.TRIVIA_RECOMPENSA_XP) || 100;
+                const moneditas = Number(CONFIG.TRIVIA_RECOMPENSA_MONEDAS) || 10;
                 await db.execute({
                     sql: `INSERT INTO usuarios (id, monedas, xp, nivel) 
                           VALUES (?, ?, ?, 1) 

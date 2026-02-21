@@ -22,7 +22,8 @@ import {
 } from "./personality.js";
 import {
   getHoraChile, estaDurmiendo, setDurmiendo, getCanalGeneral,
-  crearEmbed, getBostezo, isEstrellaActiva, setEstrellaActiva
+  crearEmbed, getBostezo, isEstrellaActiva, setEstrellaActiva,
+  lanzarEstrellaFugaz
 } from "./utils.js";
 import { initDB, loadConfig, buildAutocompleteCache, db, getLatestLogId, getLogsSince } from "./db.js";
 import { setAutocompleteCache } from "./data.js";
@@ -267,24 +268,7 @@ client.once("clientReady", async () => {
     // Entre 30 y 120 minutos
     const proxMinutos = Math.floor(Math.random() * 90) + 30;
     setTimeout(async () => {
-      if (!estaDurmiendo() && !isEstrellaActiva()) {
-        setEstrellaActiva(true);
-        const canal = getCanalGeneral(client);
-        if (canal) {
-          const embed = crearEmbed(CONFIG.COLORES.DORADO)
-            .setTitle("🌠 ¡Una Estrella Fugaz en el cielo!")
-            .setDescription("*Annie se asoma rápido por la ventanita de la oficinita...*\n\n¡Oh! Acabo de ver caer una estrella brillante en el pueblito... **¡El primero que escriba `/deseo` se la lleva!** ✨");
-          canal.send({ embeds: [embed] }).catch(console.error);
-
-          // La estrella caduca en 5 minutos
-          setTimeout(() => {
-            if (isEstrellaActiva()) {
-              setEstrellaActiva(false);
-              canal.send("❄️ La chispita de la estrella se apagó solita... ¡Ojalá para la próxima estemos más atentos!").catch(() => { });
-            }
-          }, 5 * 60 * 1000);
-        }
-      }
+      lanzarEstrellaFugaz(client);
       programarEstrellaFugaz(); // loop infinito
     }, proxMinutos * 60 * 1000);
   }
