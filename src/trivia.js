@@ -42,6 +42,18 @@ export async function lanzarTriviaAleatoria(client) {
 
         await canal.send({ embeds: [embedTrivia] });
 
+        // Registrar la trivia en la DB para las estadísticas (F7)
+        let triviaId = 0;
+        try {
+            const resStats = await db.execute({
+                sql: "INSERT INTO trivia_stats (habitante) VALUES (?) RETURNING id",
+                args: [nombreHabitante]
+            });
+            triviaId = Number(resStats.rows[0].id);
+        } catch (e) {
+            console.error("Error guardando trivia stat inicio:", e.message);
+        }
+
         // Activamos un recolector de mensajes en el canal
         const filter = m => !m.author.bot;
         const collector = canal.createMessageCollector({ filter, time: TIEMPO_TRIVIA_MS, max: 20 });
@@ -71,8 +83,21 @@ export async function lanzarTriviaAleatoria(client) {
                     args: [ganador.id, moneditas, xpGanada]
                 });
 
+                if (triviaId > 0) {
+                    db.execute({
+                        sql: "UPDATE trivia_stats SET ganador_id = ?, fue_respondida = 1 WHERE id = ?",
+                        args: [ganador.id, triviaId]
+                    }).catch(() => { });
+                }
+
                 canal.send(`🎉 ¡Correcto <@${ganador.id}>! Era **${nombreHabitante}**. ¡Ganaste **${xpGanada} XP** y **${moneditas} moneditas**!`);
             } else {
+                if (triviaId > 0) {
+                    db.execute({
+                        sql: "UPDATE trivia_stats SET fue_respondida = 0 WHERE id = ?",
+                        args: [triviaId]
+                    }).catch(() => { });
+                }
                 canal.send(`⏰ ¡Se acabó el tiempo vecinitos! La respuesta correcta era **${nombreHabitante}**. ¡Para la próxima será!`);
             }
         });

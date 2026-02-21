@@ -24,7 +24,7 @@ import {
   getHoraChile, estaDurmiendo, setDurmiendo, getCanalGeneral,
   crearEmbed, getBostezo, isEstrellaActiva, setEstrellaActiva
 } from "./utils.js";
-import { initDB, loadConfig, buildAutocompleteCache, db } from "./db.js";
+import { initDB, loadConfig, buildAutocompleteCache, db, getLatestLogId, getLogsSince } from "./db.js";
 import { setAutocompleteCache } from "./data.js";
 import { logStartup } from "./logger.js";
 import { lanzarTriviaAleatoria } from "./trivia.js";
@@ -44,6 +44,7 @@ const client = new Client({
 let ultimaRutina = null;
 let historialMensajes = [];
 let ultimoChisme = 0;
+let lastKnownLogId = 0;
 
 function actualizarEstado() {
   if (estaDurmiendo()) {
@@ -91,7 +92,6 @@ async function conectarOficina() {
   }
 }
 
-/* 
 async function anunciarClima(forzado = false) {
   const hora = getHoraChile();
   if (!forzado && hora !== 19) return;
@@ -99,18 +99,30 @@ async function anunciarClima(forzado = false) {
   const canal = getCanalGeneral(client);
   if (!canal) return;
 
-  const hoy = CLIMA_PUEBLO.hoy;
-  const embed = crearEmbed(CONFIG.COLORES.CIELO)
-    .setTitle(`Clima del Pueblito -- Hoy`)
-    .setDescription(`**${hoy.tipo}**\n${hoy.descripcion}`)
-    .addFields({
-      name: "Horarios con cariño",
-      value: hoy.timeline.map(h => `${h.hora}:00 -- ${h.texto}`).join("\n"),
-    })
-    .setFooter({ text: "Pronostico hecho con amor | Annie" });
+  try {
+    const result = await db.execute("SELECT * FROM clima WHERE id = 'hoy'");
+    if (result.rows.length === 0) return;
+    const hoy = result.rows[0];
+    const timeline = JSON.parse(hoy.timeline || "[]");
 
-  await canal.send({ content: "Annie les trae el clima con amor:", embeds: [embed] }).catch(console.error);
-} */
+    const embed = crearEmbed(CONFIG.COLORES.CIELO)
+      .setTitle(`☁️ Clima del Pueblito — Hoy`)
+      .setDescription(`**${hoy.tipo || "--"}**\n${hoy.descripcion || ""}`);
+
+    if (timeline.length > 0) {
+      embed.addFields({
+        name: "Horarios con cariño",
+        value: timeline.map(h => `${h.hora}:00 — ${h.texto}`).join("\n"),
+      });
+    }
+    embed.setFooter({ text: "Pronóstico hecho con amor | Annie" });
+
+    await canal.send({ content: "Annie les trae el clima con amor:", embeds: [embed] }).catch(console.error);
+  } catch (e) {
+    console.error("[Clima] Error anunciando clima:", e.message);
+  }
+}
+
 
 function ejecutarRutinaDiaria() {
   if (estaDurmiendo()) return;
@@ -150,28 +162,33 @@ async function updateTimeChannel() {
   }
 }
 
-/* 
 async function updateWeatherChannel() {
   if (!CONFIG.CANAL_CLIMA_ID) return;
   try {
     const canal = await client.channels.fetch(CONFIG.CANAL_CLIMA_ID);
     if (!canal) return;
 
+    const result = await db.execute("SELECT * FROM clima WHERE id = 'hoy'");
+    if (result.rows.length === 0) return;
+    const hoy = result.rows[0];
+    const timeline = JSON.parse(hoy.timeline || "[]");
+
     const horaActual = getHoraChile();
-    const estadosPasados = CLIMA_PUEBLO.hoy.timeline.filter(t => t.hora <= horaActual);
+    const estadosPasados = timeline.filter(t => t.hora <= horaActual);
     const climaAhora = estadosPasados.length > 0
       ? estadosPasados[estadosPasados.length - 1]
-      : CLIMA_PUEBLO.hoy.timeline[CLIMA_PUEBLO.hoy.timeline.length - 1];
+      : timeline[timeline.length - 1];
 
+    if (!climaAhora) return;
     const nombreCanal = `Clima: ${climaAhora.texto}`;
     if (canal.name !== nombreCanal) {
       await canal.setName(nombreCanal);
     }
   } catch (e) {
-    if (e.status !== 429) console.error("Error actualizando canal de clima:", e.message);
+    if (e.status !== 429 && e.code !== 10003) console.error("Error actualizando canal de clima:", e.message);
   }
 }
- */
+
 
 async function mencionarVecinoRandom() {
   if (estaDurmiendo()) return;
@@ -184,14 +201,18 @@ async function mencionarVecinoRandom() {
   if (miembros.length === 0) return;
 
   const vecino = miembros[Math.floor(Math.random() * miembros.length)];
-  const frases = [
-    `Ay, ${vecino}... hace ratito que no te veia por aqui.`,
-    `${vecino} sabe algo dulce... yo no digo nada, pero...`,
-    `Y ${vecino}? Siempre aparece cuando hay cositas lindas que contar.`,
-    `${vecino}, ven a charlar un ratito conmigo, corazón po.`,
-  ];
+  const trato = getTrato();
+  const fraseAleatoria = FRASES_AMBIENT[Math.floor(Math.random() * FRASES_AMBIENT.length)];
 
-  canal.send(`*Annie asoma la cabecita con cariño:* ${frases[Math.floor(Math.random() * frases.length)]}`).catch(console.error);
+  const intros = [
+    `*Annie le hace señitas a ${vecino} desde lejos:*`,
+    `*Annie le deja una cartita perfumada a ${vecino}:*`,
+    `*Annie sonríe al ver pasar a ${vecino}:*`,
+    `*Annie se acerca despacito a ${vecino}:*`
+  ];
+  const intro = intros[Math.floor(Math.random() * intros.length)];
+
+  canal.send(`${intro} "${fraseAleatoria.replace('corazón', trato).replace('vecin@', trato)}"`).catch(console.error);
 }
 
 client.once("clientReady", async () => {
@@ -199,6 +220,7 @@ client.once("clientReady", async () => {
 
   await initDB();
   await loadConfig();
+  lastKnownLogId = await getLatestLogId();
   const cache = await buildAutocompleteCache();
   setAutocompleteCache(cache);
   console.log(`Cache de autocompletado cargada para ${Object.keys(cache).length} categorías.`);
@@ -278,7 +300,49 @@ client.once("clientReady", async () => {
     lanzarTriviaAleatoria(client);
   }, 1000 * 60 * 120);
 
+  // Refrescar cache de autocompletado cada 30 minutos + notificar cambios de admins (F1)
+  setInterval(async () => {
+    try {
+      const nuevaCache = await buildAutocompleteCache();
+      setAutocompleteCache(nuevaCache);
+      console.log(`[Cache] Autocompletado refrescado (${Object.keys(nuevaCache).length} categorías).`);
+
+      // F1: detectar cambios nuevos en admin_logs
+      const latestId = await getLatestLogId();
+      if (latestId > lastKnownLogId) {
+        const logs = await getLogsSince(lastKnownLogId);
+        lastKnownLogId = latestId;
+
+        if (logs.length > 0 && CONFIG.LOG_CHANNEL_ID) {
+          const logChannel = await client.channels.fetch(CONFIG.LOG_CHANNEL_ID).catch(() => null);
+          if (logChannel) {
+            const resumen = logs.map(l => {
+              const iconos = { agregar: "✅", editar: "✏️", eliminar: "🗑️" };
+              const icono = iconos[l.accion] ?? "•";
+              return `${icono} **${l.admin}** ${l.accion} en \`${l.tabla ?? "??"}\` — \`${l.item_id ?? ""}`;
+            }).join("\n").slice(0, 1900);
+
+            const embed = crearEmbed(CONFIG.COLORES.AZUL)
+              .setTitle("📋 Cambios en la Wiki")
+              .setDescription(resumen)
+              .setFooter({ text: `${logs.length} cambio(s) detectado(s)` });
+
+            logChannel.send({ embeds: [embed] }).catch(console.error);
+          }
+        }
+      }
+    } catch (e) {
+      console.error("[Cache] Error en refresh:", e.message);
+    }
+  }, 1000 * 60 * 30);
+
+  // Clima cada hora (F4)
+  setInterval(anunciarClima, 1000 * 60 * 60);
+  updateWeatherChannel();
+  setInterval(updateWeatherChannel, 1000 * 60 * 15);
+
 });
+
 
 setInterval(() => {
   if (estaDurmiendo()) return;
@@ -334,12 +398,15 @@ client.on(Events.VoiceStateUpdate, async (oldState, newState) => {
     const frasesDia = [
       `*Annie asoma la cabecita:* Oiga ${trato}... parece que **${username}** llego a mi oficinita.`,
       `Atencion, pueblito lindo! **${username}** anda dando vueltitas por aqui... que alegria.`,
-      `Ay... **${username}** entro a mi oficinita... vendra a charlar un ratito conmigo?`,
+      `Ay... **${username}** entro a mi oficinita... ¿vendra a tomarse un tecito conmigo?`,
+      `*Annie saluda con la mano:* ¡Wena wena **${username}**! Pasa nomás, ponte cómodo.`,
+      `Miren quién llegó... **${username}** anda de chismoso por aquí, jeje. ¡Bienvenido, corazón!`
     ];
     const frasesNoche = [
       `*(Annie susurra bajito)* Shhh... ${trato}... **${username}** entro a la oficinita... que no se despierte nadie.`,
-      `*(voz suave)* Ay... creo que **${username}** anda despierto todavia... ven a acurrucarte un ratito.`,
-      `*(susurro dulce)* Entro alguien a mi oficinita... es **${username}**... que lindo.`,
+      `*(voz suave)* Ay... creo que **${username}** anda de búho todavía... ven a acurrucarte un ratito.`,
+      `*(susurro dulce)* Entro alguien a mi oficinita... es **${username}**... abrigate bien que hace frío.`,
+      `*(bostezando)* Buenas noches, **${username}**... pasa calladito nomás, corazón.`
     ];
 
     const pool = estaDurmiendo() ? frasesNoche : frasesDia;
@@ -394,9 +461,44 @@ client.on(Events.MessageCreate, async (message) => {
   if (message.author.bot) return;
 
   const msg = message;
-  const texto = message.content.toLowerCase();
+  const avatarUrl = msg.author.displayAvatarURL({ extension: "png", size: 256 }) || null;
+  // Silently update username & avatar in case it changed or was never set
+  db.execute({
+    sql: "UPDATE usuarios SET username = ?, avatar = ? WHERE id = ? AND (username IS NULL OR username != ? OR avatar IS NULL OR avatar != ?)",
+    args: [msg.author.username, avatarUrl, msg.author.id, msg.author.username, avatarUrl]
+  }).catch(() => { });
 
+  const texto = message.content.toLowerCase();
   const ahora = Date.now();
+
+  // F16: El Tarro de las Chuchadas (Swear Jar Chileno)
+  const CHUCHADAS = /\b(weon|weón|conchetumare|ctm|culiao|qlao|ql|puta|wea|weá|mierda)\b/i;
+
+  if (CHUCHADAS.test(texto)) {
+    try {
+      const resVal = await db.execute({ sql: "SELECT monedas FROM usuarios WHERE id = ?", args: [msg.author.id] });
+      if (resVal.rows.length > 0 && Number(resVal.rows[0].monedas) >= 5) {
+        // Descontar al usuario
+        await db.execute({ sql: "UPDATE usuarios SET monedas = monedas - 5 WHERE id = ?", args: [msg.author.id] });
+
+        // Abonar al evento global activo
+        const resEvento = await db.execute("SELECT id FROM eventos_globales WHERE activo = 1 LIMIT 1");
+        if (resEvento.rows.length > 0) {
+          const eventoId = resEvento.rows[0].id;
+          await db.execute({ sql: "UPDATE eventos_globales SET progreso_monedas = progreso_monedas + 5 WHERE id = ?", args: [eventoId] });
+          await db.execute({
+            sql: "INSERT INTO evento_donaciones (evento_id, user_id, cantidad) VALUES (?, ?, 5) ON CONFLICT(evento_id, user_id) DO UPDATE SET cantidad = cantidad + 5",
+            args: [eventoId, "Tarro Chuchadas"] // Se asienta a nombre del "Tarro Chuchadas"
+          });
+        }
+        await msg.reply("*(Annie frunce el ceño)* ¡Ay! ¡Esa boquita! 🧼 Te saqué **5 moneditas** p'al tarro de la Junta de Vecinos.");
+      } else {
+        await msg.reply("*(Annie te mira feo)* ¡Qué vocabulario! Te multaría, pero veo que andas aguja de monedas... ¡Pórtate bien!");
+      }
+    } catch (e) {
+      console.error("Error tarro chuchadas:", e.message);
+    }
+  }
 
   if (message.channel.id === CONFIG.CANAL_GENERAL_ID) {
     historialMensajes.push(ahora);
@@ -495,13 +597,7 @@ client.on(Events.MessageCreate, async (message) => {
   }
 });
 
-// Configuración de la tienda compartida. Idealmente esto debería importarse de tienda.js pero lo definimos aquí para el handler por simplicidad.
-const TIENDA_PRICES = {
-  "color_custom": 5000,
-  "color_rosa": 300,
-  "color_celeste": 300,
-  "color_dorado": 500
-};
+// Handler logic for interactions
 
 client.on(Events.InteractionCreate, async (interaction) => {
   if (interaction.isStringSelectMenu() && interaction.customId === "tienda_comprar") {
@@ -511,11 +607,20 @@ client.on(Events.InteractionCreate, async (interaction) => {
     }
 
     const itemSeleccionado = interaction.values[0];
-    const precio = TIENDA_PRICES[itemSeleccionado];
-
-    if (!precio) return interaction.reply({ content: "Item inválido.", ephemeral: true });
-
     await interaction.deferReply({ ephemeral: true });
+
+    // Buscar precio y tipo en BD
+    const resItem = await db.execute({
+      sql: "SELECT precio_xp, tipo, discord_role_id FROM tienda_items WHERE id = ?",
+      args: [itemSeleccionado]
+    });
+
+    if (resItem.rows.length === 0) {
+      return interaction.followUp("Item inválido o ya no está en la tienda.");
+    }
+    const precio = Number(resItem.rows[0].precio_xp);
+    const tipoItem = resItem.rows[0].tipo;
+    const discordRoleIdToAssign = resItem.rows[0].discord_role_id;
 
     const result = await db.execute({
       sql: "SELECT xp, color_rol_id FROM usuarios WHERE id = ?",
@@ -533,18 +638,50 @@ client.on(Events.InteractionCreate, async (interaction) => {
     }
 
     try {
-      // Descontar XP y dar el item
-      await db.execute({
-        sql: "UPDATE usuarios SET xp = xp - ?, color_rol_id = ? WHERE id = ?",
-        args: [precio, itemSeleccionado, interaction.user.id]
-      });
+      // Descontar XP y dar
+      if (tipoItem === 'tema') {
+        // Lógica de Temas para la Wiki (F8)
+        await db.execute({
+          sql: "UPDATE usuarios SET xp = xp - ?, tema_perfil = ? WHERE id = ?",
+          args: [precio, itemSeleccionado, interaction.user.id]
+        });
 
-      if (itemSeleccionado === "color_custom") {
-        await interaction.followUp("✨ ¡Felicidades! Has comprado el **Pincel Mágico**. Ahora puedes usar el comando `/color [hex]` para pintar tu nombre del color que quieras.");
+        await interaction.followUp(`🎨 ¡Gracias lindo/a! Acabas de comprar el tema \`${itemSeleccionado}\`. \n\nAcabo de actualizar la escenografía de tu libretita web. ¡Se va a ver preciosa!`);
+
+      } else if (tipoItem === 'mascota') {
+        // Lógica de Adopción de Mascotas F15
+        await db.execute({
+          sql: "UPDATE usuarios SET xp = xp - ?, mascota_activa = ? WHERE id = ?",
+          args: [precio, itemSeleccionado, interaction.user.id]
+        });
+
+        await interaction.followUp(`🐾 ¡Awww! Felicidades por tu nuevo amiguito \`${itemSeleccionado}\`. \n\nAcabo de hacerle espacio en tu Libretita Web. ¡Ve a la página de tu perfil para mirarlo!`);
       } else {
-        // Nota: Si son colores base, el Admin de discord debe crear roles llamados exactamente igual ("color_rosa", etc)
-        // O el bot debería crearlos también mediante código. Por ahora otorgamos el ID de la base de datos al usuario.
-        await interaction.followUp(`🛍️ ¡Felicidades! Compraste el color **${itemSeleccionado.replace("color_", "")}**. En breve Annie te lo equipará automáticamente cuando hables, o usa \`/perfil\` para forzar la actualización.`);
+        // Lógica de Roles/Colores
+        await db.execute({
+          sql: "UPDATE usuarios SET xp = xp - ?, color_rol_id = ? WHERE id = ?",
+          args: [precio, itemSeleccionado, interaction.user.id]
+        });
+
+        // F12 Automatización asignar rol en Discord
+        let roleMsg = "";
+        if (discordRoleIdToAssign && typeof discordRoleIdToAssign === 'string') {
+          try {
+            const role = interaction.guild.roles.cache.get(discordRoleIdToAssign);
+            if (role) {
+              await interaction.member.roles.add(role);
+              roleMsg = ` y te he asignado el rol oficial en el servidor automáticamente`;
+            }
+          } catch (err) {
+            console.error("Fallo al asignar el rol a ", interaction.user.username, err);
+          }
+        }
+
+        if (itemSeleccionado === "color_custom") {
+          await interaction.followUp(`✨ ¡Has comprado el Pincel Mágico! Pronto un administrador contactará contigo para darte tu color Hexadecimal único. ¡Qué emoción!`);
+        } else {
+          await interaction.followUp(`🎨 ¡Gracias tesoro! Te acabo de dar el tinte \`${itemSeleccionado}\`${roleMsg} para que resaltes tu nombre.`);
+        }
       }
     } catch (e) {
       console.error("Error comprando en tienda", e);
