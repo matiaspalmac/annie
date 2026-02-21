@@ -45,7 +45,7 @@ export async function execute(interaction, bostezo) {
     if (resCheck.rows.length === 0) {
         return interaction.reply({
             content: `Ay corazón... he revisado tu libretita pero no veo que tengas anotado ningún "${nombreItemRaw}" en recolecciones de ${categoria}. ¡Tienes que descubrirlo primero!`,
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
         });
     }
 
@@ -68,6 +68,6 @@ export async function execute(interaction, bostezo) {
 
     } catch (e) {
         console.error("Error comando destacar:", e.message);
-        return interaction.reply({ content: "Se me acabó mi cinta adhesiva para pegarlo... intentalo en un ratito.", ephemeral: true });
+        return interaction.reply({ content: "Se me acabó mi cinta adhesiva para pegarlo... intentalo en un ratito.", flags: MessageFlags.Ephemeral });
     }
 }

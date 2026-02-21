@@ -23,7 +23,7 @@ export async function execute(interaction, bostezo) {
         )
         .addFields({ name: "📨 Tu mensajito guardado", value: `**${mensaje}**` });
 
-    await interaction.reply({ embeds: [embed], ephemeral: true });
+    await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
 
     setTimeout(() => {
         const embedRecordatorio = crearEmbed(color)

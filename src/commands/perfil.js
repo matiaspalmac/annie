@@ -24,9 +24,9 @@ export async function execute(interaction, bostezo) {
     // If user not found in DB and it's the current user, prompt them to play
     if (resDb.rows.length === 0) {
         if (targetUser.id === interaction.user.id) {
-            return interaction.reply({ content: `${bostezo} Aún no sales a pasear por el pueblito... ¡escribe unos cuantos mensajitos en el chat y vuelve a preguntar!`, ephemeral: true });
+            return interaction.reply({ content: `${bostezo} Aún no sales a pasear por el pueblito... ¡escribe unos cuantos mensajitos en el chat y vuelve a preguntar!`, flags: MessageFlags.Ephemeral });
         } else {
-            return interaction.reply({ content: `Parece que **${targetUser.username}** no ha salido de su casita todavía.`, ephemeral: true });
+            return interaction.reply({ content: `Parece que **${targetUser.username}** no ha salido de su casita todavía.`, flags: MessageFlags.Ephemeral });
         }
     }
 

@@ -13,12 +13,12 @@ export async function execute(interaction, bostezo) {
         const gameId = await getGameId(usuario.id);
 
         if (!gameId) {
-            return interaction.reply({ content: `Ay no... no tengo ningún Game ID anotado para ${usuario} en mi libretita.`, ephemeral: true });
+            return interaction.reply({ content: `Ay no... no tengo ningún Game ID anotado para ${usuario} en mi libretita.`, flags: MessageFlags.Ephemeral });
         }
 
         return interaction.reply({
             content: `El game ID de ${usuario} es **${gameId}**.`,
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
         });
     } catch (err) {
         throw err;

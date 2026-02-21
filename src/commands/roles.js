@@ -8,7 +8,7 @@ export const data = new SlashCommandBuilder()
     .addChannelOption(o => o.setName("canal").setDescription("Canal donde enviar (por defecto: canal actual)").setRequired(false));
 
 export async function execute(interaction) {
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     if (!interaction.member.permissions.has("ManageRoles")) {
         return interaction.editReply({

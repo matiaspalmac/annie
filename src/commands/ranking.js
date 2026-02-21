@@ -30,7 +30,7 @@ export async function execute(interaction, bostezo) {
     if (result.rows.length === 0) {
         return interaction.reply({ 
             content: `${bostezo} Aún no hay nadie paseando por el pueblito... ¡se el primero!`, 
-            ephemeral: true 
+            flags: MessageFlags.Ephemeral 
         });
     }
 

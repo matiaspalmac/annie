@@ -20,7 +20,7 @@ export async function execute(interaction, bostezo) {
     const cantidad = Number(cantidadStr);
 
     if (isNaN(cantidad) || cantidad <= 0) {
-        return interaction.reply({ content: `Eso no parece una cantidad válida, tesoro.`, ephemeral: true });
+        return interaction.reply({ content: `Eso no parece una cantidad válida, tesoro.`, flags: MessageFlags.Ephemeral });
     }
 
     try {
@@ -30,7 +30,7 @@ export async function execute(interaction, bostezo) {
         if (resEvento.rows.length === 0) {
             return interaction.reply({
                 content: `${bostezo} En este momento no hay ningún proyecto o junta vecinal activa, corazoncito. ¡Guarda tus moneditas para más tarde!`,
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -43,7 +43,7 @@ export async function execute(interaction, bostezo) {
         if (progreso >= meta) {
             return interaction.reply({
                 content: `¡Llegaste tarde, tesoro! Ya logramos la meta de **${titulo}**. ¡El pueblito está de fiesta!`,
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -56,7 +56,7 @@ export async function execute(interaction, bostezo) {
         if (resUser.rows.length === 0 || Number(resUser.rows[0].monedas) < cantidad) {
             return interaction.reply({
                 content: `¡Ay! Me parece que no tienes tantas moneditas en los bolsillos. Solo tienes **${resUser.rows.length ? resUser.rows[0].monedas : 0}** 💰.`,
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -117,6 +117,6 @@ export async function execute(interaction, bostezo) {
 
     } catch (e) {
         console.error("Error comando aportar:", e.message, e.stack);
-        return interaction.reply({ content: "Parece que se me trabó la cajita fuerte... inténtalo en un ratito.", ephemeral: true });
+        return interaction.reply({ content: "Parece que se me trabó la cajita fuerte... inténtalo en un ratito.", flags: MessageFlags.Ephemeral });
     }
 }

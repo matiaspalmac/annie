@@ -13,7 +13,7 @@ export async function execute(interaction, bostezo) {
     if (!interaction.member.permissions.has("Administrator")) {
         return interaction.reply({
             content: "Ay, tesorito... solo los administradores pueden vincular IDs del juego.",
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
         });
     }
 
@@ -28,7 +28,7 @@ export async function execute(interaction, bostezo) {
             .setDescription(`Listo, corazón! He vinculado el Game ID **${gameId}** al usuario ${usuario}.`);
 
         agregarNarrativa(embed, "general");
-        return interaction.reply({ content: bostezo, embeds: [embed], ephemeral: true });
+        return interaction.reply({ content: bostezo, embeds: [embed], flags: MessageFlags.Ephemeral });
     } catch (err) {
         throw err;
     }

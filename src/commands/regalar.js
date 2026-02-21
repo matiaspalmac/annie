@@ -16,11 +16,11 @@ export async function execute(interaction, bostezo) {
     const donante_id = interaction.user.id;
 
     if (recipiente.id === donante_id) {
-        return interaction.reply({ content: "¡Ay, mi tesoro! No puedes regalarte moneditas a ti mismo... ¡mejor compártelas con alguien más!", ephemeral: true });
+        return interaction.reply({ content: "¡Ay, mi tesoro! No puedes regalarte moneditas a ti mismo... ¡mejor compártelas con alguien más!", flags: MessageFlags.Ephemeral });
     }
 
     if (recipiente.bot) {
-        return interaction.reply({ content: "Qué amable eres, pero a los robots no nos sirven las moneditas... guarda eso para comprarte cositas lindas.", ephemeral: true });
+        return interaction.reply({ content: "Qué amable eres, pero a los robots no nos sirven las moneditas... guarda eso para comprarte cositas lindas.", flags: MessageFlags.Ephemeral });
     }
 
     // Checking donor balance
@@ -34,7 +34,7 @@ export async function execute(interaction, bostezo) {
     if (balanceDonante < cantidad) {
         return interaction.reply({
             content: `Pucha ${getTrato()}... solo tienes **${balanceDonante}** moneditas en tu bolsita. No te alcanza para dar ${cantidad}. ¡Sigue paseando para encontrar más!`,
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
         });
     }
 
@@ -71,6 +71,6 @@ export async function execute(interaction, bostezo) {
 
     } catch (e) {
         console.error("Error regalando monedas:", e.message);
-        return interaction.reply({ content: "Hubo un problemita guardando las moneditas... ¡Ups!", ephemeral: true });
+        return interaction.reply({ content: "Hubo un problemita guardando las moneditas... ¡Ups!", flags: MessageFlags.Ephemeral });
     }
 }

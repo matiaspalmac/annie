@@ -9,7 +9,7 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction, bostezo) {
     if (!isEstrellaActiva()) {
-        return interaction.reply({ content: `${bostezo} Pucha corazón... ahora mismo el cielo está tranquilito. No hay ninguna estrella cayendo.`, ephemeral: true });
+        return interaction.reply({ content: `${bostezo} Pucha corazón... ahora mismo el cielo está tranquilito. No hay ninguna estrella cayendo.`, flags: MessageFlags.Ephemeral });
     }
 
     // El jugador ganó la carrera, consumimos la estrella
@@ -36,6 +36,6 @@ export async function execute(interaction, bostezo) {
         await interaction.reply({ content: "¡Tenemos un vecinito afortunado!", embeds: [embed] });
     } catch (e) {
         console.error("Error al dar premio de estrella:", e);
-        await interaction.reply({ content: "Ups, la estrellita se me resbaló de las manos... avísale a los admins.", ephemeral: true });
+        await interaction.reply({ content: "Ups, la estrellita se me resbaló de las manos... avísale a los admins.", flags: MessageFlags.Ephemeral });
     }
 }

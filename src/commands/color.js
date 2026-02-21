@@ -17,12 +17,12 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction, bostezo) {
     if (!interaction.guild) {
-        return interaction.reply({ content: "Este comando solo funciona dentro del servidor.", ephemeral: true });
+        return interaction.reply({ content: "Este comando solo funciona dentro del servidor.", flags: MessageFlags.Ephemeral });
     }
 
     const colorHex = interaction.options.getString("hex").trim();
     if (!/^#[0-9A-Fa-f]{6}$/.test(colorHex)) {
-        return interaction.reply({ content: `${bostezo} Eyy... ese formato de color no me sirve. Tiene que ser como \`#AABBCC\`, con el gatito adelante.`, ephemeral: true });
+        return interaction.reply({ content: `${bostezo} Eyy... ese formato de color no me sirve. Tiene que ser como \`#AABBCC\`, con el gatito adelante.`, flags: MessageFlags.Ephemeral });
     }
 
     // Check if the user bought the custom color item
@@ -32,14 +32,14 @@ export async function execute(interaction, bostezo) {
     });
 
     if (result.rows.length === 0) {
-        return interaction.reply({ content: `${bostezo} Aún no sales a pasear por el pueblito... usa la \`/tienda\` primero.`, ephemeral: true });
+        return interaction.reply({ content: `${bostezo} Aún no sales a pasear por el pueblito... usa la \`/tienda\` primero.`, flags: MessageFlags.Ephemeral });
     }
 
     const userData = result.rows[0];
 
     // Si su color_rol_id no existe O si compró un rol de servidor predeterminado (los base names en vez de ID), rechazar
     if (!userData.color_rol_id || userData.color_rol_id === "color_rosa" || userData.color_rol_id === "color_celeste" || userData.color_rol_id === "color_dorado") {
-        return interaction.reply({ content: `¡Ahí! No has comprado el **Pincel Mágico** en la \`/tienda\` todavía para poder poner puros colores personalizados.`, ephemeral: true });
+        return interaction.reply({ content: `¡Ahí! No has comprado el **Pincel Mágico** en la \`/tienda\` todavía para poder poner puros colores personalizados.`, flags: MessageFlags.Ephemeral });
     }
 
     await interaction.deferReply();
@@ -87,6 +87,6 @@ export async function execute(interaction, bostezo) {
 
     } catch (e) {
         console.error("Error creando/modificando rol de color:", e);
-        await interaction.followUp({ content: "Pucha, no pude crear el rol. Dile a mis creadores que revisen mis permisos de Administrar Roles, tienen que estar por encima de los usuarios base.", ephemeral: true });
+        await interaction.followUp({ content: "Pucha, no pude crear el rol. Dile a mis creadores que revisen mis permisos de Administrar Roles, tienen que estar por encima de los usuarios base.", flags: MessageFlags.Ephemeral });
     }
 }

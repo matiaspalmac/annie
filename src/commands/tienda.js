@@ -16,7 +16,7 @@ export async function execute(interaction, bostezo) {
     });
 
     if (result.rows.length === 0) {
-        return interaction.reply({ content: `${bostezo} Aún no sales a pasear por el pueblito... escribe en el chat para ganar alguito de XP.`, ephemeral: true });
+        return interaction.reply({ content: `${bostezo} Aún no sales a pasear por el pueblito... escribe en el chat para ganar alguito de XP.`, flags: MessageFlags.Ephemeral });
     }
 
     const userData = result.rows[0];

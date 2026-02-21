@@ -14,7 +14,7 @@ export async function execute(interaction, bostezo) {
         if (result.rows.length === 0) {
             return interaction.reply({
                 content: `${bostezo} Ay, corazoncito... parece que la oficina del clima (la wiki) no me ha mandado el reporte de hoy todavía. ¡Dile a un admin que anote el clima allá!`,
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -38,6 +38,6 @@ export async function execute(interaction, bostezo) {
 
     } catch (e) {
         console.error("Error comando clima:", e.message);
-        return interaction.reply({ content: "Ups, el termómetro se me cayó y no puedo ver el clima ahora mismo...", ephemeral: true });
+        return interaction.reply({ content: "Ups, el termómetro se me cayó y no puedo ver el clima ahora mismo...", flags: MessageFlags.Ephemeral });
     }
 }

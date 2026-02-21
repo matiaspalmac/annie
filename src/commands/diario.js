@@ -23,7 +23,7 @@ export async function execute(interaction, bostezo) {
     if (resDb.rows.length === 0) {
         return interaction.reply({
             content: `${bostezo} Aún no sales a pasear por el pueblito... escribe unos cuantos mensajitos en el chat y vuelve a pedir tu regalito.`,
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
         });
     }
 
@@ -39,7 +39,7 @@ export async function execute(interaction, bostezo) {
             const horasRestantes = Math.ceil((getMsFor24Hours() - diffMs) / (1000 * 60 * 60));
             return interaction.reply({
                 content: `¡Tranquilidad, tesoro! Ya te di tu regalito de hoy. Vuelve en **${horasRestantes} horas** para pedir más.`,
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
     }
@@ -63,6 +63,6 @@ export async function execute(interaction, bostezo) {
 
     } catch (e) {
         console.error("Error comando diario:", e.message);
-        return interaction.reply({ content: "Parece que se me rompieron las libretas, inténtalo más tarde.", ephemeral: true });
+        return interaction.reply({ content: "Parece que se me rompieron las libretas, inténtalo más tarde.", flags: MessageFlags.Ephemeral });
     }
 }

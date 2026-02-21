@@ -45,7 +45,7 @@ export async function execute(interaction, bostezo) {
     });
 
     if (result.rows.length === 0) {
-        return interaction.reply({ embeds: [crearEmbedError("insectos", input)], ephemeral: true });
+        return interaction.reply({ embeds: [crearEmbedError("insectos", input)], flags: MessageFlags.Ephemeral });
     }
 
     const row = result.rows[0];

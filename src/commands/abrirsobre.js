@@ -48,7 +48,7 @@ export async function execute(interaction, bostezo) {
         if (resUser.rows.length === 0 || Number(resUser.rows[0].monedas) < PRECIO_SOBRE) {
             return interaction.reply({
                 content: `Ay corazón... un sobre mágico cuesta **${PRECIO_SOBRE}** moneditas brillantes, y tú solo tienes ${resUser.rows.length ? resUser.rows[0].monedas : 0}.`,
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -100,6 +100,6 @@ export async function execute(interaction, bostezo) {
 
     } catch (e) {
         console.error("Error comando abrirsobre:", e.message);
-        return interaction.reply({ content: "Me rompí, tesoro :(", ephemeral: true });
+        return interaction.reply({ content: "Me rompí, tesoro :(", flags: MessageFlags.Ephemeral });
     }
 }
