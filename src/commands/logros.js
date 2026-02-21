@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
+import { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from "discord.js";
 import { CONFIG } from "../config.js";
 import { esTodos } from "../data.js";
 import { db } from "../db.js";
@@ -63,10 +63,10 @@ export async function execute(interaction, bostezo) {
             { name: "📋 Requisito", value: l.requisito, inline: false },
         );
     if (row.titulo_recompensa) {
-        embed.addFields({ name: "Recompensa", value: row.titulo_recompensa, inline: true });
+        embed.addFields([{ name: "Recompensa", value: row.titulo_recompensa, inline: true }]);
     }
     if (row.consejos) {
-        embed.addFields({ name: "Consejos", value: row.consejos, inline: false });
+        embed.addFields([{ name: "Consejos", value: row.consejos, inline: false }]);
     }
 
     agregarNarrativa(embed, "logros");

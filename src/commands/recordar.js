@@ -1,4 +1,4 @@
-import { SlashCommandBuilder } from "discord.js";
+import { SlashCommandBuilder, MessageFlags } from "discord.js";
 import { CONFIG } from "../config.js";
 import { estaDurmiendo, crearEmbed, getHoraChile } from "../utils.js";
 import { getTrato } from "../personality.js";
@@ -21,7 +21,7 @@ export async function execute(interaction, bostezo) {
                 ? "*(Annie escribe suave con ojitos cerrados)* Zzz... ya está en mi libretita, no me despiertes mucho, ¿ya?"
                 : `¡Listo, ${getTrato()}! Te guardo tu recadito y te doy el alcance en **${min}** minutitos. No se te olvide, corazón.`
         )
-        .addFields({ name: "📨 Tu mensajito guardado", value: `**${mensaje}**` });
+        .addFields([{ name: "📨 Tu mensajito guardado", value: `**${mensaje}**` }]);
 
     await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
 
@@ -33,7 +33,7 @@ export async function execute(interaction, bostezo) {
                     ? `*(Annie se despierta suave y busca su libretita)* ¡Uy! Casi se me olvida... pero aquí está, ${interaction.user}:`
                     : `¡Despierta po, ${getTrato()}! Aquí te traigo tu recadito dulce con mucho cariño.`
             )
-            .addFields({ name: "📌 Lo que tenías que recordar", value: `**${mensaje}**` });
+            .addFields([{ name: "📌 Lo que tenías que recordar", value: `**${mensaje}**` }]);
 
         interaction.channel.send({ content: `${interaction.user}`, embeds: [embedRecordatorio] }).catch(console.error);
     }, min * 60000);

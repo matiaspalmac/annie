@@ -1,4 +1,4 @@
-import { SlashCommandBuilder } from "discord.js";
+import { SlashCommandBuilder, MessageFlags } from "discord.js";
 import { CONFIG } from "../config.js";
 import { db } from "../db.js";
 import { crearEmbed, agregarNarrativa } from "../utils.js";
@@ -26,10 +26,10 @@ export async function execute(interaction, bostezo) {
             .setDescription(`**${hoy.tipo || "--"}**\n${hoy.descripcion || ""}`);
 
         if (timeline.length > 0) {
-            embed.addFields({
+            embed.addFields([{
                 name: "Pronóstico por hora",
                 value: timeline.map(h => `${h.hora}:00 — ${h.texto}`).join("\n"),
-            });
+            }]);
         }
 
         agregarNarrativa(embed, "clima");

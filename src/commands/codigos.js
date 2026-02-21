@@ -21,10 +21,10 @@ export async function execute(interaction, bostezo) {
         });
 
     if (result.rows.length === 0) {
-        embed.addFields({
+        embed.addFields([{
             name: "¡Pucha, vecinitos!",
             value: "No tengo códigos nuevitos para repartir ahora. Ojalá lleguen pronto cartitas con regalos.",
-        });
+        }]);
         return interaction.reply({ embeds: [embed] });
     }
 
@@ -37,11 +37,11 @@ export async function execute(interaction, bostezo) {
 
         const expiraTexto = info.expirationDate ? `Vence: ${info.expirationDate}` : "Sin fecha de vencimiento conocida";
         const recompensas = info.rewards.map(r => `• ${r}`).join("\n");
-        embed.addFields({
+        embed.addFields([{
             name: `🗝️ Código: \`${code}\``,
             value: `**🎁 Recompensas:**\n${recompensas}\n*⏳ ${expiraTexto}*`,
             inline: false,
-        });
+        }]);
     });
 
     agregarNarrativa(embed, "codigos");

@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, EmbedBuilder } from "discord.js";
+import { SlashCommandBuilder, EmbedBuilder, MessageFlags } from "discord.js";
 import { CONFIG } from "../config.js";
 import { db } from "../db.js";
 import { crearEmbed, agregarNarrativa } from "../utils.js";
@@ -8,18 +8,18 @@ export const data = new SlashCommandBuilder()
     .setDescription("Muestra a los vecinos más aplicaditos del pueblito")
     .addStringOption(o =>
         o.setName("tipo")
-         .setDescription("¿Qué ranking quieres ver?")
-         .setRequired(false)
-         .addChoices(
-            { name: "Experiencia (XP)", value: "xp" },
-            { name: "Moneditas", value: "monedas" }
-         )
+            .setDescription("¿Qué ranking quieres ver?")
+            .setRequired(false)
+            .addChoices(
+                { name: "Experiencia (XP)", value: "xp" },
+                { name: "Moneditas", value: "monedas" }
+            )
     );
 
 export async function execute(interaction, bostezo) {
     const tipo = interaction.options.getString("tipo") || "xp";
     const esXP = tipo === "xp";
-    
+
     const result = await db.execute(`
         SELECT id, nivel, xp, monedas 
         FROM usuarios 
@@ -28,9 +28,9 @@ export async function execute(interaction, bostezo) {
     `);
 
     if (result.rows.length === 0) {
-        return interaction.reply({ 
-            content: `${bostezo} Aún no hay nadie paseando por el pueblito... ¡se el primero!`, 
-            flags: MessageFlags.Ephemeral 
+        return interaction.reply({
+            content: `${bostezo} Aún no hay nadie paseando por el pueblito... ¡se el primero!`,
+            flags: MessageFlags.Ephemeral
         });
     }
 
@@ -39,7 +39,7 @@ export async function execute(interaction, bostezo) {
         .setDescription("Aquí están los corazones más activos de Heartopia. ¡Sigan así de lindos!");
 
     let leaderboard = "";
-    
+
     result.rows.forEach((row, index) => {
         let medalla = `${index + 1}.`;
         if (index === 0) medalla = "🥇";
@@ -50,7 +50,7 @@ export async function execute(interaction, bostezo) {
         leaderboard += `${medalla} <@${row.id}> — ${valor}\n\n`;
     });
 
-    embed.addFields({ name: "Top 10", value: leaderboard });
+    embed.addFields([{ name: "Top 10", value: leaderboard }]);
     agregarNarrativa(embed, "general");
 
     return interaction.reply({ content: bostezo, embeds: [embed] });

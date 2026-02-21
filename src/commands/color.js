@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, EmbedBuilder } from "discord.js";
+import { SlashCommandBuilder, EmbedBuilder, MessageFlags } from "discord.js";
 import { CONFIG } from "../config.js";
 import { db } from "../db.js";
 import { crearEmbed } from "../utils.js";

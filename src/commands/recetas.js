@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
+import { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from "discord.js";
 import { CONFIG } from "../config.js";
 import { esTodos } from "../data.js";
 import { db } from "../db.js";
@@ -74,13 +74,13 @@ export async function execute(interaction, bostezo) {
     if (row.energia && row.energia !== "null") {
         const data = JSON.parse(row.energia);
         if (Array.isArray(data)) {
-            embed.addFields({ name: "Energía", value: data.join(", "), inline: true });
+            embed.addFields([{ name: "Energía", value: data.join(", "), inline: true }]);
         } else {
             if (data.base) {
-                embed.addFields({ name: "Energía", value: `${data.base}`, inline: true });
+                embed.addFields([{ name: "Energía", value: `${data.base}`, inline: true }]);
             }
             if (data.buff) {
-                embed.addFields({ name: "Buff", value: data.buff, inline: true });
+                embed.addFields([{ name: "Buff", value: data.buff, inline: true }]);
             }
         }
     }

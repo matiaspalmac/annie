@@ -1,4 +1,4 @@
-import { SlashCommandBuilder } from "discord.js";
+import { SlashCommandBuilder, MessageFlags } from "discord.js";
 import { CONFIG } from "../config.js";
 import { db } from "../db.js";
 import { isEstrellaActiva, setEstrellaActiva, crearEmbed } from "../utils.js";

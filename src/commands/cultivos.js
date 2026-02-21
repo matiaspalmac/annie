@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
+import { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from "discord.js";
 import { CONFIG } from "../config.js";
 import { esTodos } from "../data.js";
 import { db } from "../db.js";
@@ -60,7 +60,7 @@ export async function execute(interaction, bostezo) {
         .setDescription("Recuerda regar la plantita todos los días, tesoro.");
 
     if (row.tiempo_crecimiento) {
-        embed.addFields({ name: "Crecimiento", value: `${row.tiempo_crecimiento}`, inline: true });
+        embed.addFields([{ name: "Crecimiento", value: `${row.tiempo_crecimiento}`, inline: true }]);
     }
     embed.addFields(
         { name: "⭐ Nivel jardinería", value: String(data.nivel_jardineria), inline: true },

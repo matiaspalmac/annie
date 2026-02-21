@@ -1,4 +1,4 @@
-import { SlashCommandBuilder } from "discord.js";
+import { SlashCommandBuilder, MessageFlags } from "discord.js";
 import { getGameId } from "../db.js";
 
 export const data = new SlashCommandBuilder()

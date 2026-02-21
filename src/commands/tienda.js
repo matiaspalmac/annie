@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder } from "discord.js";
+import { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, MessageFlags } from "discord.js";
 import { CONFIG } from "../config.js";
 import { db } from "../db.js";
 import { crearEmbed } from "../utils.js";
@@ -44,7 +44,9 @@ export async function execute(interaction, bostezo) {
         });
     });
 
-    embed.addFields({ name: "Inventario del Mercader", value: shopText, inline: false });
+    embed.setDescription(`¡Bienvenido! Tienes en tus bolsillos ✨ **${userXp} XP** y 💰 **${userData.monedas} Moneditas**.\n\n` +
+        `Aquí puedes comprar roles que teñirán tu nombre en el chat de un color especial.\n\n` +
+        `**Inventario del Mercader:**\n${shopText}`);
 
     const components = [];
     if (opcionesMenu.length > 0) {
