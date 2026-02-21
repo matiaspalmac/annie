@@ -6,7 +6,7 @@ import { crearEmbed } from "../utils.js";
 // Estructura de la tienda ahora se lee desde la DB
 export const data = new SlashCommandBuilder()
     .setName("tienda")
-    .setDescription("Compra colores y cositas lindas con tus Puntos de Experiencia (XP)");
+    .setDescription("Compra colores y cositas lindas con tus Moneditas 💰");
 
 export async function execute(interaction, bostezo) {
     // 1. Fetch user wealth
@@ -20,31 +20,31 @@ export async function execute(interaction, bostezo) {
     }
 
     const userData = result.rows[0];
-    const userXp = Number(userData.xp);
+    const userMonedas = Number(userData.monedas);
 
     // 2. Render Shop Embed
     const embed = crearEmbed(CONFIG.COLORES.DORADO)
         .setTitle("🛒 La Tiendita de Colores")
-        .setDescription(`¡Bienvenido! Tienes en tus bolsillos ✨ **${userXp} XP** y 💰 **${userData.monedas} Moneditas**.\n\n` +
+        .setDescription(`¡Bienvenido! Tienes en tus bolsillos ✨ **${Number(userData.xp)} XP** y 💰 **${userMonedas} Moneditas**.\n\n` +
             `Aquí puedes comprar roles que teñirán tu nombre en el chat de un color especial.`);
 
     // Fetch shop items from DB
-    const resTienda = await db.execute("SELECT * FROM tienda_items ORDER BY precio_xp ASC");
+    const resTienda = await db.execute("SELECT * FROM tienda_items ORDER BY precio_monedas ASC");
     const ITEMS_TIENDA = resTienda.rows;
 
     let shopText = ITEMS_TIENDA.length > 0 ? "" : "La tienda está vacía ahora mismo. ¡Vuelve más ratito!";
     const opcionesMenu = [];
 
     ITEMS_TIENDA.forEach((item, index) => {
-        shopText += `**${index + 1}. ${item.nombre}**\n${item.descripcion}\n💎 Precio: **${item.precio_xp} XP**\n\n`;
+        shopText += `**${index + 1}. ${item.nombre}**\n${item.descripcion}\n💰 Precio: **${item.precio_monedas} Moneditas**\n\n`;
         opcionesMenu.push({
             label: String(item.nombre).slice(0, 100),
-            description: `Cuesta ${item.precio_xp} XP`,
+            description: `Cuesta ${item.precio_monedas} Moneditas`,
             value: String(item.id).slice(0, 100)
         });
     });
 
-    embed.setDescription(`¡Bienvenido! Tienes en tus bolsillos ✨ **${userXp} XP** y 💰 **${userData.monedas} Moneditas**.\n\n` +
+    embed.setDescription(`¡Bienvenido! Tienes en tus bolsillos ✨ **${Number(userData.xp)} XP** y 💰 **${userMonedas} Moneditas**.\n\n` +
         `Aquí puedes comprar roles que teñirán tu nombre en el chat de un color especial.\n\n` +
         `**Inventario del Mercader:**\n${shopText}`);
 

@@ -611,19 +611,19 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
     // Buscar precio y tipo en BD
     const resItem = await db.execute({
-      sql: "SELECT precio_xp, tipo, discord_role_id FROM tienda_items WHERE id = ?",
+      sql: "SELECT precio_monedas, tipo, discord_role_id FROM tienda_items WHERE id = ?",
       args: [itemSeleccionado]
     });
 
     if (resItem.rows.length === 0) {
       return interaction.followUp("Item inválido o ya no está en la tienda.");
     }
-    const precio = Number(resItem.rows[0].precio_xp);
+    const precio = Number(resItem.rows[0].precio_monedas);
     const tipoItem = resItem.rows[0].tipo;
     const discordRoleIdToAssign = resItem.rows[0].discord_role_id;
 
     const result = await db.execute({
-      sql: "SELECT xp, color_rol_id FROM usuarios WHERE id = ?",
+      sql: "SELECT monedas, color_rol_id FROM usuarios WHERE id = ?",
       args: [interaction.user.id]
     });
 
@@ -631,18 +631,18 @@ client.on(Events.InteractionCreate, async (interaction) => {
       return interaction.followUp("No estás registrado en el pueblito.");
     }
 
-    const currentXp = Number(result.rows[0].xp);
+    const currentMonedas = Number(result.rows[0].monedas);
 
-    if (currentXp < precio) {
-      return interaction.followUp(`Pucha corazón, te faltan **${precio - currentXp} XP** para comprar eso. ¡Sigue charlando en el pueblito!`);
+    if (currentMonedas < precio) {
+      return interaction.followUp(`Pucha corazón, te faltan **${precio - currentMonedas} Moneditas** para comprar eso. ¡Sigue charlando en el pueblito!`);
     }
 
     try {
-      // Descontar XP y dar
+      // Descontar monedas y dar
       if (tipoItem === 'tema') {
         // Lógica de Temas para la Wiki (F8)
         await db.execute({
-          sql: "UPDATE usuarios SET xp = xp - ?, tema_perfil = ? WHERE id = ?",
+          sql: "UPDATE usuarios SET monedas = monedas - ?, tema_perfil = ? WHERE id = ?",
           args: [precio, itemSeleccionado, interaction.user.id]
         });
 
@@ -651,7 +651,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       } else if (tipoItem === 'mascota') {
         // Lógica de Adopción de Mascotas F15
         await db.execute({
-          sql: "UPDATE usuarios SET xp = xp - ?, mascota_activa = ? WHERE id = ?",
+          sql: "UPDATE usuarios SET monedas = monedas - ?, mascota_activa = ? WHERE id = ?",
           args: [precio, itemSeleccionado, interaction.user.id]
         });
 
@@ -659,7 +659,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       } else {
         // Lógica de Roles/Colores
         await db.execute({
-          sql: "UPDATE usuarios SET xp = xp - ?, color_rol_id = ? WHERE id = ?",
+          sql: "UPDATE usuarios SET monedas = monedas - ?, color_rol_id = ? WHERE id = ?",
           args: [precio, itemSeleccionado, interaction.user.id]
         });
 

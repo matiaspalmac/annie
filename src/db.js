@@ -97,7 +97,7 @@ export async function initDB() {
             id TEXT PRIMARY KEY,
             nombre TEXT NOT NULL,
             descripcion TEXT,
-            precio_xp INTEGER DEFAULT 0,
+            precio_monedas INTEGER DEFAULT 0,
             tipo TEXT DEFAULT 'rol',
             discord_role_id TEXT DEFAULT NULL
           )
@@ -233,25 +233,25 @@ async function seedTienda() {
   if (Number(existing.rows[0].c) > 0) return;
 
   const items = [
-    { id: "color_custom", tipo: "rol", nombre: "Pincel Mágico (Color Personalizado)", descripcion: "Elige tu propio color hexadecimal para tu nombre en el chat.", precio_xp: 5000 },
-    { id: "color_rosa", tipo: "rol", nombre: "Tinte Rosado", descripcion: "Tiñe tu nombre de un hermoso color rosa chicle.", precio_xp: 300 },
-    { id: "color_celeste", tipo: "rol", nombre: "Tinte Celeste", descripcion: "Muestra tu nombre como el cielo despejado.", precio_xp: 300 },
-    { id: "color_dorado", tipo: "rol", nombre: "Tinte Dorado", descripcion: "Brilla como el oro puro en el servidor.", precio_xp: 500 },
+    { id: "color_custom", tipo: "rol", nombre: "Pincel Mágico (Color Personalizado)", descripcion: "Elige tu propio color hexadecimal para tu nombre en el chat.", precio_monedas: 50 },
+    { id: "color_rosa", tipo: "rol", nombre: "Tinte Rosado", descripcion: "Tiñe tu nombre de un hermoso color rosa chicle.", precio_monedas: 10 },
+    { id: "color_celeste", tipo: "rol", nombre: "Tinte Celeste", descripcion: "Muestra tu nombre como el cielo despejado.", precio_monedas: 10 },
+    { id: "color_dorado", tipo: "rol", nombre: "Tinte Dorado", descripcion: "Brilla como el oro puro en el servidor.", precio_monedas: 15 },
 
     // Temas de Perfil (F8)
-    { id: "tema_bosque", tipo: "tema", nombre: "Fondo: Bosque Mágico", descripcion: "Pinta tu Libretita Web de color verde musgo, hojas y espíritu aventurero.", precio_xp: 800 },
-    { id: "tema_playa", tipo: "tema", nombre: "Fondo: Playa Sirena", descripcion: "Lleva la arena amarilla y el sonido del mar azul a tu página web de Heartopia.", precio_xp: 800 },
-    { id: "tema_noche", tipo: "tema", nombre: "Fondo: Noche Estrellada", descripcion: "Oscurece la libretita de tu perfil bajo un hermoso manto estelar.", precio_xp: 1200 },
+    { id: "tema_bosque", tipo: "tema", nombre: "Fondo: Bosque Mágico", descripcion: "Pinta tu Libretita Web de color verde musgo, hojas y espíritu aventurero.", precio_monedas: 30 },
+    { id: "tema_playa", tipo: "tema", nombre: "Fondo: Playa Sirena", descripcion: "Lleva la arena amarilla y el sonido del mar azul a tu página web de Heartopia.", precio_monedas: 30 },
+    { id: "tema_noche", tipo: "tema", nombre: "Fondo: Noche Estrellada", descripcion: "Oscurece la libretita de tu perfil bajo un hermoso manto estelar.", precio_monedas: 50 },
 
     // Mascotas (F15)
-    { id: "mascota_kiltro", tipo: "mascota", nombre: "Cachupín, el Kiltro", descripcion: "Un perrito callejero apañador que te acompañará siempre en tu libretita web.", precio_xp: 15000 },
-    { id: "mascota_pudu", tipo: "mascota", nombre: "Pudú Tímido", descripcion: "El ciervo más pequeño y tierno de Chile. Cuidará tus logros en tu perfil.", precio_xp: 25000 },
-    { id: "mascota_gatito", tipo: "mascota", nombre: "Gatito Romano", descripcion: "Un michi dormilón que ronroneará desde el encabezado de tu página web.", precio_xp: 15000 },
+    { id: "mascota_kiltro", tipo: "mascota", nombre: "Cachupín, el Kiltro", descripcion: "Un perrito callejero apañador que te acompañará siempre en tu libretita web.", precio_monedas: 300 },
+    { id: "mascota_pudu", tipo: "mascota", nombre: "Pudú Tímido", descripcion: "El ciervo más pequeño y tierno de Chile. Cuidará tus logros en tu perfil.", precio_monedas: 500 },
+    { id: "mascota_gatito", tipo: "mascota", nombre: "Gatito Romano", descripcion: "Un michi dormilón que ronroneará desde el encabezado de tu página web.", precio_monedas: 300 },
   ];
   for (const item of items) {
     await db.execute({
-      sql: "INSERT OR IGNORE INTO tienda_items (id, nombre, descripcion, precio_xp, tipo) VALUES (?, ?, ?, ?, ?)",
-      args: [item.id, item.nombre, item.descripcion, item.precio_xp, item.tipo],
+      sql: "INSERT OR IGNORE INTO tienda_items (id, nombre, descripcion, precio_monedas, tipo) VALUES (?, ?, ?, ?, ?)",
+      args: [item.id, item.nombre, item.descripcion, item.precio_monedas, item.tipo],
     });
   }
   console.log("[DB] Tienda sembrada con items iniciales y temas.");
