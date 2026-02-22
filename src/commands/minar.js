@@ -1,7 +1,7 @@
 import { SlashCommandBuilder } from "discord.js";
 import { db } from "../db.js";
 import { getBostezo } from "../utils.js";
-import { ganarXP, registrarBitacora } from "../progreso.js";
+import { ganarXP, registrarBitacora, tieneBoostActivo } from "../progreso.js";
 
 // Cooldown de 3 minutos = 180000 ms
 const COOLDOWN_MINAR = 180000;
@@ -51,8 +51,10 @@ export async function execute(interaction, bostezo) {
         let emoji = "";
         let rarezaTexto = "";
 
-        const chanceFluorita = Math.min(5 + bonoNivel, 25);
-        const chanceMineral = Math.min(30 + (bonoNivel * 1.5), 60);
+        const amuletoActivo = await tieneBoostActivo(userId, "amuleto_suerte_15m");
+        const bonusSuerte = amuletoActivo ? 10 : 0;
+        const chanceFluorita = Math.min(5 + bonoNivel + bonusSuerte, 35);
+        const chanceMineral = Math.min(30 + (bonoNivel * 1.5) + bonusSuerte, 70);
 
         if (rand <= chanceFluorita) {
             itemId = "Fluorita impecable";

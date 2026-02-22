@@ -37,8 +37,11 @@ export async function execute(interaction, bostezo) {
 
     const userData = result.rows[0];
 
-    // Si su color_rol_id no existe O si compró un rol de servidor predeterminado (los base names en vez de ID), rechazar
-    if (!userData.color_rol_id || userData.color_rol_id === "color_rosa" || userData.color_rol_id === "color_celeste" || userData.color_rol_id === "color_dorado") {
+    const colorToken = typeof userData.color_rol_id === "string" ? userData.color_rol_id : "";
+    const esTokenColorNoCustom = colorToken.startsWith("color_") && colorToken !== "color_custom";
+
+    // Solo permitir /color cuando compró color_custom o ya tiene rol personalizado creado
+    if (!colorToken || esTokenColorNoCustom) {
         return interaction.reply({ content: `¡Ahí! No has comprado el **Pincel Mágico** en la \`/tienda\` todavía para poder poner puros colores personalizados.`, flags: MessageFlags.Ephemeral });
     }
 
@@ -49,8 +52,8 @@ export async function execute(interaction, bostezo) {
 
     try {
         // Find existing custom role by ID if they already used this command once
-        if (userData.color_rol_id !== "color_custom") { // "color_custom" is the token they get from the shop
-            role = await interaction.guild.roles.fetch(userData.color_rol_id);
+        if (colorToken !== "color_custom") { // "color_custom" is the token they get from the shop
+            role = await interaction.guild.roles.fetch(colorToken);
         }
 
         if (role) {

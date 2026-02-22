@@ -6,6 +6,22 @@ import { CONFIG } from "./config.js";
 
 export async function ganarXP(userId, habilidad, cantidad, interaction) {
     try {
+        const ahora = Date.now();
+        let cantidadFinal = Number(cantidad);
+
+        try {
+            const resBoost = await db.execute({
+                sql: "SELECT fecha_expira FROM boosts_activos WHERE user_id = ? AND boost_id = 'booster_xp_30m' LIMIT 1",
+                args: [userId]
+            });
+            const expira = Number(resBoost.rows[0]?.fecha_expira || 0);
+            if (expira > ahora) {
+                cantidadFinal = Math.max(1, Math.round(cantidadFinal * 1.25));
+            }
+        } catch {
+            // Si falla la lectura de boost, seguimos con XP normal
+        }
+
         // 1. Obtener datos actuales
         let nivelActual = 1;
         let xpActual = 0;
@@ -27,7 +43,7 @@ export async function ganarXP(userId, habilidad, cantidad, interaction) {
         }
 
         // 2. Sumar XP
-        xpActual += cantidad;
+        xpActual += cantidadFinal;
         let xpNecesaria = nivelActual * 50; // Fórmula simple: n * 50
         let subioNivel = false;
 
@@ -56,6 +72,19 @@ export async function ganarXP(userId, habilidad, cantidad, interaction) {
     } catch (err) {
         console.error("Error en ganarXP:", err);
         return 1;
+    }
+}
+
+export async function tieneBoostActivo(userId, boostId) {
+    try {
+        const res = await db.execute({
+            sql: "SELECT fecha_expira FROM boosts_activos WHERE user_id = ? AND boost_id = ? LIMIT 1",
+            args: [userId, boostId]
+        });
+        const expira = Number(res.rows[0]?.fecha_expira || 0);
+        return expira > Date.now();
+    } catch {
+        return false;
     }
 }
 

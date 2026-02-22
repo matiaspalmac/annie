@@ -714,7 +714,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
     // Buscar precio y tipo en BD
     const resItem = await db.execute({
-      sql: "SELECT precio_monedas, tipo, discord_role_id FROM tienda_items WHERE id = ?",
+      sql: "SELECT precio_monedas, tipo, discord_role_id, nombre FROM tienda_items WHERE id = ?",
       args: [itemSeleccionado]
     });
 
@@ -722,8 +722,9 @@ client.on(Events.InteractionCreate, async (interaction) => {
       return interaction.followUp("Item inválido o ya no está en la tienda.");
     }
     const precio = Number(resItem.rows[0].precio_monedas);
-    const tipoItem = resItem.rows[0].tipo;
+    const tipoItem = String(resItem.rows[0].tipo || "rol");
     const discordRoleIdToAssign = resItem.rows[0].discord_role_id;
+    const nombreItem = String(resItem.rows[0].nombre || itemSeleccionado);
 
     const result = await db.execute({
       sql: "SELECT monedas, color_rol_id FROM usuarios WHERE id = ?",
@@ -742,7 +743,145 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
     try {
       // Descontar monedas y dar
-      if (tipoItem === 'tema') {
+      if (tipoItem === 'consumible') {
+        let duracionMs = 0;
+        let boostId = "";
+        let textoEfecto = "";
+
+        if (itemSeleccionado === "booster_xp_30m") {
+          duracionMs = 30 * 60 * 1000;
+          boostId = "booster_xp_30m";
+          textoEfecto = "+25% XP por 30 minutos";
+        } else if (itemSeleccionado === "amuleto_suerte_15m") {
+          duracionMs = 15 * 60 * 1000;
+          boostId = "amuleto_suerte_15m";
+          textoEfecto = "+chance de drops raros por 15 minutos";
+        }
+
+        if (!boostId || duracionMs <= 0) {
+          return interaction.followUp("Este consumible aún no está disponible.");
+        }
+
+        const ahora = Date.now();
+        const nuevoExpira = ahora + duracionMs;
+
+        await db.execute({
+          sql: "UPDATE usuarios SET monedas = monedas - ? WHERE id = ?",
+          args: [precio, interaction.user.id]
+        });
+
+        await db.execute({
+          sql: `INSERT INTO boosts_activos (user_id, boost_id, fecha_expira)
+                VALUES (?, ?, ?)
+                ON CONFLICT(user_id, boost_id) DO UPDATE SET
+                fecha_expira = CASE
+                  WHEN boosts_activos.fecha_expira > ? THEN boosts_activos.fecha_expira + ?
+                  ELSE ?
+                END`,
+          args: [interaction.user.id, boostId, nuevoExpira, ahora, duracionMs, nuevoExpira]
+        });
+
+        await db.execute({
+          sql: `INSERT INTO inventario_economia (user_id, item_id, cantidad)
+                VALUES (?, ?, 1)
+                ON CONFLICT(user_id, item_id) DO UPDATE SET cantidad = inventario_economia.cantidad + 1`,
+          args: [interaction.user.id, itemSeleccionado]
+        });
+
+        await interaction.followUp(`✨ Consumible aplicado: **${nombreItem}**. Efecto activo: **${textoEfecto}**.`);
+
+      } else if (tipoItem === 'servicio') {
+        if (itemSeleccionado !== "reset_racha_perdon") {
+          return interaction.followUp("Este servicio aún no está disponible.");
+        }
+
+        const resServicio = await db.execute({
+          sql: "SELECT ultimo_reset_racha FROM servicios_usuarios WHERE user_id = ? LIMIT 1",
+          args: [interaction.user.id]
+        });
+
+        const ultimoUso = String(resServicio.rows[0]?.ultimo_reset_racha || "");
+        if (ultimoUso) {
+          const msDesdeUltimo = Date.now() - new Date(ultimoUso).getTime();
+          const semanaMs = 7 * 24 * 60 * 60 * 1000;
+          if (!Number.isNaN(msDesdeUltimo) && msDesdeUltimo < semanaMs) {
+            const faltanDias = Math.ceil((semanaMs - msDesdeUltimo) / (24 * 60 * 60 * 1000));
+            return interaction.followUp(`Este servicio solo se puede usar **1 vez por semana**. Te faltan ~**${faltanDias} día(s)**.`);
+          }
+        }
+
+        const resAyer = await db.execute({
+          sql: `SELECT date(
+                  'now',
+                  COALESCE((SELECT valor FROM configuracion WHERE clave = 'CHILE_TZ_OFFSET_SQLITE'), '-3 hours'),
+                  '-1 day'
+                ) as ayer`
+        });
+        const fechaAyer = String(resAyer.rows[0]?.ayer || "");
+
+        const resActividadAyer = await db.execute({
+          sql: `SELECT acciones, xp_ganado, monedas_ganadas
+                FROM actividad_diaria
+                WHERE user_id = ? AND fecha = ?
+                LIMIT 1`,
+          args: [interaction.user.id, fechaAyer]
+        });
+
+        const huboActividadAyer = resActividadAyer.rows.length > 0 && (
+          Number(resActividadAyer.rows[0].acciones || 0) > 0 ||
+          Number(resActividadAyer.rows[0].xp_ganado || 0) > 0 ||
+          Number(resActividadAyer.rows[0].monedas_ganadas || 0) > 0
+        );
+
+        if (huboActividadAyer) {
+          return interaction.followUp("Tu racha no se rompió ayer, así que no necesitas usar este servicio todavía 💖.");
+        }
+
+        await db.execute({
+          sql: "UPDATE usuarios SET monedas = monedas - ? WHERE id = ?",
+          args: [precio, interaction.user.id]
+        });
+
+        await db.execute({
+          sql: `INSERT INTO actividad_diaria (user_id, fecha, xp_ganado, monedas_ganadas, acciones)
+                VALUES (?, ?, 0, 0, 1)
+                ON CONFLICT(user_id, fecha) DO UPDATE SET
+                  acciones = MAX(actividad_diaria.acciones, 1)`,
+          args: [interaction.user.id, fechaAyer]
+        });
+
+        await db.execute({
+          sql: `INSERT INTO servicios_usuarios (user_id, ultimo_reset_racha)
+                VALUES (?, datetime('now'))
+                ON CONFLICT(user_id) DO UPDATE SET ultimo_reset_racha = excluded.ultimo_reset_racha`,
+          args: [interaction.user.id]
+        });
+
+        await db.execute({
+          sql: `INSERT INTO inventario_economia (user_id, item_id, cantidad)
+                VALUES (?, ?, 1)
+                ON CONFLICT(user_id, item_id) DO UPDATE SET cantidad = inventario_economia.cantidad + 1`,
+          args: [interaction.user.id, itemSeleccionado]
+        });
+
+        await interaction.followUp("🛟 Servicio aplicado: recuperé tu día perdido de ayer para mantener la racha activa.");
+
+      } else if (tipoItem === 'marco') {
+        await db.execute({
+          sql: "UPDATE usuarios SET monedas = monedas - ?, marco_perfil = ? WHERE id = ?",
+          args: [precio, itemSeleccionado, interaction.user.id]
+        });
+
+        await db.execute({
+          sql: `INSERT INTO inventario_economia (user_id, item_id, cantidad)
+                VALUES (?, ?, 1)
+                ON CONFLICT(user_id, item_id) DO UPDATE SET cantidad = inventario_economia.cantidad + 1`,
+          args: [interaction.user.id, itemSeleccionado]
+        });
+
+        await interaction.followUp(`🖼️ ¡Listo! Equipé el **${nombreItem}** en tu perfil web.`);
+
+      } else if (tipoItem === 'tema') {
         // Lógica de Temas para la Wiki (F8)
         await db.execute({
           sql: "UPDATE usuarios SET monedas = monedas - ?, tema_perfil = ? WHERE id = ?",
@@ -1102,6 +1241,14 @@ client.on(Events.InteractionCreate, async (interaction) => {
           sql: "SELECT item_id FROM inventario_economia WHERE user_id = ? AND item_id LIKE 'tema_%' AND cantidad > 0",
           args: [targetUserId]
         });
+        const resMarcos = await db.execute({
+          sql: "SELECT item_id FROM inventario_economia WHERE user_id = ? AND item_id LIKE 'marco_perfil_%' AND cantidad > 0",
+          args: [targetUserId]
+        });
+        const resConsumibles = await db.execute({
+          sql: "SELECT item_id, cantidad FROM inventario_economia WHERE user_id = ? AND item_id IN ('booster_xp_30m','amuleto_suerte_15m','reset_racha_perdon') AND cantidad > 0",
+          args: [targetUserId]
+        });
         const resTitulos = await db.execute({
           sql: "SELECT titulo, equipado FROM titulos WHERE user_id = ? ORDER BY equipado DESC, titulo ASC",
           args: [targetUserId]
@@ -1109,6 +1256,8 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
         const mascotas = resMascotas.rows.map(r => String(r.item_id).replace("mascota_", ""));
         const temas = resTemas.rows.map(r => String(r.item_id).replace("tema_", ""));
+        const marcos = resMarcos.rows.map(r => String(r.item_id).replace("marco_perfil_", ""));
+        const consumibles = resConsumibles.rows.map(r => `${String(r.item_id)} x${Number(r.cantidad || 0)}`);
         const titulos = resTitulos.rows.map(r => `${Number(r.equipado) === 1 ? "✨ " : ""}${String(r.titulo)}`);
 
         const embed = crearEmbed(CONFIG.COLORES.DORADO)
@@ -1116,6 +1265,8 @@ client.on(Events.InteractionCreate, async (interaction) => {
           .addFields(
             { name: "🐾 Mascotas", value: mascotas.length ? mascotas.join(", ") : "Ninguna", inline: false },
             { name: "🖼️ Temas", value: temas.length ? temas.join(", ") : "Ninguno", inline: false },
+            { name: "🪞 Marcos de Perfil", value: marcos.length ? marcos.join(", ") : "Ninguno", inline: false },
+            { name: "⚗️ Consumibles / Servicios", value: consumibles.length ? consumibles.join("\n") : "Ninguno", inline: false },
             { name: "🏆 Títulos", value: titulos.length ? titulos.join("\n") : "Ninguno", inline: false }
           );
 

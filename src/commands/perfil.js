@@ -15,11 +15,11 @@ export async function execute(interaction, bostezo) {
     const targetUser = reqUser.bot ? interaction.user : reqUser;
 
     const resDb = await db.execute({
-        sql: "SELECT monedas, xp, nivel, color_rol_id, tema_perfil, mascota_activa, banner_url FROM usuarios WHERE id = ?",
+        sql: "SELECT monedas, xp, nivel, color_rol_id, tema_perfil, mascota_activa, banner_url, marco_perfil FROM usuarios WHERE id = ?",
         args: [targetUser.id]
     });
 
-    const userData = resDb.rows.length > 0 ? resDb.rows[0] : { monedas: 0, xp: 0, nivel: 1, color_rol_id: null, tema_perfil: "default", mascota_activa: null, banner_url: null };
+    const userData = resDb.rows.length > 0 ? resDb.rows[0] : { monedas: 0, xp: 0, nivel: 1, color_rol_id: null, tema_perfil: "default", mascota_activa: null, banner_url: null, marco_perfil: "default" };
     const xp = Number(userData.xp);
     const nivel = Number(userData.nivel);
     const monedas = Number(userData.monedas);
@@ -214,6 +214,32 @@ export async function execute(interaction, bostezo) {
         temaActivoText = `\n🖼️ **Tema de Perfil:** ${userData.tema_perfil.replace('tema_', '')}`;
     }
 
+    let marcoActivoText = "";
+    if (userData.marco_perfil && userData.marco_perfil !== "default") {
+        marcoActivoText = `\n🪞 **Marco de Perfil:** ${String(userData.marco_perfil).replace('marco_perfil_', '')}`;
+    }
+
+    const resBoosts = await db.execute({
+        sql: "SELECT boost_id, fecha_expira FROM boosts_activos WHERE user_id = ?",
+        args: [targetUser.id]
+    });
+    const ahora = Date.now();
+    const boostsActivos = resBoosts.rows
+        .filter(r => Number(r.fecha_expira || 0) > ahora)
+        .map(r => {
+            const id = String(r.boost_id || "");
+            const minutos = Math.max(1, Math.ceil((Number(r.fecha_expira) - ahora) / 60000));
+            if (id === "booster_xp_30m") return `⚗️ Booster XP (${minutos}m)`;
+            if (id === "amuleto_suerte_15m") return `🍀 Amuleto Suerte (${minutos}m)`;
+            return `${id} (${minutos}m)`;
+        });
+
+    const resComprasEspeciales = await db.execute({
+        sql: "SELECT item_id, cantidad FROM inventario_economia WHERE user_id = ? AND item_id IN ('booster_xp_30m','amuleto_suerte_15m','reset_racha_perdon') AND cantidad > 0",
+        args: [targetUser.id]
+    });
+    const comprasEspeciales = resComprasEspeciales.rows.map(r => `${String(r.item_id)} x${Number(r.cantidad || 0)}`);
+
     //====== Titulo Economico ======
     let tituloEconomico = "Mendigo del Pueblito";
     if (monedas >= 10000) tituloEconomico = "Mente Maestra de Wall Street";
@@ -245,14 +271,16 @@ export async function execute(interaction, bostezo) {
             `💼 **Título Económico**\n${tituloEconomico}\n` +
             `🏆 **Puesto Ranking**\n#${puestoRanking} de ${totalUsers} vecinitos (Top ${topEconomicoPercent}%)\n\n` +
             `Nivel: **${formatCompact(nivel)}** | XP: **${formatCompact(xp)}** | Moneditas: **${formatCompact(monedas)}**` +
-            `${mascotaActivaText}${temaActivoText}`
+            `${mascotaActivaText}${temaActivoText}${marcoActivoText}`
         )
         .addFields(
             { name: "🎯 Objetivo Siguiente", value: `Te faltan **${formatCompact(xpRestante)} XP** para subir a nivel ${nivel + 1}.\n${objetivoColeccion}`, inline: false },
             { name: "📈 Progreso al sig. Nivel", value: progresoBarra, inline: false },
             { name: "🔥 Actividad Mensual", value: `Racha activa: **${rachaActiva}** días | Días activos: **${diasActivosMes}**\nXP: **${formatCompact(xpMes)}** / ${formatCompact(objetivoXpMensual)} (${progresoXpMensual}%)\nMonedas: **${formatCompact(monedasMes)}**`, inline: false },
             { name: "🧭 Comparativa", value: `💸 Top ${topEconomicoPercent}% económico\n📚 Top ${topColeccionPercent}% coleccionista`, inline: true },
-            { name: "🏅 Insignias", value: insignias.length ? insignias.slice(0, 3).join("\n") : "Sin insignias", inline: true }
+            { name: "🏅 Insignias", value: insignias.length ? insignias.slice(0, 3).join("\n") : "Sin insignias", inline: true },
+            { name: "✨ Efectos Activos", value: boostsActivos.length ? boostsActivos.join("\n") : "Ninguno", inline: false },
+            { name: "🧪 Compras Especiales", value: comprasEspeciales.length ? comprasEspeciales.join("\n") : "Ninguna", inline: false }
         );
 
     if (userData.banner_url && /^https?:\/\//i.test(String(userData.banner_url))) {

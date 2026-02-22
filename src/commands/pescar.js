@@ -1,7 +1,7 @@
 import { SlashCommandBuilder } from "discord.js";
 import { db } from "../db.js";
 import { getBostezo } from "../utils.js";
-import { ganarXP, obtenerNivelHabilidad, registrarBitacora } from "../progreso.js";
+import { ganarXP, obtenerNivelHabilidad, registrarBitacora, tieneBoostActivo } from "../progreso.js";
 
 // Cooldown de 3 minutos = 180000 ms
 const COOLDOWN_PESCAR = 180000;
@@ -47,7 +47,9 @@ export async function execute(interaction, bostezo) {
         // 3. Lógica de drops (mejorada por nivel)
         // Chance base 5%. Cada nivel da +0.5% extra (máximo +25% en Nivel 50)
         const bonoNivel = (nivelPesca - 1) * 0.5;
-        const chanceBotella = Math.min(5 + bonoNivel, 30); // Tope de 30%
+        const amuletoActivo = await tieneBoostActivo(userId, "amuleto_suerte_15m");
+        const bonusSuerte = amuletoActivo ? 8 : 0;
+        const chanceBotella = Math.min(5 + bonoNivel + bonusSuerte, 45); // Tope de 45%
         const rand = Math.random() * 100;
 
         if (rand <= chanceBotella) {

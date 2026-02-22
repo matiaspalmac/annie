@@ -162,6 +162,20 @@ export async function initDB() {
           )
         `);
     await db.execute(`
+          CREATE TABLE IF NOT EXISTS boosts_activos (
+            user_id TEXT,
+            boost_id TEXT,
+            fecha_expira INTEGER,
+            PRIMARY KEY(user_id, boost_id)
+          )
+        `);
+    await db.execute(`
+          CREATE TABLE IF NOT EXISTS servicios_usuarios (
+            user_id TEXT PRIMARY KEY,
+            ultimo_reset_racha TEXT DEFAULT NULL
+          )
+        `);
+    await db.execute(`
           CREATE TABLE IF NOT EXISTS cooldowns (
             user_id TEXT,
             comando TEXT,
@@ -216,6 +230,7 @@ export async function initDB() {
 
     // Migraciones seguras para columnas añadidas posteriormente
     try { await db.execute("ALTER TABLE usuarios ADD COLUMN banner_url TEXT DEFAULT NULL"); } catch (e) { /* Ignorar si ya existe */ }
+    try { await db.execute("ALTER TABLE usuarios ADD COLUMN marco_perfil TEXT DEFAULT 'default'"); } catch (e) { /* Ignorar si ya existe */ }
 
     await db.execute(`
       CREATE TRIGGER IF NOT EXISTS trg_actividad_usuarios_update
@@ -374,32 +389,47 @@ export async function getLogsSince(sinceId) {
  * Siembra los items de la tienda si la tabla está vacía.
  */
 async function seedTienda() {
-  const existing = await db.execute("SELECT COUNT(*) as c FROM tienda_items");
-  if (Number(existing.rows[0].c) > 0) return;
-
   const items = [
-    { id: "color_custom", tipo: "rol", nombre: "Pincel Mágico (Color Personalizado)", descripcion: "Elige tu propio color hexadecimal para tu nombre en el chat.", precio_monedas: 50 },
-    { id: "color_rosa", tipo: "rol", nombre: "Tinte Rosado", descripcion: "Tiñe tu nombre de un hermoso color rosa chicle.", precio_monedas: 10 },
-    { id: "color_celeste", tipo: "rol", nombre: "Tinte Celeste", descripcion: "Muestra tu nombre como el cielo despejado.", precio_monedas: 10 },
-    { id: "color_dorado", tipo: "rol", nombre: "Tinte Dorado", descripcion: "Brilla como el oro puro en el servidor.", precio_monedas: 15 },
+    { id: "color_rosa", tipo: "rol", nombre: "Tinte Rosado", descripcion: "Tiñe tu nombre de un hermoso color rosa chicle.", precio_monedas: 120 },
+    { id: "color_celeste", tipo: "rol", nombre: "Tinte Celeste", descripcion: "Muestra tu nombre como el cielo despejado.", precio_monedas: 120 },
+    { id: "color_dorado", tipo: "rol", nombre: "Tinte Dorado", descripcion: "Brilla como el oro puro en el servidor.", precio_monedas: 180 },
+    { id: "color_lila", tipo: "rol", nombre: "Tinte Lila", descripcion: "Un tono violeta suave para destacar en el chat.", precio_monedas: 160 },
+    { id: "color_menta", tipo: "rol", nombre: "Tinte Menta", descripcion: "Un color fresco y tranquilito para tu nombre.", precio_monedas: 160 },
+    { id: "color_coral", tipo: "rol", nombre: "Tinte Coral", descripcion: "Un coral cálido y vivo para brillar conversando.", precio_monedas: 170 },
+    { id: "color_ambar", tipo: "rol", nombre: "Tinte Ámbar", descripcion: "Luce un tono dorado-naranja bien elegante.", precio_monedas: 190 },
+    { id: "color_custom", tipo: "rol", nombre: "Pincel Mágico (Color Personalizado)", descripcion: "Elige tu propio color hexadecimal para tu nombre en el chat.", precio_monedas: 450 },
 
     // Temas de Perfil (F8)
-    { id: "tema_bosque", tipo: "tema", nombre: "Fondo: Bosque Mágico", descripcion: "Pinta tu Libretita Web de color verde musgo, hojas y espíritu aventurero.", precio_monedas: 30 },
-    { id: "tema_playa", tipo: "tema", nombre: "Fondo: Playa Sirena", descripcion: "Lleva la arena amarilla y el sonido del mar azul a tu página web de Heartopia.", precio_monedas: 30 },
-    { id: "tema_noche", tipo: "tema", nombre: "Fondo: Noche Estrellada", descripcion: "Oscurece la libretita de tu perfil bajo un hermoso manto estelar.", precio_monedas: 50 },
+    { id: "tema_bosque", tipo: "tema", nombre: "Fondo: Bosque Mágico", descripcion: "Pinta tu Libretita Web de color verde musgo, hojas y espíritu aventurero.", precio_monedas: 350 },
+    { id: "tema_playa", tipo: "tema", nombre: "Fondo: Playa Sirena", descripcion: "Lleva la arena amarilla y el sonido del mar azul a tu página web de Heartopia.", precio_monedas: 350 },
+    { id: "tema_noche", tipo: "tema", nombre: "Fondo: Noche Estrellada", descripcion: "Oscurece la libretita de tu perfil bajo un hermoso manto estelar.", precio_monedas: 550 },
+
+    // Consumibles
+    { id: "booster_xp_30m", tipo: "consumible", nombre: "Booster XP 30m", descripcion: "Otorga +25% XP durante 30 minutos.", precio_monedas: 800 },
+    { id: "amuleto_suerte_15m", tipo: "consumible", nombre: "Amuleto de Suerte 15m", descripcion: "Aumenta la probabilidad de drops raros por 15 minutos.", precio_monedas: 950 },
+
+    // Servicio
+    { id: "reset_racha_perdon", tipo: "servicio", nombre: "Perdón de Racha", descripcion: "Recupera tu racha rota (1 vez por semana).", precio_monedas: 1200 },
+
+    // Marcos Web (F17)
+    { id: "marco_perfil_bronce", tipo: "marco", nombre: "Marco de Perfil Bronce", descripcion: "Marco cálido y elegante para tu avatar en la web.", precio_monedas: 450 },
+    { id: "marco_perfil_cristal", tipo: "marco", nombre: "Marco de Perfil Cristal", descripcion: "Brillo celeste y suave para tu libretita web.", precio_monedas: 650 },
+    { id: "marco_perfil_galaxia", tipo: "marco", nombre: "Marco de Perfil Galaxia", descripcion: "Un aro cósmico con vibra estelar para tu perfil.", precio_monedas: 800 },
 
     // Mascotas (F15)
-    { id: "mascota_kiltro", tipo: "mascota", nombre: "Cachupín, el Kiltro", descripcion: "Un perrito callejero apañador que te acompañará siempre en tu libretita web.", precio_monedas: 300 },
-    { id: "mascota_pudu", tipo: "mascota", nombre: "Pudú Tímido", descripcion: "El ciervo más pequeño y tierno de Chile. Cuidará tus logros en tu perfil.", precio_monedas: 500 },
-    { id: "mascota_gatito", tipo: "mascota", nombre: "Gatito Romano", descripcion: "Un michi dormilón que ronroneará desde el encabezado de tu página web.", precio_monedas: 300 },
+    { id: "mascota_kiltro", tipo: "mascota", nombre: "Cachupín, el Kiltro", descripcion: "Un perrito callejero apañador que te acompañará siempre en tu libretita web.", precio_monedas: 1800 },
+    { id: "mascota_gatito", tipo: "mascota", nombre: "Gatito Romano", descripcion: "Un michi dormilón que ronroneará desde el encabezado de tu página web.", precio_monedas: 1800 },
+    { id: "mascota_pudu", tipo: "mascota", nombre: "Pudú Tímido", descripcion: "El ciervo más pequeño y tierno de Chile. Cuidará tus logros en tu perfil.", precio_monedas: 2600 },
   ];
+
   for (const item of items) {
     await db.execute({
-      sql: "INSERT OR IGNORE INTO tienda_items (id, nombre, descripcion, precio_monedas, tipo) VALUES (?, ?, ?, ?, ?)",
+      sql: `INSERT OR IGNORE INTO tienda_items (id, nombre, descripcion, precio_monedas, tipo, discord_role_id)
+            VALUES (?, ?, ?, ?, ?, NULL)`,
       args: [item.id, item.nombre, item.descripcion, item.precio_monedas, item.tipo],
     });
   }
-  console.log("[DB] Tienda sembrada con items iniciales y temas.");
+  console.log(`[DB] Tienda verificada al inicio (${items.length} items base).`);
 }
 
 export async function buildAutocompleteCache() {

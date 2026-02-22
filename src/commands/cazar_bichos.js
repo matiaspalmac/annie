@@ -1,7 +1,7 @@
 import { SlashCommandBuilder } from "discord.js";
 import { db } from "../db.js";
 import { getBostezo } from "../utils.js";
-import { ganarXP, registrarEstadistica, registrarBitacora } from "../progreso.js";
+import { ganarXP, registrarEstadistica, registrarBitacora, tieneBoostActivo } from "../progreso.js";
 
 // Cooldown de 3 minutos = 180000 ms
 const COOLDOWN_BICHOS = 180000;
@@ -52,9 +52,11 @@ export async function execute(interaction, bostezo) {
         let mensajeObtencion = "";
 
         // Tarántula (Mortal) - 5% + bonoNivel
-        const chanceTarantula = Math.min(5 + bonoNivel, 20);
+        const amuletoActivo = await tieneBoostActivo(userId, "amuleto_suerte_15m");
+        const bonusSuerte = amuletoActivo ? 10 : 0;
+        const chanceTarantula = Math.min(5 + bonoNivel + bonusSuerte, 30);
         // Mariposa Morfo (Rara) - 20% + bonoNivel
-        const chanceMariposa = Math.min(25 + (bonoNivel * 1.5), 50);
+        const chanceMariposa = Math.min(25 + (bonoNivel * 1.5) + bonusSuerte, 60);
 
         if (rand <= chanceTarantula) {
             itemId = "Tarántula";

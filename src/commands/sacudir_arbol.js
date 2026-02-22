@@ -1,7 +1,7 @@
 import { SlashCommandBuilder } from "discord.js";
 import { db } from "../db.js";
 import { getBostezo } from "../utils.js";
-import { ganarXP, registrarEstadistica, registrarBitacora } from "../progreso.js";
+import { ganarXP, registrarEstadistica, registrarBitacora, tieneBoostActivo } from "../progreso.js";
 
 // Cooldown de 3 minutos = 180000 ms
 const COOLDOWN_ARBOL = 180000;
@@ -50,8 +50,10 @@ export async function execute(interaction, bostezo) {
         // 3. Lógica de drops
         // A mayor nivel, menos chance de abejas y más chance de lluvia de monedas
         const bonoNivel = (nivelRecoleccion - 1) * 0.5;
-        const chanceAbejas = Math.max(10 - bonoNivel, 2); // Mínimo 2% de abejas
-        const chanceMonedas = Math.min(20 + bonoNivel, 45); // Máximo 45% de lluvia
+        const amuletoActivo = await tieneBoostActivo(userId, "amuleto_suerte_15m");
+        const bonusSuerte = amuletoActivo ? 10 : 0;
+        const chanceAbejas = Math.max((10 - bonoNivel) - (amuletoActivo ? 4 : 0), 1); // Mínimo 1% de abejas
+        const chanceMonedas = Math.min(20 + bonoNivel + bonusSuerte, 55); // Máximo 55% de lluvia
 
         const rand = Math.random() * 100;
 
