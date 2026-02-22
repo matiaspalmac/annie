@@ -1,5 +1,7 @@
-import { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
+import { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
 import { obtenerEstadisticasCasino, obtenerTopCasino, obtenerBalance } from "../casino.js";
+import { crearEmbed, getBostezo } from "../utils.js";
+import { CONFIG } from "../config.js";
 
 export const data = new SlashCommandBuilder()
   .setName("casino")
@@ -20,38 +22,39 @@ export const data = new SlashCommandBuilder()
       .setDescription("Ver el top de ganadores del casino")
   );
 
-export async function execute(interaction) {
+export async function execute(interaction, bostezo) {
   const subcommand = interaction.options.getSubcommand();
+  
+  if (!bostezo) bostezo = getBostezo();
 
   if (subcommand === "menu") {
-    return await mostrarMenu(interaction);
+    return await mostrarMenu(interaction, bostezo);
   } else if (subcommand === "stats") {
-    return await mostrarStats(interaction);
+    return await mostrarStats(interaction, bostezo);
   } else if (subcommand === "top") {
-    return await mostrarTop(interaction);
+    return await mostrarTop(interaction, bostezo);
   }
 }
 
-async function mostrarMenu(interaction) {
+async function mostrarMenu(interaction, bostezo) {
   const userId = interaction.user.id;
   const balance = await obtenerBalance(userId);
 
-  const embed = new EmbedBuilder()
-    .setColor("#FFD700")
+  const embed = crearEmbed()
+    .setColor(CONFIG.COLOR)
     .setTitle("🎰 Casino de Heartopia 🎰")
     .setDescription(
-      "¡Bienvenido al casino! Elige tu juego favorito:\n\n" +
+      `${bostezo} ¡Bienvenido al casino, tesoro! Elige tu juego favorito, corazón:\n\n` +
       "🎰 **Slots** - Máquina tragamonedas con jackpots\n" +
       "🎡 **Ruleta** - Ruleta europea clásica\n" +
       "🪙 **Coinflip** - Cara o cruz simple\n" +
       "🃏 **Blackjack** - Vence a la casa en 21\n\n" +
       "📊 **Stats** - Ver tus estadísticas\n" +
       "🏆 **Top** - Ver los mejores jugadores\n\n" +
-      `💰 Tu balance: **${balance}** monedas\n` +
-      `💵 Apuestas: **50** - **50,000** monedas\n` +
+      `💰 Tu balance: **${balance}** moneditas\n` +
+      `💵 Apuestas: **50** - **50,000** moneditas\n` +
       `⏱️ Cooldown: **8 segundos** entre apuestas`
     )
-    .setFooter({ text: "¡Juega responsablemente! 🎲" })
     .setTimestamp();
 
   const row1 = new ActionRowBuilder().addComponents(
@@ -90,7 +93,7 @@ async function mostrarMenu(interaction) {
   });
 }
 
-async function mostrarStats(interaction) {
+async function mostrarStats(interaction, bostezo) {
   const userId = interaction.user.id;
   const stats = await obtenerEstadisticasCasino(userId);
   const balance = await obtenerBalance(userId);
@@ -98,52 +101,50 @@ async function mostrarStats(interaction) {
   const totalPartidas = stats.wins + stats.losses;
   const winRate = totalPartidas > 0 ? ((stats.wins / totalPartidas) * 100).toFixed(1) : 0;
 
-  const embed = new EmbedBuilder()
-    .setColor("#00BFFF")
+  const embed = crearEmbed()
+    .setColor(CONFIG.COLOR)
     .setTitle(`📊 Estadísticas del Casino`)
-    .setDescription(`Jugador: <@${userId}>`)
+    .setDescription(`${bostezo} Aquí están tus números, ${interaction.user.username}:\n\nJugador: <@${userId}>`)
     .addFields(
       { name: "✅ Victorias", value: `${stats.wins}`, inline: true },
       { name: "❌ Derrotas", value: `${stats.losses}`, inline: true },
       { name: "📈 Win Rate", value: `${winRate}%`, inline: true },
-      { name: "💰 Total Apostado", value: `${stats.total_betted} monedas`, inline: true },
-      { name: "💎 Ganancia Neta", value: `${stats.net_winnings >= 0 ? '+' : ''}${stats.net_winnings} monedas`, inline: true },
-      { name: "💰 Balance Actual", value: `${balance} monedas`, inline: true }
+      { name: "💰 Total Apostado", value: `${stats.total_betted} moneditas`, inline: true },
+      { name: "💎 Ganancia Neta", value: `${stats.net_winnings >= 0 ? '+' : ''}${stats.net_winnings} moneditas`, inline: true },
+      { name: "💰 Balance Actual", value: `${balance} moneditas`, inline: true }
     )
-    .setFooter({ text: "¡Sigue jugando para mejorar tus estadísticas!" })
     .setTimestamp();
 
   await interaction.reply({ embeds: [embed], ephemeral: true });
 }
 
-async function mostrarTop(interaction) {
+async function mostrarTop(interaction, bostezo) {
   const topJugadores = await obtenerTopCasino(10);
 
   if (topJugadores.length === 0) {
     return interaction.reply({
-      content: "📊 Aún no hay jugadores en el ranking del casino",
+      content: `${bostezo} Aún no hay jugadores en el ranking del casino, tesoro. ¡Sé el primero! 🎰`,
       ephemeral: true,
     });
   }
 
-  const embed = new EmbedBuilder()
-    .setColor("#FFD700")
+  const embed = crearEmbed()
+    .setColor(CONFIG.COLOR)
     .setTitle("🏆 Top Ganadores del Casino 🏆")
-    .setDescription("Los 10 jugadores con mayor ganancia neta:\n");
+    .setDescription(`${bostezo} Estos son los mejores del casino, corazón:\n\nLos 10 jugadores con mayor ganancia neta:\n`);
 
-  let descripcion = "";
+  let descripcion = embed.data.description;
   for (let i = 0; i < topJugadores.length; i++) {
     const jugador = topJugadores[i];
     const medalla = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `**${i + 1}.**`;
     const winRate = ((jugador.wins / (jugador.wins + jugador.losses)) * 100).toFixed(1);
     
     descripcion += `${medalla} <@${jugador.userId}>\n`;
-    descripcion += `💎 **${jugador.netWinnings >= 0 ? '+' : ''}${jugador.netWinnings}** monedas | `;
+    descripcion += `💎 **${jugador.netWinnings >= 0 ? '+' : ''}${jugador.netWinnings}** moneditas | `;
     descripcion += `${jugador.wins}W-${jugador.losses}L (${winRate}%)\n\n`;
   }
 
   embed.setDescription(descripcion);
-  embed.setFooter({ text: "¡Juega para subir en el ranking!" });
   embed.setTimestamp();
 
   await interaction.reply({ embeds: [embed] });
@@ -152,11 +153,12 @@ async function mostrarTop(interaction) {
 // Handler para los botones del menú
 export async function handleCasinoButton(interaction) {
   const action = interaction.customId.replace("casino_", "");
+  const bostezo = getBostezo();
 
   if (action === "stats") {
-    return await mostrarStats(interaction);
+    return await mostrarStats(interaction, bostezo);
   } else if (action === "top") {
-    return await mostrarTop(interaction);
+    return await mostrarTop(interaction, bostezo);
   } else if (action.startsWith("game_")) {
     const juego = action.replace("game_", "");
     const mensajes = {

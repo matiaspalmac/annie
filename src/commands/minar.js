@@ -3,8 +3,8 @@ import { db } from "../db.js";
 import { getBostezo } from "../utils.js";
 import { ganarXP, registrarBitacora, tieneBoostActivo } from "../progreso.js";
 
-// Cooldown de 3 minutos = 180000 ms
-const COOLDOWN_MINAR = 180000;
+// Cooldown de 5 minutos = 300000 ms
+const COOLDOWN_MINAR = 300000;
 
 export const data = new SlashCommandBuilder()
     .setName("minar")

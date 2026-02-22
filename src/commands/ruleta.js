@@ -9,6 +9,7 @@ import {
   CASINO_MIN_BET,
   CASINO_MAX_BET,
 } from "../casino.js";
+import { getBostezo } from "../utils.js";
 
 // Números rojos y negros en ruleta europea
 const ROJOS = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
@@ -60,11 +61,13 @@ export const data = new SlashCommandBuilder()
       .setMaxValue(36)
   );
 
-export async function execute(interaction) {
+export async function execute(interaction, bostezo) {
   const apuesta = interaction.options.getInteger("apuesta");
   const tipo = interaction.options.getString("tipo");
   const numeroElegido = interaction.options.getInteger("numero");
   const userId = interaction.user.id;
+  
+  if (!bostezo) bostezo = getBostezo();
 
   // Validar que si eligió "numero", debe proporcionar el número
   if (tipo === "numero" && numeroElegido === null) {
@@ -90,7 +93,7 @@ export async function execute(interaction) {
   const balanceActual = await obtenerBalance(userId);
   if (balanceActual < apuesta) {
     return interaction.reply({
-      content: `❌ No tienes suficientes monedas. Balance actual: **${balanceActual}** 💰`,
+      content: `${bostezo}❌ No tienes suficientes moneditas, corazón. Balance actual: **${balanceActual}** 💰`,
       ephemeral: true,
     });
   }

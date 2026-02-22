@@ -9,6 +9,7 @@ import {
   CASINO_MIN_BET,
   CASINO_MAX_BET,
 } from "../casino.js";
+import { getBostezo } from "../utils.js";
 
 // Mapas de emojis para las cartas
 const PALOS = ["♠️", "♥️", "♦️", "♣️"];
@@ -86,9 +87,11 @@ export const data = new SlashCommandBuilder()
       .setMaxValue(CASINO_MAX_BET)
   );
 
-export async function execute(interaction) {
+export async function execute(interaction, bostezo) {
   const apuesta = interaction.options.getInteger("apuesta");
   const userId = interaction.user.id;
+  
+  if (!bostezo) bostezo = getBostezo();
 
   // Validar apuesta
   const validacion = validarApuesta(apuesta);
@@ -114,7 +117,7 @@ export async function execute(interaction) {
   const balanceActual = await obtenerBalance(userId);
   if (balanceActual < apuesta) {
     return interaction.reply({
-      content: `❌ No tienes suficientes monedas. Balance actual: **${balanceActual}** 💰`,
+      content: `${bostezo}❌ No tienes suficientes moneditas, tesoro. Balance actual: **${balanceActual}** 💰`,
       ephemeral: true,
     });
   }
