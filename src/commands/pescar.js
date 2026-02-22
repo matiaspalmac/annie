@@ -3,8 +3,8 @@ import { db } from "../db.js";
 import { getBostezo } from "../utils.js";
 import { ganarXP, obtenerNivelHabilidad, registrarBitacora } from "../progreso.js";
 
-// Cooldown de 30 minutos = 1800000 ms
-const COOLDOWN_PESCAR = 1800000;
+// Cooldown de 3 minutos = 180000 ms
+const COOLDOWN_PESCAR = 180000;
 
 export const data = new SlashCommandBuilder()
     .setName("pescar")

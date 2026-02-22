@@ -3,8 +3,8 @@ import { db } from "../db.js";
 import { getBostezo } from "../utils.js";
 import { ganarXP, registrarEstadistica, registrarBitacora } from "../progreso.js";
 
-// Cooldown de 1 hora = 3600000 ms
-const COOLDOWN_ARBOL = 3600000;
+// Cooldown de 3 minutos = 180000 ms
+const COOLDOWN_ARBOL = 180000;
 
 export const data = new SlashCommandBuilder()
     .setName("sacudir_arbol")

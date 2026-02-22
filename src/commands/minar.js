@@ -3,8 +3,8 @@ import { db } from "../db.js";
 import { getBostezo } from "../utils.js";
 import { ganarXP, registrarBitacora } from "../progreso.js";
 
-// Cooldown de 1 minuto = 60000 ms
-const COOLDOWN_MINAR = 60000;
+// Cooldown de 3 minutos = 180000 ms
+const COOLDOWN_MINAR = 180000;
 
 export const data = new SlashCommandBuilder()
     .setName("minar")
@@ -26,8 +26,8 @@ export async function execute(interaction, bostezo) {
         if (resCd.rows.length > 0) {
             const limite = Number(resCd.rows[0].fecha_limite);
             if (ahora < limite) {
-                const faltanSegundos = Math.ceil((limite - ahora) / 1000);
-                return interaction.followUp(`${bostezo}Ay mi tesoro, tienes los bracitos cansados. Espera **${faltanSegundos} segundos** antes de volver a picar piedritas.`);
+                const faltanMinutos = Math.ceil((limite - ahora) / 60000);
+                return interaction.followUp(`${bostezo}Ay mi tesoro, tienes los bracitos cansados. Espera **${faltanMinutos} minutos** antes de volver a picar piedritas.`);
             }
         }
 
