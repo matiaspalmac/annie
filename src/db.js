@@ -144,6 +144,55 @@ export async function initDB() {
             PRIMARY KEY(evento_id, user_id)
           )
         `);
+    await db.execute(`
+          CREATE TABLE IF NOT EXISTS rifa_boletos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id TEXT NOT NULL,
+            fecha TEXT NOT NULL
+          )
+        `);
+    await db.execute(`
+          CREATE TABLE IF NOT EXISTS inventario_economia (
+            user_id TEXT,
+            item_id TEXT,
+            cantidad INTEGER DEFAULT 0,
+            PRIMARY KEY(user_id, item_id)
+          )
+        `);
+    await db.execute(`
+          CREATE TABLE IF NOT EXISTS cooldowns (
+            user_id TEXT,
+            comando TEXT,
+            extra_id TEXT,
+            fecha_limite INTEGER,
+            PRIMARY KEY(user_id, comando, extra_id)
+          )
+        `);
+    await db.execute(`
+          CREATE TABLE IF NOT EXISTS habilidades (
+            user_id TEXT,
+            habilidad TEXT,
+            nivel INTEGER DEFAULT 1,
+            xp INTEGER DEFAULT 0,
+            PRIMARY KEY(user_id, habilidad)
+          )
+        `);
+    await db.execute(`
+          CREATE TABLE IF NOT EXISTS estadisticas (
+            user_id TEXT,
+            accion TEXT,
+            cantidad INTEGER DEFAULT 0,
+            PRIMARY KEY(user_id, accion)
+          )
+        `);
+    await db.execute(`
+          CREATE TABLE IF NOT EXISTS titulos (
+            user_id TEXT,
+            titulo TEXT,
+            equipado INTEGER DEFAULT 0,
+            PRIMARY KEY(user_id, titulo)
+          )
+        `);
     console.log("[DB] Tablas verificadas.");
 
     await seedConfig();

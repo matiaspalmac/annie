@@ -42,9 +42,7 @@ export function getHoraChile() {
 }
 
 export function getCanalGeneral(client) {
-  const guild = client.guilds.cache.get(
-
-  );
+  const guild = client.guilds.cache.get(CONFIG.GUILD_ID);
   return guild?.channels.cache.get(CONFIG.CANAL_GENERAL_ID) ?? null;
 }
 
@@ -55,6 +53,23 @@ export function setDurmiendo(val) { _estaDurmiendo = val; }
 let _estrellaActiva = false;
 export function isEstrellaActiva() { return _estrellaActiva; }
 export function setEstrellaActiva(val) { _estrellaActiva = val; }
+
+// ---- Evento Mercader Doris ----
+let _itemEnDemanda = null; // Guardará el nombre del ítem que están comprando caro
+let _demandaActivaHasta = 0; // Timestamp hasta cuándo dura la oferta
+
+export function getItemEnDemanda() {
+  const ahora = Date.now();
+  if (_itemEnDemanda && ahora < _demandaActivaHasta) {
+    return _itemEnDemanda;
+  }
+  return null;
+}
+
+export function setItemEnDemanda(item, duracionMs) {
+  _itemEnDemanda = item;
+  _demandaActivaHasta = Date.now() + duracionMs;
+}
 
 export function crearEmbed(color, categoria) {
   const embed = new EmbedBuilder()

@@ -23,7 +23,7 @@ import {
 import {
   getHoraChile, estaDurmiendo, setDurmiendo, getCanalGeneral,
   crearEmbed, getBostezo, isEstrellaActiva, setEstrellaActiva,
-  lanzarEstrellaFugaz
+  lanzarEstrellaFugaz, getItemEnDemanda, setItemEnDemanda
 } from "./utils.js";
 import { initDB, loadConfig, buildAutocompleteCache, db, getLatestLogId, getLogsSince } from "./db.js";
 import { setAutocompleteCache } from "./data.js";
@@ -138,6 +138,73 @@ function ejecutarRutinaDiaria() {
   canal.send(rutina.mensaje).catch(console.error);
 }
 
+// ---- Lógica de la Rifa Diaria (Sorteo Automático) ----
+let rifaSorteadaHoy = false;
+
+async function procesarSorteoRifa() {
+  try {
+    const ahora = new Date();
+    // Obtener la hora y minutos en el timezone correcto (Chile)
+    const options = { timeZone: CONFIG.TIMEZONE, hour: 'numeric', minute: 'numeric', hour12: false };
+    const [, hm] = ahora.toLocaleString('en-US', options).match(/(\d+):(\d+)/) || [];
+
+    // Si no son las 23:5X (o 59) reseteamos la flag y salimos
+    if (hm && parseInt(hm, 10) !== 23) {
+      rifaSorteadaHoy = false;
+      return;
+    }
+
+    // Queremos correrlo a las 23:59 (minuto 59). Si ya lo sorteamos hoy, evitar doble sorteo.
+    const minutoEnChile = parseInt(ahora.toLocaleString('en-US', { timeZone: CONFIG.TIMEZONE, minute: 'numeric' }), 10);
+
+    // Solo sorteamos si es exactamente 23:59 y no se ha sorteado aún
+    if (minutoEnChile === 59 && !rifaSorteadaHoy) {
+      rifaSorteadaHoy = true;
+      const canal = getCanalGeneral(client);
+      if (!canal) return;
+
+      const hoyStr = ahora.toISOString().split('T')[0]; // YYYY-MM-DD
+
+      const resBoletos = await db.execute({
+        sql: "SELECT id, user_id FROM rifa_boletos WHERE fecha = ?",
+        args: [hoyStr]
+      });
+
+      if (resBoletos.rows.length === 0) {
+        // Nadie compró boletos
+        await canal.send("🎫 ¡Llegó la hora de la rifa! ...Pero *Annie abre la libretita y ve que está vacía*... Pucha, nadie compró un boleto hoy. ¡Mañana será otro día!");
+        return;
+      }
+
+      // Coste por cada boleto (el mismo que en commands/rifa.js)
+      const COSTO_BOLETO = 10;
+      const totalBoletos = resBoletos.rows.length;
+      const pozo = totalBoletos * COSTO_BOLETO;
+
+      // Escoger un ganador random
+      const boletoGanador = resBoletos.rows[Math.floor(Math.random() * totalBoletos)];
+      const ganadorId = boletoGanador.user_id;
+
+      // Pagar
+      await db.execute({
+        sql: "UPDATE usuarios SET monedas = monedas + ? WHERE id = ?",
+        args: [pozo, ganadorId]
+      });
+
+      // Anunciar
+      const embed = crearEmbed(CONFIG.COLORES.DORADO)
+        .setTitle("🎉 ¡Sorteo Histórico de la Rifa!")
+        .setDescription(`*Annie saca un papelito temblando de un frasco de vidrio... y lee en voz alta:* \n\n¡YEEEEEEEI! ¡Tenemos un ganadorcito para las **${pozo} Moneditas**!\n\nSe nos van directamente a los bolsillos de: <@${ganadorId}>. \n¡Disfrútalas y hazte algo rico para cenar, mi tesoro! 💖`)
+        .setFooter({ text: `Se vendieron ${totalBoletos} boletos hoy.` });
+
+      await canal.send({ embeds: [embed] });
+    }
+  } catch (error) {
+    console.error("Error sorteando rifa:", error);
+  }
+}
+
+
 async function updateTimeChannel() {
   if (!CONFIG.CANAL_HORA_ID) return;
   try {
@@ -216,6 +283,40 @@ async function mencionarVecinoRandom() {
   canal.send(`${intro} "${fraseAleatoria.replace('corazón', trato).replace('vecin@', trato)}"`).catch(console.error);
 }
 
+// ---- Evento Mercader Estelar (Doris) ----
+function chequearDoris() {
+  if (estaDurmiendo() || getItemEnDemanda()) return;
+
+  // 15% de probabilidad de que aparezca cuando se llama a esta función
+  const rand = Math.random();
+  if (rand > 0.15) return;
+
+  const ITEMS_GRANJABLES = [
+    { id: "Piedra", emoji: "🪨" },
+    { id: "Mineral", emoji: "🪨✨" },
+    { id: "Fluorita impecable", emoji: "💎" },
+    { id: "Pescado", emoji: "🐟" },
+    { id: "Manzanas", emoji: "🍎" },
+    { id: "Mantis Religiosa", emoji: "🦗" },
+    { id: "Mariposa Emperador", emoji: "🦋" },
+    { id: "Tarántula", emoji: "🕷️" },
+  ];
+
+  const elegido = ITEMS_GRANJABLES[Math.floor(Math.random() * ITEMS_GRANJABLES.length)];
+
+  // La oferta durará 3 horas (10800000 ms)
+  setItemEnDemanda(elegido.id, 10800000);
+
+  const canal = getCanalGeneral(client);
+  if (canal) {
+    const embed = crearEmbed(CONFIG.COLORES.DORADO)
+      .setTitle("🚀 ¡Doris ha aterrizado de emergencia!")
+      .setDescription(`*Doris se baja corriendo de su nave espacial...*\n\n"¡Oigan, pueblerinos terrícolas! Mi nave necesita combustible rápido y estoy pagando EL TRIPLE por un ítem específico en el mercado de Annie."\n\n🎯 **Ítem en Alta Demanda:** ${elegido.emoji} **${elegido.id}**\n⏱️ **Duración de la oferta:** 3 Horas\n\n*(¡Vayan corriendo a usar \`/vender\` si tienen este ítem!)*`)
+      .setThumbnail("https://heartopiachile.vercel.app/npc/doris-rain.webp");
+    canal.send({ embeds: [embed] }).catch(console.error);
+  }
+}
+
 client.once("clientReady", async () => {
   console.log(`Annie v2 conectada: ${client.user.tag}`);
 
@@ -277,12 +378,18 @@ client.once("clientReady", async () => {
   gestionarSueno();
   setInterval(gestionarSueno, 60000);
 
+  // Comprobar si es hora de la Rifa (cada minuto)
+  setInterval(procesarSorteoRifa, 60000);
+
   setInterval(actualizarEstado, 600000);
 
   // Motor de Trivias (cada 2 horas)
   setInterval(() => {
     lanzarTriviaAleatoria(client);
   }, 1000 * 60 * 120);
+
+  // Comprobar si Doris aterriza (cada 1 hora y media)
+  setInterval(chequearDoris, 1000 * 60 * 90);
 
   // Refrescar cache de autocompletado cada 30 minutos + notificar cambios de admins (F1)
   setInterval(async () => {
