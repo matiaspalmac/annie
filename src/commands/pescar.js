@@ -1,7 +1,7 @@
 import { SlashCommandBuilder } from "discord.js";
 import { db } from "../db.js";
 import { getBostezo } from "../utils.js";
-import { ganarXP, obtenerNivelHabilidad } from "../progreso.js";
+import { ganarXP, obtenerNivelHabilidad, registrarBitacora } from "../progreso.js";
 
 // Cooldown de 30 minutos = 1800000 ms
 const COOLDOWN_PESCAR = 1800000;
@@ -60,6 +60,8 @@ export async function execute(interaction, bostezo) {
               ON CONFLICT(id) DO UPDATE SET monedas = usuarios.monedas + excluded.monedas`,
                 args: [userId, monedasGanadas]
             });
+
+            await registrarBitacora(userId, `¡Pescó una misteriosa Botella con mensaje!`);
 
             return interaction.followUp(`🎣 *Sientes un tirón extraño en la caña...* \n\n¡Atrapaste una **📜 Botella con mensaje**!\nAdentro del vidrio había **${monedasGanadas} moneditas**. ¡Qué suerte! *(Nv. Pesca: ${nivelPesca})*`);
         } else {

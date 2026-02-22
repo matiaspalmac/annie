@@ -1,7 +1,7 @@
 import { SlashCommandBuilder } from "discord.js";
 import { db } from "../db.js";
 import { getBostezo } from "../utils.js";
-import { registrarEstadistica } from "../progreso.js";
+import { registrarEstadistica, registrarBitacora } from "../progreso.js";
 
 // Cooldown de 2 horas por objetivo = 7200000 ms
 const COOLDOWN_ROBAR = 7200000;
@@ -79,6 +79,7 @@ export async function execute(interaction, bostezo) {
                 sql: "UPDATE usuarios SET monedas = MAX(0, monedas - ?) WHERE id = ?",
                 args: [MULTA_FAIL_EPICO, userId]
             });
+            await registrarBitacora(userId, `¡Fue arrestado por Annie intentando robarle a un vecino!`);
             return interaction.followUp(`🚨 **¡FALLO Y MULTA!** \n\n¡Gendarmería te vio intentando meterle la mano en los bolsillos a **${targetUser.username}**! \nAnnie te quitó **${MULTA_FAIL_EPICO} moneditas** de multa por portarte mal. ¡Qué vergüenza!`);
         } else if (rand <= 40) {
             // Fallo normal (30%)
@@ -103,6 +104,7 @@ export async function execute(interaction, bostezo) {
 
             if (monedasTarget >= 10000) {
                 await registrarEstadistica(userId, "robar_rico", 1, interaction);
+                await registrarBitacora(userId, `Asestó un golpe maestro al robarle a un millonario.`);
             }
 
             return interaction.followUp(`🥷 **¡Robo Exitoso!** \n\nCon mucha destreza, le sacaste **${montoRobado} moneditas** 💰 a **${targetUser.username}** sin que se diera cuenta. ¡A correr!`);

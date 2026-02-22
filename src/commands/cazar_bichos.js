@@ -1,7 +1,7 @@
 import { SlashCommandBuilder } from "discord.js";
 import { db } from "../db.js";
 import { getBostezo } from "../utils.js";
-import { ganarXP, registrarEstadistica } from "../progreso.js";
+import { ganarXP, registrarEstadistica, registrarBitacora } from "../progreso.js";
 
 // Cooldown de 45 minutos = 2700000 ms
 const COOLDOWN_BICHOS = 2700000;
@@ -60,10 +60,12 @@ export async function execute(interaction, bostezo) {
             itemId = "Tarántula";
             emoji = "🕷️";
             mensajeObtencion = `¡Ay mamita! ¡Un monstruo peludo saltó a tu red! Te dio un susto tremendo, pero... eh, ¡atrapaste una **🕷️ Tarántula**! *(Nv. Caza: ${nivelCaza})*`;
+            await registrarBitacora(userId, `Sobrevivió y cazó una Tarántula mortal.`);
         } else if (rand <= chanceMariposa) {
             itemId = "Mariposa Emperador";
             emoji = "🦋";
             mensajeObtencion = `¡Qué belleza! Una vibrante **🦋 Mariposa Emperador** se posó solita en tu red. *(Nv. Caza: ${nivelCaza})*`;
+            await registrarBitacora(userId, `Atrapó una deslumbrante Mariposa Emperador.`);
         } else if (rand <= 65) {
             itemId = "Mantis Religiosa";
             emoji = "🦗";

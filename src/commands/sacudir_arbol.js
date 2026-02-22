@@ -1,7 +1,7 @@
 import { SlashCommandBuilder } from "discord.js";
 import { db } from "../db.js";
 import { getBostezo } from "../utils.js";
-import { ganarXP, registrarEstadistica } from "../progreso.js";
+import { ganarXP, registrarEstadistica, registrarBitacora } from "../progreso.js";
 
 // Cooldown de 1 hora = 3600000 ms
 const COOLDOWN_ARBOL = 3600000;
@@ -64,6 +64,8 @@ export async function execute(interaction, bostezo) {
                 args: [monedasPerdidas, userId]
             });
 
+            await registrarBitacora(userId, `Huyó despavorido/a de un enjambre de Abejas.`);
+
             return interaction.followUp(`🌳 *Shake, shake...* \n\n🐝 **¡BZZZ! ¡UN PANAL DE ABEJAS!** 🐝\n\nSaliste corriendo pero te picaron igual. En el escándalo, se te cayeron **${monedasPerdidas} moneditas**. ¡Pobrecito mi niño! *(Nv. Recolección: ${nivelRecoleccion})*`);
         } else if (rand <= chanceAbejas + chanceMonedas) {
             // Lluvia de monedas - gana 10 a 30 monedas + bono
@@ -75,6 +77,8 @@ export async function execute(interaction, bostezo) {
               ON CONFLICT(id) DO UPDATE SET monedas = usuarios.monedas + excluded.monedas`,
                 args: [userId, monedasGanadas]
             });
+
+            await registrarBitacora(userId, `¡Encontró una bolsa mágica de moneditas en un árbol!`);
 
             return interaction.followUp(`🌳 *Shake, shake...* \n\n💰 **¡CLINK CLINK!** \n\n¡En vez de frutas, te llovieron del cielo **${monedasGanadas} moneditas**! A veces la magia del pueblito te sorprende. *(Nv. Recolección: ${nivelRecoleccion})*`);
         } else {

@@ -9,6 +9,7 @@ const db = createClient({
 // ── Valores por defecto que se insertan la primera vez ──────────────────────
 const CONFIG_DEFAULTS = {
   TIMEZONE: "America/Santiago",
+  CHILE_TZ_OFFSET_SQLITE: "-3 hours",
   TIMEZONE_VOZ: "America/New_York",
   GUILD_ID: "1463659718382977253",
   CANAL_GENERAL_ID: "1463659720207372464",
@@ -69,7 +70,8 @@ export async function initDB() {
             color_rol_id TEXT,
             tema_perfil TEXT DEFAULT 'default',
             ultimo_diario TEXT DEFAULT NULL,
-            mascota_activa TEXT DEFAULT NULL
+            mascota_activa TEXT DEFAULT NULL,
+            banner_url TEXT DEFAULT NULL
           )
         `);
     await db.execute(`
@@ -169,30 +171,122 @@ export async function initDB() {
           )
         `);
     await db.execute(`
-          CREATE TABLE IF NOT EXISTS habilidades (
-            user_id TEXT,
-            habilidad TEXT,
-            nivel INTEGER DEFAULT 1,
-            xp INTEGER DEFAULT 0,
-            PRIMARY KEY(user_id, habilidad)
-          )
-        `);
+          CREATE TABLE IF NOT EXISTS habilidades(
+      user_id TEXT,
+      habilidad TEXT,
+      nivel INTEGER DEFAULT 1,
+      xp INTEGER DEFAULT 0,
+      PRIMARY KEY(user_id, habilidad)
+    )
+      `);
     await db.execute(`
-          CREATE TABLE IF NOT EXISTS estadisticas (
-            user_id TEXT,
-            accion TEXT,
-            cantidad INTEGER DEFAULT 0,
-            PRIMARY KEY(user_id, accion)
-          )
-        `);
+          CREATE TABLE IF NOT EXISTS bitacora(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id TEXT,
+        accion TEXT,
+        fecha TEXT
+      )
+      `);
     await db.execute(`
-          CREATE TABLE IF NOT EXISTS titulos (
-            user_id TEXT,
-            titulo TEXT,
-            equipado INTEGER DEFAULT 0,
-            PRIMARY KEY(user_id, titulo)
-          )
+          CREATE TABLE IF NOT EXISTS actividad_diaria(
+        user_id TEXT,
+        fecha TEXT,
+        xp_ganado INTEGER DEFAULT 0,
+        monedas_ganadas INTEGER DEFAULT 0,
+        acciones INTEGER DEFAULT 0,
+        PRIMARY KEY(user_id, fecha)
+      )
+      `);
+    await db.execute(`
+          CREATE TABLE IF NOT EXISTS estadisticas(
+        user_id TEXT,
+        accion TEXT,
+        cantidad INTEGER DEFAULT 0,
+        PRIMARY KEY(user_id, accion)
+      )
+      `);
+    await db.execute(`
+          CREATE TABLE IF NOT EXISTS titulos(
+        user_id TEXT,
+        titulo TEXT,
+        equipado INTEGER DEFAULT 0,
+        PRIMARY KEY(user_id, titulo)
+      )
         `);
+
+    // Migraciones seguras para columnas añadidas posteriormente
+    try { await db.execute("ALTER TABLE usuarios ADD COLUMN banner_url TEXT DEFAULT NULL"); } catch (e) { /* Ignorar si ya existe */ }
+
+    await db.execute(`
+      CREATE TRIGGER IF NOT EXISTS trg_actividad_usuarios_update
+      AFTER UPDATE OF xp, monedas ON usuarios
+      WHEN (NEW.xp != OLD.xp OR NEW.monedas != OLD.monedas)
+      BEGIN
+        INSERT INTO actividad_diaria (user_id, fecha, xp_ganado, monedas_ganadas, acciones)
+        VALUES (
+          NEW.id,
+          date('now', COALESCE((SELECT valor FROM configuracion WHERE clave = 'CHILE_TZ_OFFSET_SQLITE'), '-3 hours')),
+          CASE WHEN NEW.xp > OLD.xp THEN NEW.xp - OLD.xp ELSE 0 END,
+          CASE WHEN NEW.monedas > OLD.monedas THEN NEW.monedas - OLD.monedas ELSE 0 END,
+          0
+        )
+        ON CONFLICT(user_id, fecha) DO UPDATE SET
+          xp_ganado = actividad_diaria.xp_ganado + excluded.xp_ganado,
+          monedas_ganadas = actividad_diaria.monedas_ganadas + excluded.monedas_ganadas;
+      END;
+    `);
+
+    await db.execute(`
+      CREATE TRIGGER IF NOT EXISTS trg_actividad_bitacora_insert
+      AFTER INSERT ON bitacora
+      BEGIN
+        INSERT INTO actividad_diaria (user_id, fecha, xp_ganado, monedas_ganadas, acciones)
+        VALUES (
+          NEW.user_id,
+          date(
+            COALESCE(NEW.fecha, 'now'),
+            COALESCE((SELECT valor FROM configuracion WHERE clave = 'CHILE_TZ_OFFSET_SQLITE'), '-3 hours')
+          ),
+          0,
+          0,
+          1
+        )
+        ON CONFLICT(user_id, fecha) DO UPDATE SET
+          acciones = actividad_diaria.acciones + 1;
+      END;
+    `);
+
+    // Backfill legacy purchases (idempotent): move active theme/pet into inventory if missing
+    await db.execute(`
+      INSERT INTO inventario_economia (user_id, item_id, cantidad)
+      SELECT u.id, u.tema_perfil, 1
+      FROM usuarios u
+      WHERE u.tema_perfil IS NOT NULL
+        AND u.tema_perfil LIKE 'tema_%'
+        AND NOT EXISTS (
+          SELECT 1
+          FROM inventario_economia ie
+          WHERE ie.user_id = u.id
+            AND ie.item_id = u.tema_perfil
+            AND ie.cantidad > 0
+        )
+    `);
+
+    await db.execute(`
+      INSERT INTO inventario_economia (user_id, item_id, cantidad)
+      SELECT u.id, u.mascota_activa, 1
+      FROM usuarios u
+      WHERE u.mascota_activa IS NOT NULL
+        AND u.mascota_activa LIKE 'mascota_%'
+        AND NOT EXISTS (
+          SELECT 1
+          FROM inventario_economia ie
+          WHERE ie.user_id = u.id
+            AND ie.item_id = u.mascota_activa
+            AND ie.cantidad > 0
+        )
+    `);
+
     console.log("[DB] Tablas verificadas.");
 
     await seedConfig();
@@ -241,7 +335,7 @@ export async function loadConfig() {
       }
     }
 
-    console.log(`[DB] Configuración cargada (${result.rows.length} claves).`);
+    console.log(`[DB] Configuración cargada(${result.rows.length} claves).`);
   } catch (err) {
     console.error("[DB] Error cargando configuración:", err);
   }
@@ -314,7 +408,7 @@ export async function buildAutocompleteCache() {
 
   for (const table of tables) {
     try {
-      const result = await db.execute(`SELECT id FROM ${table}`);
+      const result = await db.execute(`SELECT id FROM ${table} `);
       cache[table] = result.rows.map(row => ({
         original: String(row.id),
         normalized: String(row.id)
@@ -325,7 +419,7 @@ export async function buildAutocompleteCache() {
           .trim()
       }));
     } catch (e) {
-      console.error(`[DB] No se pudo armar cache para tabla ${table}:`, e.message);
+      console.error(`[DB] No se pudo armar cache para tabla ${table}: `, e.message);
       cache[table] = [];
     }
   }

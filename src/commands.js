@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { URL } from "node:url";
+import { MessageFlags } from "discord.js";
 import { logError, logCommand } from "./logger.js";
 import { getBostezo } from "./utils.js";
 
@@ -77,9 +78,9 @@ export async function handleCommand(client, interaction) {
     // Notify user if interaction is still alive
     const msg = "Ay, se me enredaron los papelitos... inténtalo otra vez, corazón.";
     if (interaction.replied || interaction.deferred) {
-      await interaction.followUp({ content: msg, ephemeral: true }).catch(() => { });
+      await interaction.followUp({ content: msg, flags: MessageFlags.Ephemeral }).catch(() => { });
     } else {
-      await interaction.reply({ content: msg, ephemeral: true }).catch(() => { });
+      await interaction.reply({ content: msg, flags: MessageFlags.Ephemeral }).catch(() => { });
     }
   }
 }

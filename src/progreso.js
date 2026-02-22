@@ -49,6 +49,7 @@ export async function ganarXP(userId, habilidad, cantidad, interaction) {
         if (subioNivel && interaction) {
             // Mensaje in-game sutil
             interaction.followUp(`🌟 *¡Tatachán!* Has subido al **Nivel ${nivelActual}** de \`${habilidad.toUpperCase()}\`.`).catch(console.error);
+            await registrarBitacora(userId, `Alcanzó el Nivel ${nivelActual} de ${habilidad.charAt(0).toUpperCase() + habilidad.slice(1)}`);
         }
 
         return nivelActual;
@@ -122,10 +123,33 @@ async function verificarTitulos(userId, interaction) {
                     .setTitle("🏆 ¡Nuevo Título Desbloqueado!")
                     .setDescription(`¡Felicidades, <@${userId}>!\nPor tus hazañas en el pueblito, te has ganado el derecho a llamarte:\n\n**✨ ${t} ✨**\n\n*(Puedes equiparlo luego usando \`/titulos\` para que aparezca en tu perfil)*`);
                 interaction.followUp({ embeds: [embed] }).catch(console.error);
+                await registrarBitacora(userId, `Desbloqueó el título: ${t}`);
             }
         }
 
     } catch (err) {
         console.error("Error en verificarTitulos:", err);
+    }
+}
+
+export async function registrarBitacora(userId, accion) {
+    try {
+        const fecha = new Date().toISOString();
+        await db.execute({
+            sql: "INSERT INTO bitacora (user_id, accion, fecha) VALUES (?, ?, ?)",
+            args: [userId, accion, fecha]
+        });
+
+        // Limpiar registros antiguos del usuario (mantener solo los 10 más recientes)
+        await db.execute({
+            sql: `DELETE FROM bitacora 
+                  WHERE user_id = ? 
+                  AND id NOT IN (
+                      SELECT id FROM bitacora WHERE user_id = ? ORDER BY id DESC LIMIT 10
+                  )`,
+            args: [userId, userId]
+        });
+    } catch (err) {
+        console.error("Error en registrarBitacora:", err);
     }
 }

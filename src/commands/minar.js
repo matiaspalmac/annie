@@ -1,7 +1,7 @@
 import { SlashCommandBuilder } from "discord.js";
 import { db } from "../db.js";
 import { getBostezo } from "../utils.js";
-import { ganarXP } from "../progreso.js";
+import { ganarXP, registrarBitacora } from "../progreso.js";
 
 // Cooldown de 1 minuto = 60000 ms
 const COOLDOWN_MINAR = 60000;
@@ -58,6 +58,7 @@ export async function execute(interaction, bostezo) {
             itemId = "Fluorita impecable";
             emoji = "💎";
             rarezaTexto = "¡Cielo santo! ¡Qué brillo tan hermoso!";
+            await registrarBitacora(userId, `Desenterró una codiciada Fluorita impecable.`);
         } else if (rand <= chanceMineral) {
             itemId = "Mineral";
             emoji = "🪨✨"; // Mineral genérico
