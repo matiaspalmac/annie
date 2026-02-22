@@ -176,6 +176,15 @@ export async function initDB() {
           )
         `);
     await db.execute(`
+          CREATE TABLE IF NOT EXISTS casino_stats (
+            user_id TEXT PRIMARY KEY,
+            wins INTEGER DEFAULT 0,
+            losses INTEGER DEFAULT 0,
+            total_betted INTEGER DEFAULT 0,
+            net_winnings INTEGER DEFAULT 0
+          )
+        `);
+    await db.execute(`
           CREATE TABLE IF NOT EXISTS cooldowns (
             user_id TEXT,
             comando TEXT,

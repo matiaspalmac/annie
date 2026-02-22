@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, ActionRowBuilder, StringSelectMenuBuilder, MessageFlags } from "discord.js";
+import { SlashCommandBuilder, MessageFlags } from "discord.js";
 import { CONFIG } from "../config.js";
 import { db } from "../db.js";
 import { crearEmbed } from "../utils.js";
@@ -6,21 +6,27 @@ import { crearEmbed } from "../utils.js";
 // Estructura de la tienda ahora se lee desde la DB
 export const data = new SlashCommandBuilder()
     .setName("tienda")
-    .setDescription("Compra colores, temas y mascotitas con tus Moneditas 💰");
+    .setDescription("Explora los productos de la tienda por páginas")
+    .addIntegerOption(o =>
+        o.setName("pagina")
+            .setDescription("Número de página")
+            .setMinValue(1)
+    );
 
 export async function execute(interaction, bostezo) {
     // 1. Fetch user wealth
     const result = await db.execute({
-        sql: "SELECT xp, monedas FROM usuarios WHERE id = ?",
+        sql: "SELECT monedas FROM usuarios WHERE id = ?",
         args: [interaction.user.id]
     });
 
     if (result.rows.length === 0) {
-        return interaction.reply({ content: `${bostezo} Aún no sales a pasear por el pueblito... escribe en el chat para ganar alguito de XP.`, flags: MessageFlags.Ephemeral });
+        return interaction.reply({ content: `${bostezo} Aún no sales a pasear por el pueblito... escribe en el chat para ganar moneditas y luego vuelve a la tienda.`, flags: MessageFlags.Ephemeral });
     }
 
-    const userData = result.rows[0];
-    const userMonedas = Number(userData.monedas);
+    const userMonedas = Number(result.rows[0].monedas);
+    const pageSize = 6;
+    const pagina = interaction.options.getInteger("pagina") || 1;
 
     const tipoMeta = {
         rol: { emoji: "🎨", titulo: "Tintes y Colores" },
@@ -33,74 +39,39 @@ export async function execute(interaction, bostezo) {
 
     // 2. Render Shop Embed
     const embed = crearEmbed(CONFIG.COLORES.DORADO)
-        .setTitle("🛒 Mercadito Encantado de Annie")
-        .setDescription(
-            `✨ **XP:** ${Number(userData.xp).toLocaleString("es-CL")}\n` +
-            `💰 **Moneditas disponibles:** ${userMonedas.toLocaleString("es-CL")}\n\n` +
-            "Elige con calma, corazoncito. Cada compra suma a tu aventura 💖"
-        );
+        .setTitle("🛒 Mercadito Encantado de Annie");
 
     // Fetch shop items from DB
-    const resTienda = await db.execute("SELECT * FROM tienda_items ORDER BY precio_monedas ASC");
+    const resTienda = await db.execute("SELECT id, nombre, descripcion, precio_monedas, tipo FROM tienda_items ORDER BY precio_monedas ASC, nombre ASC");
     const ITEMS_TIENDA = resTienda.rows;
 
-    const opcionesMenu = [];
-
-    const agrupados = {
-        rol: [], tema: [], mascota: [], consumible: [], servicio: [], marco: [], other: []
-    };
-
-    ITEMS_TIENDA.forEach((item) => {
-        const tipo = String(item.tipo || "other");
-        if (agrupados[tipo]) agrupados[tipo].push(item);
-        else agrupados.other.push(item);
-
-        const meta = tipoMeta[tipo] || { emoji: "🧺", titulo: "Otros" };
-        opcionesMenu.push({
-            label: String(item.nombre).slice(0, 100),
-            description: `${meta.emoji} ${meta.titulo} · ${item.precio_monedas} moneditas`,
-            value: String(item.id).slice(0, 100)
-        });
-    });
-
-    const order = ["rol", "tema", "marco", "mascota", "consumible", "servicio", "other"];
-    for (const tipo of order) {
-        const items = agrupados[tipo];
-        if (!items || items.length === 0) continue;
-        const meta = tipoMeta[tipo] || { emoji: "🧺", titulo: "Otros" };
-        const value = items
-            .map((it) => `• **${it.nombre}** — ${it.precio_monedas}💰\n${it.descripcion}`)
-            .join("\n\n")
-            .slice(0, 1024);
-
-        embed.addFields({
-            name: `${meta.emoji} ${meta.titulo}`,
-            value,
-            inline: false,
-        });
-    }
-
     if (ITEMS_TIENDA.length === 0) {
-        embed.addFields({
-            name: "Mercader ausente",
-            value: "La tienda está vacía por ahora. Vuelve más ratito ✨",
-            inline: false,
-        });
+        embed.setDescription("La tienda está vacía por ahora. Vuelve más ratito ✨");
+        return interaction.reply({ content: bostezo, embeds: [embed] });
     }
 
-    embed.setFooter({ text: "Tip: algunos ítems aplican efecto inmediato al comprar." });
+    const totalPages = Math.max(1, Math.ceil(ITEMS_TIENDA.length / pageSize));
+    const safePage = Math.min(Math.max(1, pagina), totalPages);
+    const start = (safePage - 1) * pageSize;
+    const pageItems = ITEMS_TIENDA.slice(start, start + pageSize);
 
-    const components = [];
-    if (opcionesMenu.length > 0) {
-        components.push(
-            new ActionRowBuilder().addComponents(
-                new StringSelectMenuBuilder()
-                    .setCustomId("tienda_comprar")
-                    .setPlaceholder("Elige qué deseas comprar...")
-                    .addOptions(opcionesMenu)
-            )
-        );
-    }
+    const lines = pageItems.map((item, idx) => {
+        const tipo = String(item.tipo || "other");
+        const meta = tipoMeta[tipo] || { emoji: "🧺", titulo: "Otros" };
+        return `**${start + idx + 1}. ${meta.emoji} ${item.nombre}**\n` +
+            `ID: \`${item.id}\` · Tipo: ${meta.titulo}\n` +
+            `${item.descripcion}\n` +
+            `💰 **${Number(item.precio_monedas).toLocaleString("es-CL")} moneditas**`;
+    }).join("\n\n");
 
-    await interaction.reply({ content: bostezo, embeds: [embed], components });
+    embed.setDescription(
+        `💰 **Moneditas disponibles:** ${userMonedas.toLocaleString("es-CL")}\n` +
+        `📄 **Página ${safePage}/${totalPages}**\n\n` +
+        `${lines}\n\n` +
+        `Usa **/comprar** y elige el item con sugerencias automáticas.`
+    );
+
+    embed.setFooter({ text: "Tip: /comprar tiene autocompletado por nombre e ID." });
+
+    await interaction.reply({ content: bostezo, embeds: [embed] });
 }

@@ -14,7 +14,7 @@ import { joinVoiceChannel, getVoiceConnection } from "@discordjs/voice";
 
 import { CONFIG } from "./config.js";
 
-import { loadCommands, getCommandDefs, handleCommand } from "./commands.js";
+import { loadCommands, getCommandDefs, handleCommand, handleAutocomplete } from "./commands.js";
 import { handleAutocompleteGlobal } from "./data.js";
 import {
   getTrato, getSaludoHora,
@@ -29,6 +29,7 @@ import { initDB, loadConfig, buildAutocompleteCache, db, getLatestLogId, getLogs
 import { setAutocompleteCache } from "./data.js";
 import { logStartup } from "./logger.js";
 import { lanzarTriviaAleatoria } from "./trivia.js";
+import { procesarCompraTienda } from "./shop.js";
 
 const client = new Client({
   intents: [
@@ -712,233 +713,9 @@ client.on(Events.InteractionCreate, async (interaction) => {
     const itemSeleccionado = interaction.values[0];
     await interaction.deferReply({ ephemeral: true });
 
-    // Buscar precio y tipo en BD
-    const resItem = await db.execute({
-      sql: "SELECT precio_monedas, tipo, discord_role_id, nombre FROM tienda_items WHERE id = ?",
-      args: [itemSeleccionado]
-    });
-
-    if (resItem.rows.length === 0) {
-      return interaction.followUp("Item inválido o ya no está en la tienda.");
-    }
-    const precio = Number(resItem.rows[0].precio_monedas);
-    const tipoItem = String(resItem.rows[0].tipo || "rol");
-    const discordRoleIdToAssign = resItem.rows[0].discord_role_id;
-    const nombreItem = String(resItem.rows[0].nombre || itemSeleccionado);
-
-    const result = await db.execute({
-      sql: "SELECT monedas, color_rol_id FROM usuarios WHERE id = ?",
-      args: [interaction.user.id]
-    });
-
-    if (result.rows.length === 0) {
-      return interaction.followUp("No estás registrado en el pueblito.");
-    }
-
-    const currentMonedas = Number(result.rows[0].monedas);
-
-    if (currentMonedas < precio) {
-      return interaction.followUp(`Pucha corazón, te faltan **${precio - currentMonedas} Moneditas** para comprar eso. ¡Sigue charlando en el pueblito!`);
-    }
-
     try {
-      // Descontar monedas y dar
-      if (tipoItem === 'consumible') {
-        let duracionMs = 0;
-        let boostId = "";
-        let textoEfecto = "";
-
-        if (itemSeleccionado === "booster_xp_30m") {
-          duracionMs = 30 * 60 * 1000;
-          boostId = "booster_xp_30m";
-          textoEfecto = "+25% XP por 30 minutos";
-        } else if (itemSeleccionado === "amuleto_suerte_15m") {
-          duracionMs = 15 * 60 * 1000;
-          boostId = "amuleto_suerte_15m";
-          textoEfecto = "+chance de drops raros por 15 minutos";
-        }
-
-        if (!boostId || duracionMs <= 0) {
-          return interaction.followUp("Este consumible aún no está disponible.");
-        }
-
-        const ahora = Date.now();
-        const nuevoExpira = ahora + duracionMs;
-
-        await db.execute({
-          sql: "UPDATE usuarios SET monedas = monedas - ? WHERE id = ?",
-          args: [precio, interaction.user.id]
-        });
-
-        await db.execute({
-          sql: `INSERT INTO boosts_activos (user_id, boost_id, fecha_expira)
-                VALUES (?, ?, ?)
-                ON CONFLICT(user_id, boost_id) DO UPDATE SET
-                fecha_expira = CASE
-                  WHEN boosts_activos.fecha_expira > ? THEN boosts_activos.fecha_expira + ?
-                  ELSE ?
-                END`,
-          args: [interaction.user.id, boostId, nuevoExpira, ahora, duracionMs, nuevoExpira]
-        });
-
-        await db.execute({
-          sql: `INSERT INTO inventario_economia (user_id, item_id, cantidad)
-                VALUES (?, ?, 1)
-                ON CONFLICT(user_id, item_id) DO UPDATE SET cantidad = inventario_economia.cantidad + 1`,
-          args: [interaction.user.id, itemSeleccionado]
-        });
-
-        await interaction.followUp(`✨ Consumible aplicado: **${nombreItem}**. Efecto activo: **${textoEfecto}**.`);
-
-      } else if (tipoItem === 'servicio') {
-        if (itemSeleccionado !== "reset_racha_perdon") {
-          return interaction.followUp("Este servicio aún no está disponible.");
-        }
-
-        const resServicio = await db.execute({
-          sql: "SELECT ultimo_reset_racha FROM servicios_usuarios WHERE user_id = ? LIMIT 1",
-          args: [interaction.user.id]
-        });
-
-        const ultimoUso = String(resServicio.rows[0]?.ultimo_reset_racha || "");
-        if (ultimoUso) {
-          const msDesdeUltimo = Date.now() - new Date(ultimoUso).getTime();
-          const semanaMs = 7 * 24 * 60 * 60 * 1000;
-          if (!Number.isNaN(msDesdeUltimo) && msDesdeUltimo < semanaMs) {
-            const faltanDias = Math.ceil((semanaMs - msDesdeUltimo) / (24 * 60 * 60 * 1000));
-            return interaction.followUp(`Este servicio solo se puede usar **1 vez por semana**. Te faltan ~**${faltanDias} día(s)**.`);
-          }
-        }
-
-        const resAyer = await db.execute({
-          sql: `SELECT date(
-                  'now',
-                  COALESCE((SELECT valor FROM configuracion WHERE clave = 'CHILE_TZ_OFFSET_SQLITE'), '-3 hours'),
-                  '-1 day'
-                ) as ayer`
-        });
-        const fechaAyer = String(resAyer.rows[0]?.ayer || "");
-
-        const resActividadAyer = await db.execute({
-          sql: `SELECT acciones, xp_ganado, monedas_ganadas
-                FROM actividad_diaria
-                WHERE user_id = ? AND fecha = ?
-                LIMIT 1`,
-          args: [interaction.user.id, fechaAyer]
-        });
-
-        const huboActividadAyer = resActividadAyer.rows.length > 0 && (
-          Number(resActividadAyer.rows[0].acciones || 0) > 0 ||
-          Number(resActividadAyer.rows[0].xp_ganado || 0) > 0 ||
-          Number(resActividadAyer.rows[0].monedas_ganadas || 0) > 0
-        );
-
-        if (huboActividadAyer) {
-          return interaction.followUp("Tu racha no se rompió ayer, así que no necesitas usar este servicio todavía 💖.");
-        }
-
-        await db.execute({
-          sql: "UPDATE usuarios SET monedas = monedas - ? WHERE id = ?",
-          args: [precio, interaction.user.id]
-        });
-
-        await db.execute({
-          sql: `INSERT INTO actividad_diaria (user_id, fecha, xp_ganado, monedas_ganadas, acciones)
-                VALUES (?, ?, 0, 0, 1)
-                ON CONFLICT(user_id, fecha) DO UPDATE SET
-                  acciones = MAX(actividad_diaria.acciones, 1)`,
-          args: [interaction.user.id, fechaAyer]
-        });
-
-        await db.execute({
-          sql: `INSERT INTO servicios_usuarios (user_id, ultimo_reset_racha)
-                VALUES (?, datetime('now'))
-                ON CONFLICT(user_id) DO UPDATE SET ultimo_reset_racha = excluded.ultimo_reset_racha`,
-          args: [interaction.user.id]
-        });
-
-        await db.execute({
-          sql: `INSERT INTO inventario_economia (user_id, item_id, cantidad)
-                VALUES (?, ?, 1)
-                ON CONFLICT(user_id, item_id) DO UPDATE SET cantidad = inventario_economia.cantidad + 1`,
-          args: [interaction.user.id, itemSeleccionado]
-        });
-
-        await interaction.followUp("🛟 Servicio aplicado: recuperé tu día perdido de ayer para mantener la racha activa.");
-
-      } else if (tipoItem === 'marco') {
-        await db.execute({
-          sql: "UPDATE usuarios SET monedas = monedas - ?, marco_perfil = ? WHERE id = ?",
-          args: [precio, itemSeleccionado, interaction.user.id]
-        });
-
-        await db.execute({
-          sql: `INSERT INTO inventario_economia (user_id, item_id, cantidad)
-                VALUES (?, ?, 1)
-                ON CONFLICT(user_id, item_id) DO UPDATE SET cantidad = inventario_economia.cantidad + 1`,
-          args: [interaction.user.id, itemSeleccionado]
-        });
-
-        await interaction.followUp(`🖼️ ¡Listo! Equipé el **${nombreItem}** en tu perfil web.`);
-
-      } else if (tipoItem === 'tema') {
-        // Lógica de Temas para la Wiki (F8)
-        await db.execute({
-          sql: "UPDATE usuarios SET monedas = monedas - ?, tema_perfil = ? WHERE id = ?",
-          args: [precio, itemSeleccionado, interaction.user.id]
-        });
-
-        await db.execute({
-          sql: `INSERT INTO inventario_economia (user_id, item_id, cantidad)
-                VALUES (?, ?, 1)
-                ON CONFLICT(user_id, item_id) DO UPDATE SET cantidad = inventario_economia.cantidad + 1`,
-          args: [interaction.user.id, itemSeleccionado]
-        });
-
-        await interaction.followUp(`🎨 ¡Gracias lindo/a! Acabas de comprar el tema \`${itemSeleccionado}\`. \n\nAcabo de actualizar la escenografía de tu libretita web. ¡Se va a ver preciosa!`);
-
-      } else if (tipoItem === 'mascota') {
-        // Lógica de Adopción de Mascotas F15
-        await db.execute({
-          sql: "UPDATE usuarios SET monedas = monedas - ?, mascota_activa = ? WHERE id = ?",
-          args: [precio, itemSeleccionado, interaction.user.id]
-        });
-
-        await db.execute({
-          sql: `INSERT INTO inventario_economia (user_id, item_id, cantidad)
-                VALUES (?, ?, 1)
-                ON CONFLICT(user_id, item_id) DO UPDATE SET cantidad = inventario_economia.cantidad + 1`,
-          args: [interaction.user.id, itemSeleccionado]
-        });
-
-        await interaction.followUp(`🐾 ¡Awww! Felicidades por tu nuevo amiguito \`${itemSeleccionado}\`. \n\nAcabo de hacerle espacio en tu Libretita Web. ¡Ve a la página de tu perfil para mirarlo!`);
-      } else {
-        // Lógica de Roles/Colores
-        await db.execute({
-          sql: "UPDATE usuarios SET monedas = monedas - ?, color_rol_id = ? WHERE id = ?",
-          args: [precio, itemSeleccionado, interaction.user.id]
-        });
-
-        // F12 Automatización asignar rol en Discord
-        let roleMsg = "";
-        if (discordRoleIdToAssign && typeof discordRoleIdToAssign === 'string') {
-          try {
-            const role = interaction.guild.roles.cache.get(discordRoleIdToAssign);
-            if (role) {
-              await interaction.member.roles.add(role);
-              roleMsg = ` y te he asignado el rol oficial en el servidor automáticamente`;
-            }
-          } catch (err) {
-            console.error("Fallo al asignar el rol a ", interaction.user.username, err);
-          }
-        }
-
-        if (itemSeleccionado === "color_custom") {
-          await interaction.followUp(`✨ ¡Has comprado el Pincel Mágico! Pronto un administrador contactará contigo para darte tu color Hexadecimal único. ¡Qué emoción!`);
-        } else {
-          await interaction.followUp(`🎨 ¡Gracias tesoro! Te acabo de dar el tinte \`${itemSeleccionado}\`${roleMsg} para que resaltes tu nombre.`);
-        }
-      }
+      const result = await procesarCompraTienda(interaction, itemSeleccionado);
+      await interaction.followUp(result.message);
     } catch (e) {
       console.error("Error comprando en tienda", e);
       await interaction.followUp("Ocurrió un error mágico al procesar tu compra.");
@@ -1354,9 +1131,30 @@ client.on(Events.InteractionCreate, async (interaction) => {
     return;
   }
 
+  // ---- Blackjack Buttons ----
+  if (interaction.isButton() && interaction.customId.startsWith("blackjack_")) {
+    const { handleBlackjackButton } = await import("./commands/blackjack.js");
+    return await handleBlackjackButton(interaction);
+  }
+
+  // ---- Casino Buttons ----
+  if (interaction.isButton() && interaction.customId.startsWith("casino_")) {
+    const { handleCasinoButton } = await import("./commands/casino.js");
+    return await handleCasinoButton(interaction);
+  }
+
   if (interaction.isAutocomplete()) {
     try {
-      await handleAutocompleteGlobal(interaction);
+      const globalAutocompleteCommands = new Set([
+        "peces", "insectos", "aves", "animales", "cultivos",
+        "recolectables", "recetas", "habitantes", "logros"
+      ]);
+
+      if (globalAutocompleteCommands.has(interaction.commandName)) {
+        await handleAutocompleteGlobal(interaction);
+      } else {
+        await handleAutocomplete(interaction);
+      }
     } catch (err) {
       const code = err?.code ?? err?.rawError?.code;
       if (code === 10062) {

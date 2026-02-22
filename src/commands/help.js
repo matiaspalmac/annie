@@ -21,8 +21,22 @@ export async function execute(interaction, bostezo) {
                 name: "💰 Economía y Perfil (¡NUEVO!)",
                 value:
                     "✨ `/perfil` — Mira tu nivel, experiencia y moneditas acumuladas.\n" +
-                    "🛒 `/tienda` — Gasta tu XP en colores bonitos para tu nombre.\n" +
+                    "🛒 `/tienda [pagina]` — Revisa el catálogo por páginas.\n" +
+                    "🧾 `/comprar [item]` — Compra directo con sugerencias automáticas.\n" +
                     "🖌️ `/color [hex]` — Aplica tu Pincel Mágico personalizado.",
+                inline: false,
+            },
+            {
+                name: "🎰 Casino (¡NUEVO!)",
+                value:
+                    "🎰 `/casino menu` — Menú principal del casino.\n" +
+                    "🎰 `/slots [apuesta]` — Máquina tragamonedas (x2 a x50).\n" +
+                    "🎡 `/ruleta [apuesta] [tipo]` — Ruleta europea.\n" +
+                    "🪙 `/coinflip [apuesta] [lado]` — Cara o cruz simple.\n" +
+                    "🃏 `/blackjack [apuesta]` — 21 contra la casa.\n" +
+                    "📊 `/casino stats` — Tus estadísticas.\n" +
+                    "🏆 `/casino top` — Top 10 ganadores.\n" +
+                    "💵 **Apuestas:** 50 - 50,000 monedas | ⏱️ **Cooldown:** 8s",
                 inline: false,
             },
             {

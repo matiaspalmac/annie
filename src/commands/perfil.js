@@ -240,6 +240,22 @@ export async function execute(interaction, bostezo) {
     });
     const comprasEspeciales = resComprasEspeciales.rows.map(r => `${String(r.item_id)} x${Number(r.cantidad || 0)}`);
 
+    //====== Casino Stats ======
+    const resCasino = await db.execute({
+        sql: "SELECT wins, losses, total_betted, net_winnings FROM casino_stats WHERE user_id = ?",
+        args: [targetUser.id]
+    });
+    let casinoText = "Sin estadísticas";
+    if (resCasino.rows.length > 0) {
+        const wins = Number(resCasino.rows[0].wins || 0);
+        const losses = Number(resCasino.rows[0].losses || 0);
+        const totalBetted = Number(resCasino.rows[0].total_betted || 0);
+        const netWinnings = Number(resCasino.rows[0].net_winnings || 0);
+        const totalGames = wins + losses;
+        const winRate = totalGames > 0 ? ((wins / totalGames) * 100).toFixed(1) : 0;
+        casinoText = `${wins}W-${losses}L (${winRate}%) | ${netWinnings >= 0 ? '+' : ''}${formatCompact(netWinnings)} 💰`;
+    }
+
     //====== Titulo Economico ======
     let tituloEconomico = "Mendigo del Pueblito";
     if (monedas >= 10000) tituloEconomico = "Mente Maestra de Wall Street";
@@ -279,6 +295,7 @@ export async function execute(interaction, bostezo) {
             { name: "🔥 Actividad Mensual", value: `Racha activa: **${rachaActiva}** días | Días activos: **${diasActivosMes}**\nXP: **${formatCompact(xpMes)}** / ${formatCompact(objetivoXpMensual)} (${progresoXpMensual}%)\nMonedas: **${formatCompact(monedasMes)}**`, inline: false },
             { name: "🧭 Comparativa", value: `💸 Top ${topEconomicoPercent}% económico\n📚 Top ${topColeccionPercent}% coleccionista`, inline: true },
             { name: "🏅 Insignias", value: insignias.length ? insignias.slice(0, 3).join("\n") : "Sin insignias", inline: true },
+            { name: "🎰 Casino", value: casinoText, inline: true },
             { name: "✨ Efectos Activos", value: boostsActivos.length ? boostsActivos.join("\n") : "Ninguno", inline: false },
             { name: "🧪 Compras Especiales", value: comprasEspeciales.length ? comprasEspeciales.join("\n") : "Ninguna", inline: false }
         );
