@@ -1,6 +1,6 @@
 {
   "name": "annie-bot",
-  "version": "2.0.0",
+  "version": "2.2.0",
   "description": "Annie - Bot de Discord para Heartopia Wiki",
   "main": "src/index.js",
   "type": "module",

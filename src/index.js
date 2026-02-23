@@ -12,24 +12,24 @@ import {
 } from "discord.js";
 import { joinVoiceChannel, getVoiceConnection } from "@discordjs/voice";
 
-import { CONFIG } from "./config.js";
+import { CONFIG } from "./core/config.js";
 
-import { loadCommands, getCommandDefs, handleCommand, handleAutocomplete } from "./commands.js";
-import { handleAutocompleteGlobal } from "./data.js";
+import { loadCommands, getCommandDefs, handleCommand, handleAutocomplete } from "./handlers/commands.js";
+import { handleAutocompleteGlobal } from "./core/data.js";
 import {
   getTrato, getSaludoHora,
   ACTIVIDADES, RUTINAS, FRASES_AMBIENT,
-} from "./personality.js";
+} from "./core/personality.js";
 import {
   getHoraChile, estaDurmiendo, setDurmiendo, getCanalGeneral,
   crearEmbed, getBostezo, isEstrellaActiva, setEstrellaActiva,
   lanzarEstrellaFugaz, getItemEnDemanda, setItemEnDemanda, getFechaChile
-} from "./utils.js";
-import { initDB, loadConfig, buildAutocompleteCache, db, getLatestLogId, getLogsSince } from "./db.js";
-import { setAutocompleteCache } from "./data.js";
-import { logStartup } from "./logger.js";
-import { lanzarTriviaAleatoria } from "./trivia.js";
-import { procesarCompraTienda } from "./shop.js";
+} from "./core/utils.js";
+import { initDB, loadConfig, buildAutocompleteCache, db, getLatestLogId, getLogsSince } from "./services/db.js";
+import { setAutocompleteCache } from "./core/data.js";
+import { logStartup } from "./core/logger.js";
+import { lanzarTriviaAleatoria } from "./features/trivia.js";
+import { procesarCompraTienda } from "./features/shop.js";
 
 const client = new Client({
   intents: [
@@ -336,7 +336,7 @@ function chequearDoris() {
 }
 
 client.once("clientReady", async () => {
-  console.log(`Annie v2 conectada: ${client.user.tag}`);
+  console.log(`${CONFIG.APP_LABEL} conectada: ${client.user.tag}`);
 
   await initDB();
   await loadConfig();
@@ -1150,13 +1150,13 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
   // ---- Blackjack Buttons ----
   if (interaction.isButton() && interaction.customId.startsWith("blackjack_")) {
-    const { handleBlackjackButton } = await import("./commands/blackjack.js");
+    const { handleBlackjackButton } = await import("./commands/games/games-blackjack.js");
     return await handleBlackjackButton(interaction);
   }
 
   // ---- Casino Buttons ----
   if (interaction.isButton() && interaction.customId.startsWith("casino_")) {
-    const { handleCasinoButton } = await import("./commands/casino.js");
+    const { handleCasinoButton } = await import("./commands/games/games-casino.js");
     return await handleCasinoButton(interaction);
   }
 
@@ -1187,7 +1187,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
 http.createServer((req, res) => {
   res.writeHead(200);
-  res.end("Annie v2 is live");
+  res.end(`${CONFIG.APP_LABEL} is live`);
 }).listen(8000);
 
 client.login(CONFIG.TOKEN);
