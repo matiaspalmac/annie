@@ -21,6 +21,7 @@ export async function execute(interaction, bostezo) {
                 name: "💰 Economía y Perfil (¡NUEVO!)",
                 value:
                     "✨ `/perfil` — Mira tu nivel, experiencia y moneditas acumuladas.\n" +
+                    "🛠️ `/accion [actividad]` — Minar, pescar, sacudir árbol o cazar bichos desde un solo comando.\n" +
                     "🛒 `/tienda [pagina]` — Revisa el catálogo por páginas.\n" +
                     "🧾 `/comprar [item]` — Compra directo con sugerencias automáticas.\n" +
                     "🖌️ `/color [hex]` — Aplica tu Pincel Mágico personalizado.",
