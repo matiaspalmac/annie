@@ -1,6 +1,13 @@
 import { createClient } from "@libsql/client";
 import { CONFIG } from "../core/config.js";
 
+// ── Constantes ────────────────────────────────────────────────────────────
+/** Timeout máximo para operaciones de base de datos (15 segundos) */
+const DB_OPERATION_TIMEOUT = 15000;
+
+/** Límite de logs a mantener en bitácora por usuario */
+const MAX_BITACORA_REGISTROS = 10;
+
 if (!CONFIG.TURSO_URL) {
   throw new Error(
     "Falta TURSO_DATABASE_URL en variables de entorno. Crea/recupera el archivo .env con TURSO_DATABASE_URL y TURSO_AUTH_TOKEN."
@@ -76,6 +83,11 @@ const CONFIG_DEFAULTS = {
   }),
 };
 
+/**
+ * Inicializa todas las tablas de la base de datos y ejecuta migraciones.
+ * @async
+ * @returns {Promise<void>}
+ */
 export async function initDB() {
   try {
     await db.execute(`
@@ -179,6 +191,16 @@ export async function initDB() {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id TEXT NOT NULL,
             fecha TEXT NOT NULL
+          )
+        `);
+    await db.execute(`
+          CREATE TABLE IF NOT EXISTS items_economia (
+            id TEXT PRIMARY KEY,
+            nombre TEXT NOT NULL,
+            emoji TEXT,
+            tipo TEXT NOT NULL,
+            rareza TEXT,
+            precio_venta INTEGER DEFAULT 0
           )
         `);
     await db.execute(`
@@ -380,6 +402,7 @@ export async function initDB() {
 
     await seedConfig();
     await seedTienda();
+    await seedItemsEconomia();
   } catch (err) {
     console.error("[DB] Error iniciando Turso:", err);
   }
@@ -387,30 +410,46 @@ export async function initDB() {
 
 /**
  * Inserta los valores por defecto en `configuracion` si la tabla está vacía.
+ * @async
+ * @returns {Promise<void>}
  */
 async function seedConfig() {
-  const existing = await db.execute("SELECT COUNT(*) as c FROM configuracion");
-  if (Number(existing.rows[0].c) > 0) return; // ya hay datos, no pisar
+  try {
+    const existing = await db.execute("SELECT COUNT(*) as c FROM configuracion");
+    const count = Number(existing?.rows?.[0]?.c ?? 0);
+    if (count > 0) return; // ya hay datos, no pisar
 
-  for (const [clave, valor] of Object.entries(CONFIG_DEFAULTS)) {
-    await db.execute({
-      sql: "INSERT OR IGNORE INTO configuracion (clave, valor) VALUES (?, ?)",
-      args: [clave, String(valor)],
-    });
+    for (const [clave, valor] of Object.entries(CONFIG_DEFAULTS)) {
+      await db.execute({
+        sql: "INSERT OR IGNORE INTO configuracion (clave, valor) VALUES (?, ?)",
+        args: [clave, String(valor)],
+      });
+    }
+    console.log("[DB] Configuración inicial sembrada en la tabla `configuracion`.");
+  } catch (err) {
+    console.error("[DB] Error en seedConfig:", err);
   }
-  console.log("[DB] Configuración inicial sembrada en la tabla `configuracion`.");
 }
 
 /**
  * Carga la configuración desde la DB y la mezcla en el objeto CONFIG importado.
  * Llama esto justo después de initDB() en el arranque del bot.
+ * @async
+ * @returns {Promise<void>}
  */
 export async function loadConfig() {
   try {
     const result = await db.execute("SELECT clave, valor FROM configuracion");
+    if (!result?.rows) {
+      console.warn("[DB] No se pudo cargar configuración: respuesta vacía");
+      return;
+    }
+
     for (const row of result.rows) {
-      const key = row.clave;
-      const raw = row.valor;
+      const key = String(row?.clave ?? "");
+      const raw = String(row?.valor ?? "");
+      if (!key) continue;
+
       if (raw.startsWith("{") || raw.startsWith("[")) {
         // Objetos y arrays JSON
         try { CONFIG[key] = JSON.parse(raw); } catch { CONFIG[key] = raw; }
@@ -424,7 +463,7 @@ export async function loadConfig() {
       }
     }
 
-    console.log(`[DB] Configuración cargada(${result.rows.length} claves).`);
+    console.log(`[DB] Configuración cargada (${result.rows.length} claves).`);
   } catch (err) {
     console.error("[DB] Error cargando configuración:", err);
   }
@@ -434,33 +473,45 @@ export async function loadConfig() {
 
 /**
  * Devuelve el id del log más reciente en admin_logs, o 0 si no hay.
+ * @async
+ * @returns {Promise<number>} ID del último log
  */
 export async function getLatestLogId() {
   try {
     const result = await db.execute("SELECT MAX(id) as maxId FROM admin_logs");
-    return Number(result.rows[0]?.maxId ?? 0);
-  } catch {
+    return Number(result?.rows?.[0]?.maxId ?? 0);
+  } catch (err) {
+    console.error("[DB] Error obteniendo último log ID:", err.message);
     return 0;
   }
 }
 
 /**
  * Devuelve los logs nuevos desde un id determinado.
+ * @async
+ * @param {number} sinceId - ID desde donde obtener logs
+ * @returns {Promise<Array>} Array de logs
  */
 export async function getLogsSince(sinceId) {
   try {
+    const id = Number(sinceId);
+    if (isNaN(id) || id < 0) return [];
+
     const result = await db.execute({
       sql: "SELECT * FROM admin_logs WHERE id > ? ORDER BY id ASC LIMIT 20",
-      args: [sinceId],
+      args: [id],
     });
-    return result.rows;
-  } catch {
+    return result?.rows ?? [];
+  } catch (err) {
+    console.error("[DB] Error obteniendo logs desde ID:", err.message);
     return [];
   }
 }
 
 /**
  * Siembra los items de la tienda si la tabla está vacía.
+ * @async
+ * @returns {Promise<void>}
  */
 async function seedTienda() {
   const items = [
@@ -509,26 +560,167 @@ async function seedTienda() {
     { id: "mascota_pudu", tipo: "mascota", nombre: "Pudú Tímido", descripcion: "El ciervo más pequeño y tierno de Chile. Cuidará tus logros en tu perfil.", precio_monedas: 2600 },
   ];
 
-  for (const item of items) {
-    await db.execute({
-      sql: `INSERT OR IGNORE INTO tienda_items (id, nombre, descripcion, precio_monedas, tipo, discord_role_id)
-            VALUES (?, ?, ?, ?, ?, NULL)`,
-      args: [item.id, item.nombre, item.descripcion, item.precio_monedas, item.tipo],
-    });
+  try {
+    for (const item of items) {
+      await db.execute({
+        sql: `INSERT OR IGNORE INTO tienda_items (id, nombre, descripcion, precio_monedas, tipo, discord_role_id)
+              VALUES (?, ?, ?, ?, ?, NULL)`,
+        args: [item.id, item.nombre, item.descripcion, item.precio_monedas, item.tipo],
+      });
+    }
+    console.log(`[DB] Tienda verificada al inicio (${items.length} items base).`);
+  } catch (err) {
+    console.error("[DB] Error en seedTienda:", err);
   }
-  console.log(`[DB] Tienda verificada al inicio (${items.length} items base).`);
 }
 
+/**
+ * Carga items de economía obtenibles (minerales, peces, frutas, bichos)
+ * @async
+ * @returns {Promise<void>}
+ */
+async function seedItemsEconomia() {
+  const items = [
+    // MINERALES (Minar)
+    { id: "Diamante puro", nombre: "Diamante puro", emoji: "💎", tipo: "mineral", rareza: "mitico", precio_venta: 150 },
+    { id: "Esmeralda brillante", nombre: "Esmeralda brillante", emoji: "💚", tipo: "mineral", rareza: "epico", precio_venta: 80 },
+    { id: "Rubí carmesí", nombre: "Rubí carmesí", emoji: "❤️", tipo: "mineral", rareza: "epico", precio_venta: 75 },
+    { id: "Zafiro estelar", nombre: "Zafiro estelar", emoji: "💙", tipo: "mineral", rareza: "epico", precio_venta: 70 },
+    { id: "Amatista cristalina", nombre: "Amatista cristalina", emoji: "💜", tipo: "mineral", rareza: "raro", precio_venta: 50 },
+    { id: "Fluorita impecable", nombre: "Fluorita impecable", emoji: "🟢", tipo: "mineral", rareza: "raro", precio_venta: 45 },
+    { id: "Topacio dorado", nombre: "Topacio dorado", emoji: "🟡", tipo: "mineral", rareza: "poco_comun", precio_venta: 30 },
+    { id: "Cuarzo rosa", nombre: "Cuarzo rosa", emoji: "🪷", tipo: "mineral", rareza: "poco_comun", precio_venta: 25 },
+    { id: "Hierro", nombre: "Hierro", emoji: "⚙️", tipo: "mineral", rareza: "comun", precio_venta: 8 },
+    { id: "Cobre", nombre: "Cobre", emoji: "🟠", tipo: "mineral", rareza: "comun", precio_venta: 7 },
+    { id: "Obsidiana", nombre: "Obsidiana", emoji: "⬛", tipo: "mineral", rareza: "comun", precio_venta: 10 },
+    { id: "Jade", nombre: "Jade", emoji: "🟩", tipo: "mineral", rareza: "comun", precio_venta: 12 },
+    { id: "Ópalo", nombre: "Ópalo", emoji: "🌈", tipo: "mineral", rareza: "comun", precio_venta: 15 },
+    { id: "Piedra", nombre: "Piedra", emoji: "🪨", tipo: "mineral", rareza: "basico", precio_venta: 2 },
+    { id: "Grava", nombre: "Grava", emoji: "🔸", tipo: "mineral", rareza: "basico", precio_venta: 1 },
+    { id: "Roca común", nombre: "Roca común", emoji: "🗿", tipo: "mineral", rareza: "basico", precio_venta: 1 },
+
+    // PECES (Pescar)
+    { id: "Dragón Marino", nombre: "Dragón Marino", emoji: "🐉", tipo: "pez", rareza: "mitico", precio_venta: 200 },
+    { id: "Leviatán Bebé", nombre: "Leviatán Bebé", emoji: "🐳", tipo: "pez", rareza: "mitico", precio_venta: 180 },
+    { id: "Sirena Escamosa", nombre: "Sirena Escamosa", emoji: "🧜", tipo: "pez", rareza: "mitico", precio_venta: 190 },
+    { id: "Anguila Astral", nombre: "Anguila Astral", emoji: "⚡", tipo: "pez", rareza: "legendario", precio_venta: 100 },
+    { id: "Koi Dorado", nombre: "Koi Dorado", emoji: "🐟", tipo: "pez", rareza: "legendario", precio_venta: 95 },
+    { id: "Tiburón Bebé", nombre: "Tiburón Bebé", emoji: "🦈", tipo: "pez", rareza: "legendario", precio_venta: 90 },
+    { id: "Pez Espada Lunar", nombre: "Pez Espada Lunar", emoji: "🗡️", tipo: "pez", rareza: "legendario", precio_venta: 85 },
+    { id: "Manta Raya Celeste", nombre: "Manta Raya Celeste", emoji: "🫶", tipo: "pez", rareza: "legendario", precio_venta: 88 },
+    { id: "Atún Gigante", nombre: "Atún Gigante", emoji: "🐟", tipo: "pez", rareza: "legendario", precio_venta: 82 },
+    { id: "Salmón Real", nombre: "Salmón Real", emoji: "🐟", tipo: "pez", rareza: "epico", precio_venta: 55 },
+    { id: "Lubina Plateada", nombre: "Lubina Plateada", emoji: "🐠", tipo: "pez", rareza: "epico", precio_venta: 50 },
+    { id: "Pez Globo Mágico", nombre: "Pez Globo Mágico", emoji: "🐡", tipo: "pez", rareza: "epico", precio_venta: 48 },
+    { id: "Caballito de Mar Dorado", nombre: "Caballito de Mar Dorado", emoji: "🫸", tipo: "pez", rareza: "epico", precio_venta: 45 },
+    { id: "Medusa Luna", nombre: "Medusa Luna", emoji: "🌙", tipo: "pez", rareza: "epico", precio_venta: 52 },
+    { id: "Trucha Arcoiris", nombre: "Trucha Arcoiris", emoji: "🌈", tipo: "pez", rareza: "raro", precio_venta: 30 },
+    { id: "Carpa Koi", nombre: "Carpa Koi", emoji: "🐟", tipo: "pez", rareza: "raro", precio_venta: 28 },
+    { id: "Pez Payaso", nombre: "Pez Payaso", emoji: "🤡", tipo: "pez", rareza: "raro", precio_venta: 25 },
+    { id: "Morena Verde", nombre: "Morena Verde", emoji: "🐍", tipo: "pez", rareza: "raro", precio_venta: 32 },
+    { id: "Perca Dorada", nombre: "Perca Dorada", emoji: "🟡", tipo: "pez", rareza: "raro", precio_venta: 27 },
+    { id: "Pescado", nombre: "Pescado", emoji: "🐟", tipo: "pez", rareza: "comun", precio_venta: 8 },
+    { id: "Trucha Clara", nombre: "Trucha Clara", emoji: "🐠", tipo: "pez", rareza: "comun", precio_venta: 10 },
+    { id: "Mojarra", nombre: "Mojarra", emoji: "🐟", tipo: "pez", rareza: "comun", precio_venta: 9 },
+    { id: "Bagre Joven", nombre: "Bagre Joven", emoji: "🐟", tipo: "pez", rareza: "comun", precio_venta: 8 },
+    { id: "Carpa Soleada", nombre: "Carpa Soleada", emoji: "🐠", tipo: "pez", rareza: "comun", precio_venta: 11 },
+    { id: "Róbalo", nombre: "Róbalo", emoji: "🐟", tipo: "pez", rareza: "comun", precio_venta: 12 },
+    { id: "Pejerrey", nombre: "Pejerrey", emoji: "🐠", tipo: "pez", rareza: "comun", precio_venta: 10 },
+    { id: "Bagre Sombrío", nombre: "Bagre Sombrío", emoji: "🐟", tipo: "pez", rareza: "comun", precio_venta: 13 },
+    { id: "Anguila Común", nombre: "Anguila Común", emoji: "🐍", tipo: "pez", rareza: "comun", precio_venta: 14 },
+    { id: "Pez Gato", nombre: "Pez Gato", emoji: "🐈", tipo: "pez", rareza: "comun", precio_venta: 11 },
+    { id: "Sardina de Luna", nombre: "Sardina de Luna", emoji: "🌙", tipo: "pez", rareza: "comun", precio_venta: 9 },
+    { id: "Anchoa Nocturna", nombre: "Anchoa Nocturna", emoji: "🐟", tipo: "pez", rareza: "comun", precio_venta: 8 },
+    { id: "Boquerón", nombre: "Boquerón", emoji: "🐠", tipo: "pez", rareza: "comun", precio_venta: 7 },
+    { id: "Botella con mensaje", nombre: "Botella con mensaje", emoji: "🍾", tipo: "tesoro", rareza: "raro", precio_venta: 0 },
+
+    // FRUTAS (Talar)
+    { id: "Manzana Dorada", nombre: "Manzana Dorada", emoji: "🍎", tipo: "fruta", rareza: "epico", precio_venta: 60 },
+    { id: "Durazno Plateado", nombre: "Durazno Plateado", emoji: "🍑", tipo: "fruta", rareza: "epico", precio_venta: 58 },
+    { id: "Pera Cristalina", nombre: "Pera Cristalina", emoji: "🍐", tipo: "fruta", rareza: "epico", precio_venta: 55 },
+    { id: "Ciruela Mágica", nombre: "Ciruela Mágica", emoji: "🫐", tipo: "fruta", rareza: "epico", precio_venta: 57 },
+    { id: "Naranjas", nombre: "Naranjas", emoji: "🍊", tipo: "fruta", rareza: "raro", precio_venta: 20 },
+    { id: "Peras", nombre: "Peras", emoji: "🍐", tipo: "fruta", rareza: "raro", precio_venta: 18 },
+    { id: "Duraznos", nombre: "Duraznos", emoji: "🍑", tipo: "fruta", rareza: "raro", precio_venta: 19 },
+    { id: "Ciruelas", nombre: "Ciruelas", emoji: "🫐", tipo: "fruta", rareza: "raro", precio_venta: 17 },
+    { id: "Cerezas", nombre: "Cerezas", emoji: "🍒", tipo: "fruta", rareza: "raro", precio_venta: 16 },
+    { id: "Limones", nombre: "Limones", emoji: "🍋", tipo: "fruta", rareza: "raro", precio_venta: 15 },
+    { id: "Manzanas", nombre: "Manzanas", emoji: "🍎", tipo: "fruta", rareza: "comun", precio_venta: 8 },
+    { id: "Coco", nombre: "Coco", emoji: "🥥", tipo: "fruta", rareza: "comun", precio_venta: 12 },
+    { id: "Plátanos", nombre: "Plátanos", emoji: "🍌", tipo: "fruta", rareza: "comun", precio_venta: 6 },
+    { id: "Fresas", nombre: "Fresas", emoji: "🍓", tipo: "fruta", rareza: "comun", precio_venta: 7 },
+    { id: "Uvas", nombre: "Uvas", emoji: "🍇", tipo: "fruta", rareza: "comun", precio_venta: 5 },
+    { id: "Sandía", nombre: "Sandía", emoji: "🍉", tipo: "fruta", rareza: "comun", precio_venta: 15 },
+    { id: "Melón", nombre: "Melón", emoji: "🍈", tipo: "fruta", rareza: "comun", precio_venta: 14 },
+    { id: "Pluma brillante", nombre: "Pluma brillante", emoji: "🪶", tipo: "objeto", rareza: "raro", precio_venta: 35 },
+    { id: "Huevo de Pájaro", nombre: "Huevo de Pájaro", emoji: "🥚", tipo: "objeto", rareza: "poco_comun", precio_venta: 20 },
+    { id: "Rama Dorada", nombre: "Rama Dorada", emoji: "🌿", tipo: "objeto", rareza: "poco_comun", precio_venta: 25 },
+
+    // BICHOS (Capturar)
+    { id: "Escarabajo Divino", nombre: "Escarabajo Divino", emoji: "🐞", tipo: "bicho", rareza: "mitico", precio_venta: 250 },
+    { id: "Fénix Polilla", nombre: "Fénix Polilla", emoji: "🦋", tipo: "bicho", rareza: "mitico", precio_venta: 240 },
+    { id: "Libélula Arcoiris", nombre: "Libélula Arcoiris", emoji: "🪰", tipo: "bicho", rareza: "mitico", precio_venta: 230 },
+    { id: "Tarántula", nombre: "Tarántula", emoji: "🕷️", tipo: "bicho", rareza: "legendario", precio_venta: 120 },
+    { id: "Escorpión Dorado", nombre: "Escorpión Dorado", emoji: "🦂", tipo: "bicho", rareza: "legendario", precio_venta: 115 },
+    { id: "Cicada Gigante", nombre: "Cicada Gigante", emoji: "🦗", tipo: "bicho", rareza: "legendario", precio_venta: 110 },
+    { id: "Luciérnaga Estelar", nombre: "Luciérnaga Estelar", emoji: "✨", tipo: "bicho", rareza: "legendario", precio_venta: 105 },
+    { id: "Abeja Reina", nombre: "Abeja Reina", emoji: "🐝", tipo: "bicho", rareza: "legendario", precio_venta: 100 },
+    { id: "Mariposa Emperador", nombre: "Mariposa Emperador", emoji: "🦋", tipo: "bicho", rareza: "epico", precio_venta: 65 },
+    { id: "Oruga Tornasol", nombre: "Oruga Tornasol", emoji: "🐛", tipo: "bicho", rareza: "epico", precio_venta: 60 },
+    { id: "Grillo Dorado", nombre: "Grillo Dorado", emoji: "🦗", tipo: "bicho", rareza: "epico", precio_venta: 58 },
+    { id: "Saltamontes Esmeralda", nombre: "Saltamontes Esmeralda", emoji: "🦗", tipo: "bicho", rareza: "epico", precio_venta: 62 },
+    { id: "Escarabajo Rinoceronte", nombre: "Escarabajo Rinoceronte", emoji: "🪲", tipo: "bicho", rareza: "epico", precio_venta: 67 },
+    { id: "Abeja Mielera", nombre: "Abeja Mielera", emoji: "🐝", tipo: "bicho", rareza: "raro", precio_venta: 35 },
+    { id: "Mariposa Nocturna", nombre: "Mariposa Nocturna", emoji: "🦋", tipo: "bicho", rareza: "raro", precio_venta: 32 },
+    { id: "Libélula Azul", nombre: "Libélula Azul", emoji: "🦗", tipo: "bicho", rareza: "raro", precio_venta: 30 },
+    { id: "Crisopa Verde", nombre: "Crisopa Verde", emoji: "🐛", tipo: "bicho", rareza: "raro", precio_venta: 28 },
+    { id: "Chinche Soldado", nombre: "Chinche Soldado", emoji: "🐞", tipo: "bicho", rareza: "raro", precio_venta: 26 },
+    { id: "Mosca Dragón", nombre: "Mosca Dragón", emoji: "🦗", tipo: "bicho", rareza: "raro", precio_venta: 33 },
+    { id: "Mantis Religiosa", nombre: "Mantis Religiosa", emoji: "🦗", tipo: "bicho", rareza: "poco_comun", precio_venta: 18 },
+    { id: "Mariquita", nombre: "Mariquita", emoji: "🐞", tipo: "bicho", rareza: "poco_comun", precio_venta: 15 },
+    { id: "Catarina", nombre: "Catarina", emoji: "🐞", tipo: "bicho", rareza: "poco_comun", precio_venta: 16 },
+    { id: "Hormiga Roja", nombre: "Hormiga Roja", emoji: "🐜", tipo: "bicho", rareza: "poco_comun", precio_venta: 12 },
+    { id: "Mosca Verde", nombre: "Mosca Verde", emoji: "🪰", tipo: "bicho", rareza: "poco_comun", precio_venta: 14 },
+    { id: "Caracolito", nombre: "Caracolito", emoji: "🐌", tipo: "bicho", rareza: "poco_comun", precio_venta: 10 },
+    { id: "Hormiga", nombre: "Hormiga", emoji: "🐜", tipo: "bicho", rareza: "comun", precio_venta: 3 },
+    { id: "Mosca", nombre: "Mosca", emoji: "🪰", tipo: "bicho", rareza: "comun", precio_venta: 2 },
+    { id: "Mosquito", nombre: "Mosquito", emoji: "🫰", tipo: "bicho", rareza: "comun", precio_venta: 2 },
+    { id: "Polilla", nombre: "Polilla", emoji: "🦋", tipo: "bicho", rareza: "comun", precio_venta: 4 },
+    { id: "Escarabajo", nombre: "Escarabajo", emoji: "🪲", tipo: "bicho", rareza: "comun", precio_venta: 5 },
+    { id: "Gusano", nombre: "Gusano", emoji: "🪱", tipo: "bicho", rareza: "comun", precio_venta: 3 },
+    { id: "Araña Pequeña", nombre: "Araña Pequeña", emoji: "🕷️", tipo: "bicho", rareza: "comun", precio_venta: 6 },
+    { id: "Tijereta", nombre: "Tijereta", emoji: "🦗", tipo: "bicho", rareza: "comun", precio_venta: 4 },
+  ];
+
+  try {
+    for (const item of items) {
+      await db.execute({
+        sql: `INSERT OR IGNORE INTO items_economia (id, nombre, emoji, tipo, rareza, precio_venta)
+              VALUES (?, ?, ?, ?, ?, ?)`,
+        args: [item.id, item.nombre, item.emoji, item.tipo, item.rareza, item.precio_venta],
+      });
+    }
+    console.log(`[DB] Items de economía verificados al inicio (${items.length} items obtenibles).`);
+  } catch (err) {
+    console.error("[DB] Error en seedItemsEconomia:", err);
+  }
+}
+
+/**
+ * Construye el caché de autocompletado para todas las tablas de colecciones.
+ * @async
+ * @returns {Promise<Object>} Objeto con cache normalizado por tabla
+ */
 export async function buildAutocompleteCache() {
   const cache = {};
   const tables = ["peces", "insectos", "aves", "animales", "cultivos", "recolectables", "habitantes", "logros", "recetas"];
 
   for (const table of tables) {
     try {
-      const result = await db.execute(`SELECT id FROM ${table} `);
-      cache[table] = result.rows.map(row => ({
-        original: String(row.id),
-        normalized: String(row.id)
+      const result = await db.execute(`SELECT id FROM ${table}`);
+      cache[table] = (result?.rows ?? []).map(row => ({
+        original: String(row?.id ?? ""),
+        normalized: String(row?.id ?? "")
           .toLowerCase()
           .normalize("NFD")
           .replace(/[\u0300-\u036f]/g, "")
@@ -536,26 +728,54 @@ export async function buildAutocompleteCache() {
           .trim()
       }));
     } catch (e) {
-      console.error(`[DB] No se pudo armar cache para tabla ${table}: `, e.message);
+      console.error(`[DB] No se pudo armar cache para tabla ${table}:`, e.message);
       cache[table] = [];
     }
   }
   return cache;
 }
 
+/**
+ * Guarda o actualiza el game_id de un usuario.
+ * @async
+ * @param {string} userId - ID del usuario de Discord
+ * @param {string} gameId - ID del juego a guardar
+ * @returns {Promise<Object>} Resultado de la operación
+ */
 export async function saveGameId(userId, gameId) {
-  return await db.execute({
-    sql: "INSERT INTO game_ids (user_id, game_id) VALUES (?, ?) ON CONFLICT(user_id) DO UPDATE SET game_id = excluded.game_id",
-    args: [userId, gameId],
-  });
+  try {
+    if (!userId || !gameId) {
+      console.warn("[DB] saveGameId: userId o gameId vacío");
+      return null;
+    }
+    return await db.execute({
+      sql: "INSERT INTO game_ids (user_id, game_id) VALUES (?, ?) ON CONFLICT(user_id) DO UPDATE SET game_id = excluded.game_id",
+      args: [String(userId), String(gameId)],
+    });
+  } catch (err) {
+    console.error("[DB] Error guardando game_id:", err);
+    return null;
+  }
 }
 
+/**
+ * Obtiene el game_id de un usuario.
+ * @async
+ * @param {string} userId - ID del usuario de Discord
+ * @returns {Promise<string|null>} Game ID o null si no existe
+ */
 export async function getGameId(userId) {
-  const result = await db.execute({
-    sql: "SELECT game_id FROM game_ids WHERE user_id = ?",
-    args: [userId],
-  });
-  return result.rows.length > 0 ? result.rows[0].game_id : null;
+  try {
+    if (!userId) return null;
+    const result = await db.execute({
+      sql: "SELECT game_id FROM game_ids WHERE user_id = ?",
+      args: [String(userId)],
+    });
+    return result?.rows?.length > 0 ? result.rows[0].game_id : null;
+  } catch (err) {
+    console.error("[DB] Error obteniendo game_id:", err);
+    return null;
+  }
 }
 
 export { db };

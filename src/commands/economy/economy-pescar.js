@@ -126,8 +126,11 @@ export async function execute(interaction, bostezo) {
         const bonusSuerte = amuletoActivo ? 8 : 0;
         const bonusRod = ROD_META[rod.itemId] || { bonusRare: 0, bonusLegend: 0, nombre: "Caña Básica" };
 
-        const chanceLegendaria = Math.min(2 + (bonoNivel * 0.25) + bonusSuerte + bonusRod.bonusLegend + bonusCebo, 25);
-        const chanceBotella = Math.min(6 + bonoNivel + bonusSuerte + bonusRod.bonusRare + bonusCebo, 55);
+        const chanceMitico = Math.min(0.5 + (bonoNivel * 0.1) + bonusSuerte + bonusRod.bonusLegend + bonusCebo, 8);
+        const chanceLegendaria = Math.min(3 + (bonoNivel * 0.25) + bonusSuerte + bonusRod.bonusLegend + bonusCebo, 18);
+        const chanceEpica = Math.min(8 + (bonoNivel * 0.4) + bonusSuerte + bonusRod.bonusRare + bonusCebo, 30);
+        const chanceRara = Math.min(15 + (bonoNivel * 0.6) + bonusSuerte + bonusRod.bonusRare + bonusCebo, 45);
+        const chanceBotella = Math.min(20 + bonoNivel + bonusSuerte + bonusRod.bonusRare + bonusCebo, 60);
         const rand = Math.random() * 100;
 
         await db.execute({
@@ -141,18 +144,112 @@ export async function execute(interaction, bostezo) {
         });
         const durabilidadRestante = Number(resRodAfter.rows[0]?.durabilidad || 0);
 
-        if (rand <= chanceLegendaria) {
-            const itemLegendario = franja === "noche" || franja === "madrugada" ? "Anguila Astral" : "Koi Dorado";
+        // MITICO - Super raro
+        if (rand <= chanceMitico) {
+            const pecesmiticos = [
+                { id: "Dragón Marino", emoji: "🐉", texto: "¡¡IMPOSIBLE!! ¡Capturaste un mítico Dragón Marino! ¡Los pescadores hablan de esto por generaciones!" },
+                { id: "Leviatán Bebé", emoji: "🐳", texto: "¡POR TODOS LOS CIELOS! ¡Un bebé Leviatán! ¡Esto es legendario!" },
+                { id: "Sirena Escamosa", emoji: "🧜", texto: "¡NO PUEDE SER! ¿Una Sirena? ¡Esto desafía toda lógica!" }
+            ];
+            const elegido = pecesmiticos[Math.floor(Math.random() * pecesmiticos.length)];
+            
             await db.execute({
                 sql: `INSERT INTO inventario_economia (user_id, item_id, cantidad)
                       VALUES (?, ?, 1)
                       ON CONFLICT(user_id, item_id) DO UPDATE SET cantidad = cantidad + 1`,
-                args: [userId, itemLegendario]
+                args: [userId, elegido.id]
             });
+            
+            await registrarBitacora(userId, `¡¡CAPTURÓ UN ${elegido.id.toUpperCase()} MÍTICO!!`);
+
+            return interaction.followUp(
+                `🌊 **¡¡EVENTO MÍTICO DE PESCA!!** 🌊\n` +
+                `${elegido.texto}\n` +
+                `Has capturado: **${elegido.emoji} ${elegido.id}**\n` +
+                `${consumioCebo ? "🎣 Se consumió 1x cebo_simple.\n" : ""}` +
+                `🛠️ Durabilidad de caña: **${durabilidadRestante}/${rod.maxDurabilidad}** *(Nv. Pesca: ${nivelPesca})*`
+            );
+        }
+
+        // LEGENDARIO
+        if (rand <= chanceLegendaria) {
+            const pecesLegendarios = [
+                { id: "Anguila Astral", emoji: "⚡", texto: "Tu caña vibró con energía cósmica" },
+                { id: "Koi Dorado", emoji: "🐟", texto: "Las aguas brillaron en dorado" },
+                { id: "Tiburón Bebé", emoji: "🦈", texto: "¡Cuidado con esos dientecitos!" },
+                { id: "Pez Espada Lunar", emoji: "🗡️", texto: "Su espada refleja la luz de la luna" },
+                { id: "Manta Raya Celeste", emoji: "🫶", texto: "Planea suavemente bajo el agua" },
+                { id: "Atún Gigante", emoji: "🐟", texto: "¡Qué fuerza! Casi te arrastra al agua" }
+            ];
+            
+            const elegido = pecesLegendarios[Math.floor(Math.random() * pecesLegendarios.length)];
+            
+            await db.execute({
+                sql: `INSERT INTO inventario_economia (user_id, item_id, cantidad)
+                      VALUES (?, ?, 1)
+                      ON CONFLICT(user_id, item_id) DO UPDATE SET cantidad = cantidad + 1`,
+                args: [userId, elegido.id]
+            });
+            
+            await registrarBitacora(userId, `Capturó un legendario ${elegido.id}!`);
 
             return interaction.followUp(
                 `🌊 **¡Mini-evento legendario de pesca!**\n` +
-                `Tu ${bonusRod.nombre} vibró con fuerza y capturaste **${itemLegendario}**.\n` +
+                `${elegido.texto} y capturaste **${elegido.emoji} ${elegido.id}**.\n` +
+                `${consumioCebo ? "🎣 Se consumió 1x cebo_simple.\n" : ""}` +
+                `🛠️ Durabilidad de caña: **${durabilidadRestante}/${rod.maxDurabilidad}** *(Nv. Pesca: ${nivelPesca})*`
+            );
+        }
+
+        // EPICO
+        if (rand <= chanceEpica) {
+            const pecesEpicos = [
+                { id: "Salmón Real", emoji: "🐟", texto: "Un salmón majestuoso" },
+                { id: "Lubina Plateada", emoji: "🐠", texto: "Brilla como la plata pura" },
+                { id: "Pez Globo Mágico", emoji: "🐡", texto: "Se infla cuando lo sacas del agua" },
+                { id: "Caballito de Mar Dorado", emoji: "🫘", texto: "Diminuto pero valioso" },
+                { id: "Medusa Luna", emoji: "🌙", texto: "Translucida y brillante" }
+            ];
+            
+            const elegido = pecesEpicos[Math.floor(Math.random() * pecesEpicos.length)];
+            
+            await db.execute({
+                sql: `INSERT INTO inventario_economia (user_id, item_id, cantidad)
+                      VALUES (?, ?, 1)
+                      ON CONFLICT(user_id, item_id) DO UPDATE SET cantidad = cantidad + 1`,
+                args: [userId, elegido.id]
+            });
+
+            return interaction.followUp(
+                `🎣 *¡Tirón fuerte!*\n\n` +
+                `¡${elegido.texto}! Has pescado **${elegido.emoji} ${elegido.id}** (${franja}).\n` +
+                `${consumioCebo ? "🎣 Se consumió 1x cebo_simple.\n" : ""}` +
+                `🛠️ Durabilidad de caña: **${durabilidadRestante}/${rod.maxDurabilidad}** *(Nv. Pesca: ${nivelPesca})*`
+            );
+        }
+
+        // RARO
+        if (rand <= chanceRara) {
+            const pecesRaros = [
+                { id: "Trucha Arcoiris", emoji: "🌈", texto: "Sus escamas tienen todos los colores" },
+                { id: "Carpa Koi", emoji: "🐟", texto: "Naranja y blanca, muy bonita" },
+                { id: "Pez Payaso", emoji: "🤡", texto: "Naranjita con rayas blancas" },
+                { id: "Morena Verde", emoji: "🐍", texto: "Larga y resbaladiza" },
+                { id: "Perca Dorada", emoji: "🟡", texto: "Brilla con tonos dorados" }
+            ];
+            
+            const elegido = pecesRaros[Math.floor(Math.random() * pecesRaros.length)];
+            
+            await db.execute({
+                sql: `INSERT INTO inventario_economia (user_id, item_id, cantidad)
+                      VALUES (?, ?, 1)
+                      ON CONFLICT(user_id, item_id) DO UPDATE SET cantidad = cantidad + 1`,
+                args: [userId, elegido.id]
+            });
+
+            return interaction.followUp(
+                `🎣 *Splash...*\n\n` +
+                `¡${elegido.texto}! Has pescado **${elegido.emoji} ${elegido.id}** (${franja}).\n` +
                 `${consumioCebo ? "🎣 Se consumió 1x cebo_simple.\n" : ""}` +
                 `🛠️ Durabilidad de caña: **${durabilidadRestante}/${rod.maxDurabilidad}** *(Nv. Pesca: ${nivelPesca})*`
             );
@@ -180,25 +277,53 @@ export async function execute(interaction, bostezo) {
             );
         } else {
             const tablaPorFranja = {
-                manana: ["Pescado", "Trucha Clara"],
-                tarde: ["Pescado", "Carpa Soleada"],
-                noche: ["Pescado", "Bagre Sombrío"],
-                madrugada: ["Pescado", "Sardina de Luna"],
+                manana: [
+                    { id: "Pescado", emoji: "🐟" },
+                    { id: "Trucha Clara", emoji: "🐠" },
+                    { id: "Mojarra", emoji: "🐟" },
+                    { id: "Bagre Joven", emoji: "🐟" }
+                ],
+                tarde: [
+                    { id: "Pescado", emoji: "🐟" },
+                    { id: "Carpa Soleada", emoji: "🐠" },
+                    { id: "Róbalo", emoji: "🐟" },
+                    { id: "Pejerrey", emoji: "🐠" }
+                ],
+                noche: [
+                    { id: "Pescado", emoji: "🐟" },
+                    { id: "Bagre Sombrío", emoji: "🐟" },
+                    { id: "Anguila Común", emoji: "🐍" },
+                    { id: "Pez Gato", emoji: "🐈" }
+                ],
+                madrugada: [
+                    { id: "Pescado", emoji: "🐟" },
+                    { id: "Sardina de Luna", emoji: "🌙" },
+                    { id: "Anchoa Nocturna", emoji: "🐟" },
+                    { id: "Boquerón", emoji: "🐠" }
+                ],
             };
-            const pool = tablaPorFranja[franja] || ["Pescado"];
-            const itemId = pool[Math.floor(Math.random() * pool.length)];
-            const emoji = itemId === "Pescado" ? "🐟" : "🐠";
+            const pool = tablaPorFranja[franja] || [{ id: "Pescado", emoji: "🐟" }];
+            const elegido = pool[Math.floor(Math.random() * pool.length)];
 
             await db.execute({
                 sql: `INSERT INTO inventario_economia (user_id, item_id, cantidad) 
               VALUES (?, ?, 1) 
               ON CONFLICT(user_id, item_id) DO UPDATE SET cantidad = cantidad + 1`,
-                args: [userId, itemId]
+                args: [userId, elegido.id]
             });
 
+            const mensajesPesca = [
+                "*Splash...*",
+                "*Tirón en la caña...*",
+                "*Algo picó...*",
+                "*La caña se dobla...*",
+                "*Burbujas en el agua...*"
+            ];
+            const mensajeAleatorio = mensajesPesca[Math.floor(Math.random() * mensajesPesca.length)];
+
             return interaction.followUp(
-                `🎣 *Splash...*\n\n` +
-                `¡Ha picado algo! Has pescado **1x ${emoji} ${itemId}** (${franja}).\n` +
+                `🎣 ${mensajeAleatorio}\n\n` +
+                `¡Ha picado algo! Has pescado **${elegido.emoji} ${elegido.id}** (${franja}).\n` +
                 `${consumioCebo ? "🎣 Se consumió 1x cebo_simple.\n" : ""}` +
                 `🛠️ Durabilidad de caña: **${durabilidadRestante}/${rod.maxDurabilidad}** *(Nv. Pesca: ${nivelPesca})*`
             );

@@ -302,12 +302,13 @@ export async function enviarPaginado({
     );
   };
 
-  const message = await interaction.reply({
+  const response = await interaction.reply({
     content,
     embeds: [generarEmbedPagina(1)],
     components: totalPaginas > 1 ? [crearBotones(1)] : [],
-    fetchReply: true,
   });
+
+  const message = await response.fetch();
 
   if (totalPaginas <= 1) return;
 

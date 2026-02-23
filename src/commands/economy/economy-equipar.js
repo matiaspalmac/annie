@@ -1,4 +1,4 @@
-import { SlashCommandBuilder } from "discord.js";
+import { SlashCommandBuilder, MessageFlags } from "discord.js";
 import { db } from "../../services/db.js";
 import { getBostezo } from "../../core/utils.js";
 
@@ -111,7 +111,7 @@ export async function execute(interaction, bostezo) {
     const tipo = normalizeTipo(interaction.options.getString("tipo", true));
     const herramienta = interaction.options.getString("herramienta", true).trim();
 
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     try {
         if (!tipo) {

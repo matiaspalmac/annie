@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
+import { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from "discord.js";
 import { obtenerEstadisticasCasino, obtenerTopCasino, obtenerBalance } from "../../features/casino.js";
 import { crearEmbed, getBostezo } from "../../core/utils.js";
 import { CONFIG } from "../../core/config.js";
@@ -115,7 +115,7 @@ async function mostrarStats(interaction, bostezo) {
     )
     .setTimestamp();
 
-  await interaction.reply({ embeds: [embed], ephemeral: true });
+  await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
 }
 
 async function mostrarTop(interaction, bostezo) {
@@ -124,7 +124,7 @@ async function mostrarTop(interaction, bostezo) {
   if (topJugadores.length === 0) {
     return interaction.reply({
       content: `${bostezo} Aún no hay jugadores en el ranking del casino, tesoro. ¡Sé el primero! 🎰`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 
@@ -170,7 +170,7 @@ export async function handleCasinoButton(interaction) {
 
     await interaction.reply({
       content: mensajes[juego] || "Juego no disponible",
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 }

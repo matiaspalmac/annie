@@ -1,21 +1,44 @@
+/**
+ * Módulo de personalidad de Annie
+ * Contiene frases, tratos, sugerencias y rutinas para dar personalidad al bot
+ */
+
+// Constantes de tiempo
+const PROBABILIDAD_SUGERENCIA = 0.25; // 25% de probabilidad
+
 const TRATOS = [
   "vecino", "vecina", "tesorito", "corazón",
   "jovencito", "jovencita", "vecinito", "vecinita",
   "iñorito", "iñora",
 ];
 
+/**
+ * Obtiene un trato aleatorio para dirigirse al usuario
+ * @returns {string} Trato aleatorio (ej: "vecino", "corazón")
+ */
 export function getTrato() {
   return TRATOS[Math.floor(Math.random() * TRATOS.length)];
 }
 
+/**
+ * Obtiene un saludo apropiado según la hora del día
+ * @param {number} hora - Hora del día (0-23)
+ * @returns {string} Saludo apropiado
+ */
 export function getSaludoHora(hora) {
-  if (hora >= 6 && hora < 12) return "Buenos dias";
-  if (hora >= 12 && hora < 20) return "Buenas tardes";
+  const horaNormalizada = Number(hora) || 12;
+  
+  if (horaNormalizada >= 6 && horaNormalizada < 12) return "Buenos dias";
+  if (horaNormalizada >= 12 && horaNormalizada < 20) return "Buenas tardes";
   return "Buenas noches";
 }
 
+/**
+ * Determina si Annie debe sugerir contenido adicional
+ * @returns {boolean} true si debe sugerir (25% probabilidad)
+ */
 export function debeSugerir() {
-  return Math.random() < 0.25;
+  return Math.random() < PROBABILIDAD_SUGERENCIA;
 }
 
 const FRASES = {
@@ -94,8 +117,19 @@ const FRASES = {
   ],
 };
 
+/**
+ * Obtiene una frase aleatoria de Annie para una categoría
+ * @param {string} categoria - Categoría (peces, insectos, aves, etc.)
+ * @returns {string} Frase aleatoria de Annie
+ */
 export function getFraseAnnie(categoria) {
-  const pool = FRASES[categoria] || FRASES.general;
+  const categoriaSegura = String(categoria || 'general');
+  const pool = FRASES[categoriaSegura] || FRASES.general;
+  
+  if (!Array.isArray(pool) || pool.length === 0) {
+    return "Que lindo día para explorar el pueblito!";
+  }
+  
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
@@ -151,9 +185,19 @@ const SUGERENCIAS = {
   ],
 };
 
+/**
+ * Obtiene una sugerencia aleatoria para una categoría
+ * @param {string} categoria - Categoría (peces, insectos, aves, etc.)
+ * @returns {string|null} Sugerencia aleatoria o null si no hay disponibles
+ */
 export function getSugerencia(categoria) {
-  const pool = SUGERENCIAS[categoria] || [];
-  if (pool.length === 0) return null;
+  const categoriaSegura = String(categoria || '');
+  const pool = SUGERENCIAS[categoriaSegura] || [];
+  
+  if (!Array.isArray(pool) || pool.length === 0) {
+    return null;
+  }
+  
   return pool[Math.floor(Math.random() * pool.length)];
 }
 

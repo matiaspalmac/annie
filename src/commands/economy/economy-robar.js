@@ -123,10 +123,34 @@ export async function execute(interaction, bostezo) {
                 args: [userId]
             });
             const repNueva = repActual + 1;
-            return interaction.followUp(`👀 **Fallo**\n\nTe acercaste a **${targetUser.username}** pero se dio cuenta y te miró feo. Te fuiste silbando con las manos vacías.\nReputación actual: **${repNueva}** (${getNivelPillo(repNueva)}).`);
+            
+            const mensajesFallo = [
+                `Te acercaste a **${targetUser.username}** pero se dio cuenta y te miró feo. Te fuiste silbando con las manos vacías.`,
+                `¡Casi! Pero **${targetUser.username}** movió su bolsillo justo a tiempo. Te tocó irte con cara de inocente.`,
+                `Intentaste hacerte el despistado cerca de **${targetUser.username}**, pero te cachó al tiro. Que vergüenza.`,
+                `**${targetUser.username}** te pescó con la mano en la masa (o casi). Te hiciste el tonto y te fuiste corriendo.`,
+                `¡Fallaste! **${targetUser.username}** tiene los bolsillos más seguros que banco. Mejor suerte a la próxima.`,
+                `**${targetUser.username}** sintió algo raro y te pilló. Te hiciste el perdido preguntando la hora.`
+            ];
+            const mensajeFallo = mensajesFallo[Math.floor(Math.random() * mensajesFallo.length)];
+            
+            return interaction.followUp(
+                `👀 **Fallo**\n\n${mensajeFallo}\nReputación actual: **${repNueva}** (${getNivelPillo(repNueva)}).`
+            );
         } else {
             // Éxito (60%)
-            const montoRobado = Math.min(Math.floor(Math.random() * 3) + 1, monedasTarget); // Roba 1 a 3, max lo que tenga
+            // Sistema de cantidades progresivas basado en reputación y nivel
+            let montoBase = Math.floor(Math.random() * 20) + 5; // 5-25 base
+            
+            // Bonus por reputación (más rep = robos más audaces)
+            const bonusRep = Math.floor(repActual * 0.3); // hasta +30 con 100 rep
+            
+            // Bonus aleatorio por "golpe maestro"
+            const esGolpeMaestro = Math.random() < 0.15; // 15% chance
+            const bonusMaestro = esGolpeMaestro ? Math.floor(Math.random() * 30) + 20 : 0; // +20-50
+            
+            // Total robado (mínimo 5, máximo 100 o lo que tenga el target)
+            const montoRobado = Math.min(Math.max(montoBase + bonusRep + bonusMaestro, 5), Math.min(monedasTarget, 100));
 
             // Quitar al target
             await db.execute({
@@ -153,7 +177,32 @@ export async function execute(interaction, bostezo) {
             }
 
             const repNueva = repActual + 2;
-            return interaction.followUp(`🥷 **¡Robo Exitoso!** \n\nCon mucha destreza, le sacaste **${montoRobado} moneditas** 💰 a **${targetUser.username}** sin que se diera cuenta.\nReputación pillo: **${repNueva}** (${getNivelPillo(repNueva)}). ¡A correr!`);
+            
+            const mensajesExito = [
+                `Con mucha destreza, le sacaste **${montoRobado} moneditas** 💰 a **${targetUser.username}** sin que se diera cuenta.`,
+                `¡Zas! Manos rápidas y te llevaste **${montoRobado} moneditas** del bolsillo de **${targetUser.username}**.`,
+                `Un golpe limpio y perfecto. **${montoRobado} moneditas** de **${targetUser.username}** ahora son tuyas.`,
+                `Como ninja en la noche, le quitaste **${montoRobado} moneditas** a **${targetUser.username}** sin hacer ruido.`,
+                `¡Qué manos! Le birlaste **${montoRobado} moneditas** a **${targetUser.username}** sin que se diera cuenta ni un poquito.`,
+                `Trabajo limpio y profesional. **${targetUser.username}** ni sintió cuando le quitaste **${montoRobado} moneditas**.`,
+                `¡Suave y silencioso! Le sacaste **${montoRobado} moneditas** a **${targetUser.username}** como todo un experto.`,
+                `Un roce, un empujón "accidental" y listo: **${montoRobado} moneditas** de **${targetUser.username}** volaron a tus bolsillos.`
+            ];
+            
+            const mensajesMaestro = [
+                `🏆 **¡¡GOLPE MAESTRO!!** ¡Le sacaste **${montoRobado} moneditas** a **${targetUser.username}**! Esto fue digno de las leyendas del hampa.`,
+                `🔥 **¡ROBO PERFECTO!** Con una técnica impecable, le quitaste **${montoRobado} moneditas** a **${targetUser.username}**. ¡Obra maestra!`,
+                `✨ **¡ATRACO LEGENDARIO!** Nadie vio nada cuando le sacaste **${montoRobado} moneditas** a **${targetUser.username}**. ¡Increíble!`
+            ];
+            
+            const mensajeFinal = esGolpeMaestro 
+                ? mensajesMaestro[Math.floor(Math.random() * mensajesMaestro.length)]
+                : `🥷 **¡Robo Exitoso!** \n\n${mensajesExito[Math.floor(Math.random() * mensajesExito.length)]}`;
+            
+            return interaction.followUp(
+                `${mensajeFinal}\n` +
+                `Reputación pillo: **${repNueva}** (${getNivelPillo(repNueva)}). ¡A correr!`
+            );
         }
 
     } catch (error) {

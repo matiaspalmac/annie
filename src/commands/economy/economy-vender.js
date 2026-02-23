@@ -3,21 +3,51 @@ import { db } from "../../services/db.js";
 import { getBostezo, crearEmbed, getItemEnDemanda } from "../../core/utils.js";
 import { CONFIG } from "../../core/config.js";
 
-const PRECIOS_ECONOMIA = {
-    "Piedra": 1,
-    "Mineral": 5,
-    "Fluorita impecable": 100,
-    "Pescado": 2,
-    "Manzanas": 2,
-    "Mantis Religiosa": 3,
-    "Mariposa Emperador": 15,
-    "Tarántula": 35
-};
+/**
+ * Obtiene el precio de venta de un item desde la base de datos
+ * @async
+ * @param {string} itemId - ID del item
+ * @returns {Promise<number>} Precio de venta (0 si no existe)
+ */
+async function getPrecioVenta(itemId) {
+    try {
+        const res = await db.execute({
+            sql: "SELECT precio_venta FROM items_economia WHERE id = ?",
+            args: [itemId]
+        });
+        return Number(res.rows[0]?.precio_venta || 0);
+    } catch (err) {
+        console.error(`[Vender] Error obteniendo precio de ${itemId}:`, err);
+        return 0;
+    }
+}
+
+/**
+ * Obtiene todos los items vendibles (con precio_venta > 0)
+ * @async
+ * @returns {Promise<Set<string>>} Set de item IDs vendibles
+ */
+async function getItemsVendibles() {
+    try {
+        const res = await db.execute({
+            sql: "SELECT id FROM items_economia WHERE precio_venta > 0"
+        });
+        return new Set(res.rows.map(r => String(r.id)));
+    } catch (err) {
+        console.error("[Vender] Error obteniendo items vendibles:", err);
+        return new Set();
+    }
+}
 
 async function venderItemEspecifico(interaction, userId, itemNombre, itemData, bostezo) {
     const qty = Number(itemData.cantidad);
     const itemDoris = getItemEnDemanda();
-    let precioUnitario = PRECIOS_ECONOMIA[itemNombre];
+    let precioUnitario = await getPrecioVenta(itemNombre);
+    
+    if (precioUnitario === 0) {
+        return interaction.followUp(`${bostezo}Ese item no tiene precio de venta configurado, tesoro.`);
+    }
+    
     let multiplicadorTexto = "";
     let dorisAparecio = false;
 
@@ -177,7 +207,8 @@ export async function execute(interaction, bostezo) {
                 return interaction.followUp(`${bostezo}Para gestionar favoritos debes indicar **favorito_accion** y **favorito_item** juntos.`);
             }
 
-            if (!PRECIOS_ECONOMIA.hasOwnProperty(favoritoItem)) {
+            const itemsVendiblesSet = await getItemsVendibles();
+            if (!itemsVendiblesSet.has(favoritoItem)) {
                 return interaction.followUp(`${bostezo}Ese item no es vendible, así que no puede marcarse como favorito.`);
             }
 
@@ -207,10 +238,11 @@ export async function execute(interaction, bostezo) {
             return interaction.followUp(`${bostezo}Revisé tus bolsillos pero no vi nada que pueda comprarte, tesoro. ¡Sal a pescar o a picar rocas primero!`);
         }
 
-        // Filtrar solo items vendibles (que están en PRECIOS_ECONOMIA)
+        // Filtrar solo items vendibles (que están en items_economia con precio_venta > 0)
+        const itemsVendiblesSet = await getItemsVendibles();
         const itemsVendibles = resInv.rows.filter(row => {
             const item = String(row.item_id);
-            return PRECIOS_ECONOMIA.hasOwnProperty(item);
+            return itemsVendiblesSet.has(item);
         });
 
         const resFav = await db.execute({
@@ -266,7 +298,7 @@ export async function execute(interaction, bostezo) {
         for (const row of itemsParaVender) {
             const item = String(row.item_id);
             const qty = Number(row.cantidad);
-            let precioUnitario = PRECIOS_ECONOMIA[item];
+            let precioUnitario = await getPrecioVenta(item);
             let multiplicadorTexto = "";
 
             if (item === itemDoris) {
@@ -396,15 +428,21 @@ export async function autocomplete(interaction) {
         });
 
         // Filtrar solo items vendibles
-        const itemsVendibles = resInv.rows
-            .filter(row => {
-                const item = String(row.item_id);
-                return PRECIOS_ECONOMIA.hasOwnProperty(item);
-            })
-            .map(row => ({
-                name: `${row.item_id} (x${row.cantidad}) - ${PRECIOS_ECONOMIA[String(row.item_id)]} c/u`,
-                value: String(row.item_id)
-            }))
+        const itemsVendiblesSet = await getItemsVendibles();
+        const itemsConPrecio = [];
+        
+        for (const row of resInv.rows) {
+            const itemId = String(row.item_id);
+            if (itemsVendiblesSet.has(itemId)) {
+                const precio = await getPrecioVenta(itemId);
+                itemsConPrecio.push({
+                    name: `${itemId} (x${row.cantidad}) - ${precio} c/u`,
+                    value: itemId
+                });
+            }
+        }
+        
+        const itemsVendibles = itemsConPrecio
             .filter(item => item.name.toLowerCase().includes(focusedValue))
             .slice(0, 25);
 

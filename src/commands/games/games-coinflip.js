@@ -1,4 +1,4 @@
-import { SlashCommandBuilder } from "discord.js";
+import { SlashCommandBuilder, MessageFlags } from "discord.js";
 import {
   validarApuesta,
   verificarCooldownCasino,
@@ -43,13 +43,13 @@ export async function execute(interaction, bostezo) {
   // Validar apuesta
   const validacion = validarApuesta(apuesta);
   if (!validacion.ok) {
-    return interaction.reply({ content: validacion.mensaje, ephemeral: true });
+    return interaction.reply({ content: validacion.mensaje, flags: MessageFlags.Ephemeral });
   }
 
   // Verificar cooldown
   const cooldown = await verificarCooldownCasino(userId);
   if (!cooldown.ok) {
-    return interaction.reply({ content: cooldown.mensaje, ephemeral: true });
+    return interaction.reply({ content: cooldown.mensaje, flags: MessageFlags.Ephemeral });
   }
 
   // Verificar balance
@@ -57,7 +57,7 @@ export async function execute(interaction, bostezo) {
   if (balanceActual < apuesta) {
     return interaction.reply({
       content: `${bostezo}❌ No tienes suficientes moneditas, corazón. Balance actual: **${balanceActual}** 💰`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 

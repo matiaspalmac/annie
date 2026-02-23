@@ -99,8 +99,17 @@ export async function execute(interaction, bostezo) {
         const amuletoActivo = await tieneBoostActivo(userId, "amuleto_suerte_15m");
         const bonusSuerte = amuletoActivo ? 10 : 0;
         const bonusPick = PICK_META[pick.itemId]?.bonusRare || 0;
-        const chanceFluorita = Math.min(5 + bonoNivel + bonusSuerte + bonusPick, 45);
-        const chanceMineral = Math.min(30 + (bonoNivel * 1.5) + bonusSuerte, 70);
+        
+        // Estructura de drops mejorada con más variedad
+        const chanceDiamante = Math.min(1 + (bonoNivel * 0.15) + bonusSuerte + bonusPick, 8);
+        const chanceEsmeralda = Math.min(2 + (bonoNivel * 0.2) + bonusSuerte + bonusPick, 12);
+        const chanceRubi = Math.min(3 + (bonoNivel * 0.25) + bonusSuerte + bonusPick, 18);
+        const chanceZafiro = Math.min(4 + (bonoNivel * 0.3) + bonusSuerte + bonusPick, 22);
+        const chanceAmatista = Math.min(6 + (bonoNivel * 0.4) + bonusSuerte + bonusPick, 30);
+        const chanceFluorita = Math.min(8 + bonoNivel + bonusSuerte + bonusPick, 38);
+        const chanceTopacio = Math.min(12 + bonoNivel + bonusSuerte, 45);
+        const chanceCuarzo = Math.min(20 + (bonoNivel * 1.2) + bonusSuerte, 60);
+        const chanceMineral = Math.min(35 + (bonoNivel * 1.5) + bonusSuerte, 75);
 
         await db.execute({
             sql: "UPDATE herramientas_durabilidad SET durabilidad = MAX(0, durabilidad - 1) WHERE user_id = ? AND item_id = ?",
@@ -135,19 +144,66 @@ export async function execute(interaction, bostezo) {
             );
         }
 
-        if (rand <= chanceFluorita) {
-            itemId = "Fluorita impecable";
+        if (rand <= chanceDiamante) {
+            itemId = "Diamante puro";
             emoji = "💎";
-            rarezaTexto = "¡Cielo santo! ¡Qué brillo tan hermoso!";
+            rarezaTexto = "¡¡DIAMANTE!! ¡Ay por Dios, esto vale una fortuna! ¡Te vas a hacer rico/a!";
+            await registrarBitacora(userId, `¡Encontró un DIAMANTE PURO de valor incalculable!`);
+        } else if (rand <= chanceEsmeralda) {
+            itemId = "Esmeralda brillante";
+            emoji = "💚";
+            rarezaTexto = "¡Santo cielo! ¡Una esmeralda verde como el bosque chileno!";
+            await registrarBitacora(userId, `Desenterró una preciosa Esmeralda brillante.`);
+        } else if (rand <= chanceRubi) {
+            itemId = "Rubí carmesí";
+            emoji = "❤️";
+            rarezaTexto = "¡Qué maravilla! Un rubí rojo sangre que brilla como fuego.";
+            await registrarBitacora(userId, `Extrajo un valioso Rubí carmesí.`);
+        } else if (rand <= chanceZafiro) {
+            itemId = "Zafiro estelar";
+            emoji = "💙";
+            rarezaTexto = "¡Precioso! Un zafiro azul profundo como el cielo nocturno.";
+            await registrarBitacora(userId, `Halló un hermoso Zafiro estelar.`);
+        } else if (rand <= chanceAmatista) {
+            itemId = "Amatista cristalina";
+            emoji = "💜";
+            rarezaTexto = "¡Qué linda! Una amatista púrpura que refleja la luz.";
+            await registrarBitacora(userId, `Descubrió una Amatista cristalina reluciente.`);
+        } else if (rand <= chanceFluorita) {
+            itemId = "Fluorita impecable";
+            emoji = "🟢";
+            rarezaTexto = "¡Excelente! Fluorita de calidad premium, perfecta para coleccionar.";
             await registrarBitacora(userId, `Desenterró una codiciada Fluorita impecable.`);
+        } else if (rand <= chanceTopacio) {
+            itemId = "Topacio dorado";
+            emoji = "🟡";
+            rarezaTexto = "¡Qué descubrimiento! Un topacio que brilla como el sol.";
+        } else if (rand <= chanceCuarzo) {
+            itemId = "Cuarzo rosa";
+            emoji = "🩷";
+            rarezaTexto = "¡Bonito! Cuarzo rosa suavecito, perfecto para decorar.";
         } else if (rand <= chanceMineral) {
-            itemId = "Mineral";
-            emoji = "🪨✨"; // Mineral genérico
-            rarezaTexto = "¡Conseguiste algo de mineral brillante!";
+            const mineralesComunes = [
+                { id: "Hierro", emoji: "⚙️", texto: "Mineral de hierro útil para herramientas." },
+                { id: "Cobre", emoji: "🟠", texto: "Cobre brillante, siempre necesario." },
+                { id: "Obsidiana", emoji: "⬛", texto: "Obsidiana negra y filosa como espejo." },
+                { id: "Jade", emoji: "🟩", texto: "Jade verdecito, suave al tacto." },
+                { id: "Ópalo", emoji: "🌈", texto: "Ópalo que cambia de color con la luz." }
+            ];
+            const elegido = mineralesComunes[Math.floor(Math.random() * mineralesComunes.length)];
+            itemId = elegido.id;
+            emoji = elegido.emoji;
+            rarezaTexto = `¡Conseguiste ${elegido.texto}!`;
         } else {
-            itemId = "Piedra";
-            emoji = "🪨";
-            rarezaTexto = "¡Pura piedrecilla sólida y rústica!";
+            const piedrasComunes = [
+                { id: "Piedra", emoji: "🪨", texto: "Piedrecilla sólida y rústica." },
+                { id: "Grava", emoji: "🔸", texto: "Grava simple, nada especial." },
+                { id: "Roca común", emoji: "🗿", texto: "Roca común y corriente." }
+            ];
+            const elegida = piedrasComunes[Math.floor(Math.random() * piedrasComunes.length)];
+            itemId = elegida.id;
+            emoji = elegida.emoji;
+            rarezaTexto = `${elegida.texto}`;
         }
 
         // 4. Guardar en inventario (ajuste económico estacional)

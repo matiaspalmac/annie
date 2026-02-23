@@ -9,6 +9,7 @@ import {
   Routes,
   ActivityType,
   Events,
+  MessageFlags,
 } from "discord.js";
 import { joinVoiceChannel, getVoiceConnection } from "@discordjs/voice";
 
@@ -43,43 +44,89 @@ const client = new Client({
   partials: [Partials.Message, Partials.Channel, Partials.Reaction],
 });
 
+// Constantes de configuración
+const INTERVALO_ACTUALIZACION_ESTADO = 30 * 60 * 1000; // 30 minutos
+const INTERVALO_RUTINA_CHEQUEO = 60 * 1000; // 1 minuto
+const INTERVALO_GESTION_SUENO = 5 * 60 * 1000; // 5 minutos
+const PROBABILIDAD_FRASE_AMBIENT = 0.05; // 5%
+const MAX_HISTORIAL_MENSAJES = 50;
+
 let ultimaRutina = null;
 let historialMensajes = [];
 let ultimoChisme = 0;
 let lastKnownLogId = 0;
 
+/**
+ * Actualiza el estado (activity) de Annie
+ */
 function actualizarEstado() {
-  if (estaDurmiendo()) {
-    client.user.setActivity("Zzz... acurrucadita en la oficinita", { type: ActivityType.Custom });
-  } else {
-    const estado = ACTIVIDADES[Math.floor(Math.random() * ACTIVIDADES.length)];
+  try {
+    if (!client?.user) {
+      console.warn('[Estado] Cliente no inicializado');
+      return;
+    }
+
+    const estado = estaDurmiendo()
+      ? "Zzz... acurrucadita en la oficinita"
+      : ACTIVIDADES[Math.floor(Math.random() * ACTIVIDADES.length)];
+    
     client.user.setActivity(estado, { type: ActivityType.Custom });
+  } catch (error) {
+    console.error('[Estado] Error actualizando estado:', error.message);
   }
 }
 
+/**
+ * Gestiona el ciclo de sueño de Annie según la hora
+ */
 function gestionarSueno() {
-  const hora = getHoraChile();
-  const deberiaDormir = hora >= CONFIG.HORA_DORMIR || hora < CONFIG.HORA_DESPERTAR;
+  try {
+    const hora = getHoraChile();
+    const horaDormir = CONFIG.HORA_DORMIR || 23;
+    const horaDespertar = CONFIG.HORA_DESPERTAR || 6;
+    const deberiaDormir = hora >= horaDormir || hora < horaDespertar;
 
-  if (deberiaDormir && !estaDurmiendo()) {
-    setDurmiendo(true);
-    actualizarEstado();
-  } else if (!deberiaDormir && estaDurmiendo()) {
-    setDurmiendo(false);
-    actualizarEstado();
+    if (deberiaDormir && !estaDurmiendo()) {
+      setDurmiendo(true);
+      actualizarEstado();
+      console.log(`[Sueño] Annie se fue a dormir (hora: ${hora})`);
+    } else if (!deberiaDormir && estaDurmiendo()) {
+      setDurmiendo(false);
+      actualizarEstado();
+      console.log(`[Sueño] Annie despertó (hora: ${hora})`);
+    }
+  } catch (error) {
+    console.error('[Sueño] Error gestionando sueño:', error.message);
   }
 }
 
+/**
+ * Conecta Annie al canal de voz de su oficina
+ */
 async function conectarOficina() {
-  if (!CONFIG.CANAL_VOZ_DORMIR_ID) return;
+  if (!CONFIG.CANAL_VOZ_DORMIR_ID) {
+    console.log('[Voz] Canal de voz de oficina no configurado');
+    return;
+  }
 
   try {
     const guild = await client.guilds.fetch(CONFIG.GUILD_ID);
+    if (!guild) {
+      console.warn('[Voz] Guild no encontrado');
+      return;
+    }
+
     const canal = await guild.channels.fetch(CONFIG.CANAL_VOZ_DORMIR_ID);
-    if (!canal || canal.type !== 2) return;
+    if (!canal || canal.type !== 2) {
+      console.warn('[Voz] Canal de voz no encontrado o no es tipo voz');
+      return;
+    }
 
     const connection = getVoiceConnection(CONFIG.GUILD_ID);
-    if (connection) return;
+    if (connection) {
+      console.log('[Voz] Annie ya está conectada al canal de voz');
+      return;
+    }
 
     joinVoiceChannel({
       channelId: canal.id,
@@ -88,22 +135,36 @@ async function conectarOficina() {
       selfDeaf: true,
       selfMute: true,
     });
-    console.log("Annie entro a su oficinita de voz");
-  } catch (e) {
-    console.error("Error conectando Annie al voice:", e.message);
+    
+    console.log('[Voz] Annie entró a su oficinita de voz');
+  } catch (error) {
+    console.error('[Voz] Error conectando al canal de voz:', error.message);
   }
 }
 
+/**
+ * Anuncia el clima del día en el canal general
+ * @param {boolean} [forzado=false] - Si es true, anuncia independiente de la hora
+ */
 async function anunciarClima(forzado = false) {
-  const hora = getHoraChile();
-  if (!forzado && hora !== 19) return;
-
-  const canal = getCanalGeneral(client);
-  if (!canal) return;
-
   try {
+    const hora = getHoraChile();
+    const horaAnuncio = CONFIG.HORA_ANUNCIO_CLIMA || 19;
+    
+    if (!forzado && hora !== horaAnuncio) return;
+
+    const canal = getCanalGeneral(client);
+    if (!canal) {
+      console.warn('[Clima] Canal general no encontrado');
+      return;
+    }
+
     const result = await db.execute("SELECT * FROM clima WHERE id = 'hoy'");
-    if (result.rows.length === 0) return;
+    if (result.rows.length === 0) {
+      console.log('[Clima] No hay datos de clima para hoy');
+      return;
+    }
+
     const hoy = result.rows[0];
     const timeline = JSON.parse(hoy.timeline || "[]");
 
@@ -111,32 +172,56 @@ async function anunciarClima(forzado = false) {
       .setTitle(`☁️ Clima del Pueblito — Hoy`)
       .setDescription(`**${hoy.tipo || "--"}**\n${hoy.descripcion || ""}`);
 
-    if (timeline.length > 0) {
+    if (Array.isArray(timeline) && timeline.length > 0) {
+      const horariosTexto = timeline
+        .map(h => `${h.hora}:00 — ${h.texto}`)
+        .join("\n");
       embed.addFields({
         name: "Horarios con cariño",
-        value: timeline.map(h => `${h.hora}:00 — ${h.texto}`).join("\n"),
+        value: horariosTexto,
       });
     }
+    
     embed.setFooter({ text: "Pronóstico hecho con amor | Annie" });
 
-    await canal.send({ content: "Annie les trae el clima con amor:", embeds: [embed] }).catch(console.error);
-  } catch (e) {
-    console.error("[Clima] Error anunciando clima:", e.message);
+    await canal.send({ 
+      content: "Annie les trae el clima con amor:", 
+      embeds: [embed] 
+    });
+    
+    console.log('[Clima] Clima anunciado exitosamente');
+  } catch (error) {
+    console.error('[Clima] Error anunciando clima:', error.message);
   }
 }
 
 
+/**
+ * Ejecuta rutinas horarias de Annie (mensajes automáticos)
+ */
 function ejecutarRutinaDiaria() {
-  if (estaDurmiendo()) return;
-  const hora = getHoraChile();
-  const rutina = RUTINAS.find(r => r.hora === hora);
-  if (!rutina || ultimaRutina === hora) return;
+  try {
+    if (estaDurmiendo()) return;
+    
+    const hora = getHoraChile();
+    const rutina = RUTINAS.find(r => r.hora === hora);
+    
+    if (!rutina || ultimaRutina === hora) return;
 
-  ultimaRutina = hora;
-  const canal = getCanalGeneral(client);
-  if (!canal) return;
+    ultimaRutina = hora;
+    const canal = getCanalGeneral(client);
+    
+    if (!canal) {
+      console.warn('[Rutina] Canal general no encontrado');
+      return;
+    }
 
-  canal.send(rutina.mensaje).catch(console.error);
+    canal.send(rutina.mensaje)
+      .then(() => console.log(`[Rutina] Ejecutada para hora ${hora}`))
+      .catch(err => console.error('[Rutina] Error enviando mensaje:', err.message));
+  } catch (error) {
+    console.error('[Rutina] Error ejecutando rutina:', error.message);
+  }
 }
 
 // ---- Lógica de la Rifa Diaria (Sorteo Automático) ----
@@ -724,11 +809,11 @@ client.on(Events.InteractionCreate, async (interaction) => {
   if (interaction.isStringSelectMenu() && interaction.customId === "tienda_comprar") {
     // Evitar que otro usuario toque el dropdown de alguien más
     if (interaction.user.id !== interaction.message.interaction?.user.id && interaction.message.interaction) {
-      return interaction.reply({ content: "¡Ey! Esta tienda la abrió otra personita. Escribe `/tienda` tú mismo para comprar.", ephemeral: true });
+      return interaction.reply({ content: "¡Ey! Esta tienda la abrió otra personita. Escribe `/tienda` tú mismo para comprar.", flags: MessageFlags.Ephemeral });
     }
 
     const itemSeleccionado = interaction.values[0];
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     try {
       const result = await procesarCompraTienda(interaction, itemSeleccionado);
@@ -749,7 +834,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
     const tipo = parts[1];
     const targetUserId = parts.slice(2).join("_");
 
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     try {
       const resUser = await db.execute({
@@ -1081,7 +1166,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
     const [, categoria, targetUserId] = value.split("_");
 
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     try {
       const result = await db.execute({
@@ -1115,7 +1200,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
     const [, categoria, ...itemIdParts] = interaction.customId.split("_");
     const itemId = itemIdParts.join("_");
 
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     try {
       await db.execute({

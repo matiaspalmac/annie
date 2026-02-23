@@ -96,20 +96,20 @@ export async function execute(interaction, bostezo) {
   // Validar apuesta
   const validacion = validarApuesta(apuesta);
   if (!validacion.ok) {
-    return interaction.reply({ content: validacion.mensaje, ephemeral: true });
+    return interaction.reply({ content: validacion.mensaje, flags: MessageFlags.Ephemeral });
   }
 
   // Verificar cooldown
   const cooldown = await verificarCooldownCasino(userId);
   if (!cooldown.ok) {
-    return interaction.reply({ content: cooldown.mensaje, ephemeral: true });
+    return interaction.reply({ content: cooldown.mensaje, flags: MessageFlags.Ephemeral });
   }
 
   // Verificar si ya tiene una partida activa
   if (partidasActivas.has(userId)) {
     return interaction.reply({
       content: `${bostezo}❌ Ya tienes una partida activa de Blackjack, corazón. Termina esa primero.`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 
@@ -118,7 +118,7 @@ export async function execute(interaction, bostezo) {
   if (balanceActual < apuesta) {
     return interaction.reply({
       content: `${bostezo}❌ No tienes suficientes moneditas, tesoro. Balance actual: **${balanceActual}** 💰`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 
@@ -184,7 +184,7 @@ export async function handleBlackjackButton(interaction) {
   if (interaction.user.id !== userId) {
     return interaction.reply({
       content: "❌ Esta no es tu partida",
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 

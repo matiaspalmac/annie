@@ -120,9 +120,12 @@ export async function execute(interaction, bostezo) {
         const amuletoActivo = await tieneBoostActivo(userId, "amuleto_suerte_15m");
         const bonusSuerte = amuletoActivo ? 10 : 0;
         const bonusRed = RED_META[red.itemId]?.bonusRare || 0;
-        const chanceTarantula = Math.min((5 + bonoNivel + bonusSuerte + bonusHora + bonusClima + bonusRed) * penalizacionMacro, 40);
-        // Mariposa Morfo (Rara) - 20% + bonoNivel
-        const chanceMariposa = Math.min((25 + (bonoNivel * 1.5) + bonusSuerte + bonusHora + (bonusClima / 2) + bonusRed) * penalizacionMacro, 70);
+        
+        const chanceMitico = Math.min((0.8 + (nivelCaza * 0.15) + bonusSuerte + bonusRed) * penalizacionMacro, 10);
+        const chanceLegendario = Math.min((3 + (nivelCaza * 0.3) + bonusSuerte + bonusHora + bonusClima + bonusRed) * penalizacionMacro, 20);
+        const chanceEpico = Math.min((8 + (nivelCaza * 0.5) + bonusSuerte + bonusHora + bonusClima + bonusRed) * penalizacionMacro, 32);
+        const chanceRaro = Math.min((15 + (nivelCaza * 0.8) + bonusSuerte + bonusHora + bonusClima + bonusRed) * penalizacionMacro, 48);
+        const chancePocoComun = Math.min((25 + (nivelCaza * 1.0) + bonusSuerte + bonusHora + bonusRed) * penalizacionMacro, 65);
 
         await db.execute({
             sql: "UPDATE herramientas_durabilidad SET durabilidad = MAX(0, durabilidad - 1) WHERE user_id = ? AND item_id = ?",
@@ -140,21 +143,77 @@ export async function execute(interaction, bostezo) {
             args: [userId]
         });
         const comboActivo = Number(resComboCd.rows[0]?.fecha_limite || 0) > ahora;
+        const comboMsg = comboActivo ? "\n⚡ Combo activo: +1 captura bonus." : "";
 
-        if (rand <= chanceTarantula) {
-            itemId = "Tarántula";
-            emoji = "🕷️";
-            mensajeObtencion = `¡Ay mamita! ¡Un monstruo peludo saltó a tu red! Te dio un susto tremendo, pero... eh, ¡atrapaste una **🕷️ Tarántula**! *(Nv. Caza: ${nivelCaza})*${comboActivo ? "\n⚡ Combo activo: +1 captura bonus." : ""}`;
-            await registrarBitacora(userId, `Sobrevivió y cazó una Tarántula mortal.`);
-        } else if (rand <= chanceMariposa) {
-            itemId = "Mariposa Emperador";
-            emoji = "🦋";
-            mensajeObtencion = `¡Qué belleza! Una vibrante **🦋 Mariposa Emperador** se posó solita en tu red. *(Nv. Caza: ${nivelCaza})*${comboActivo ? "\n⚡ Combo activo: +1 captura bonus." : ""}`;
-            await registrarBitacora(userId, `Atrapó una deslumbrante Mariposa Emperador.`);
-        } else if (rand <= 65) {
-            itemId = "Mantis Religiosa";
-            emoji = "🦗";
-            mensajeObtencion = `Zaz, un manotazo rápido y ¡listo! Tienes una **🦗 Mantis Religiosa**. *(Nv. Caza: ${nivelCaza})*${comboActivo ? "\n⚡ Combo activo: +1 captura bonus." : ""}`;
+        let encontrado = null;
+
+        if (rand <= chanceMitico) {
+            const bichosMiticos = [
+                { id: "Escarabajo Divino", emoji: "🐞", texto: "¡¡LEGENDARIO!! ¡Un escarabajo que brilla con luz celestial!" },
+                { id: "Fénix Polilla", emoji: "🦋", texto: "¡¡IMPOSIBLE!! ¡Una polilla que arde sin quemarse!" },
+                { id: "Libélula Arcoiris", emoji: "🪰", texto: "¡¡INCREÍBLE!! ¡Sus alas tienen todos los colores del universo!" }
+            ];
+            encontrado = bichosMiticos[Math.floor(Math.random() * bichosMiticos.length)];
+            
+            await registrarBitacora(userId, `¡¡CAPTURÓ UN ${encontrado.id.toUpperCase()} MÍTICO!!`);
+
+        } else if (rand <= chanceLegendario) {
+            const bichosLegendarios = [
+                { id: "Tarántula", emoji: "🕷️", texto: "¡Ay mamita! ¡Un monstruo peludo saltó a tu red!" },
+                { id: "Escorpión Dorado", emoji: "🦂", texto: "Brilla como el oro, ¡qué peligro!" },
+                { id: "Cicada Gigante", emoji: "🦗", texto: "Cantó tan fuerte que casi te ensordece" },
+                { id: "Luciérnaga Estelar", emoji: "✨", texto: "Ilumina como una pequeña estrella" },
+                { id: "Abeja Reina", emoji: "🐝", texto: "¡La reina del panal!" }
+            ];
+            encontrado = bichosLegendarios[Math.floor(Math.random() * bichosLegendarios.length)];
+            
+            await registrarBitacora(userId, `Capturó un legendario ${encontrado.id}!`);
+
+        } else if (rand <= chanceEpico) {
+            const bichosEpicos = [
+                { id: "Mariposa Emperador", emoji: "🦋", texto: "¡Qué belleza! Sus alas son majestuosas." },
+                { id: "Oruga Tornasol", emoji: "🐛", texto: "Cambia de color al moverse" },
+                { id: "Grillo Dorado", emoji: "🦗", texto: "Canta melodías preciosas" },
+                { id: "Saltamontes Esmeralda", emoji: "🦗", texto: "Verde brillante como una gema" },
+                { id: "Escarabajo Rinoceronte", emoji: "🪲",texto: "¡Qué cuernito tan imponente!" }
+            ];
+            encontrado = bichosEpicos[Math.floor(Math.random() * bichosEpicos.length)];
+
+        } else if (rand <= chanceRaro) {
+            const bichosRaros = [
+                { id: "Abeja Mielera", emoji: "🐝", texto: "¡Zumba feliz!" },
+                { id: "Mariposa Nocturna", emoji: "🦋", texto: "Vuela en la oscuridad" },
+                { id: "Libélula Azul", emoji: "🦗", texto: "Planea sobre el agua" },
+                { id: "Crisopa Verde", emoji: "🐛", texto: "Alas como encaje" },
+                { id: "Chinche Soldado", emoji: "🐞", texto: "Vestida de rojo y negro" },
+                { id: "Mosca Dragón", emoji: "🦗", texto: "Vuela a toda velocidad" }
+            ];
+            encontrado = bichosRaros[Math.floor(Math.random() * bichosRaros.length)];
+
+        } else if (rand <= chancePocoComun) {
+            const bichosPocosComunes = [
+                { id: "Mantis Religiosa", emoji: "🦗", texto: "Zaz, un manotazo rápido y ¡listo!" },
+                { id: "Mariquita", emoji: "🐞", texto: "Roja con puntitos" },
+                { id: "Catarina", emoji: "🐞", texto: "Preciosa y redondita" },
+                { id: "Hormiga Roja", emoji: "🐜", texto: "Trabajadora incansable" },
+                { id: "Mosca Verde", emoji: "🪰", texto: "Brilla con tonos metálicos" },
+                { id: "Caracolito", emoji: "🐌", texto: "Arrastrándose lentito" }
+            ];
+            encontrado = bichosPocosComunes[Math.floor(Math.random() * bichosPocosComunes.length)];
+
+        } else if (rand <= 85) {
+            const bichosComunes = [
+                { id: "Hormiga", emoji: "🐜", texto: "Chiquitita pero fuerte" },
+                { id: "Mosca", emoji: "🪰", texto: "Zumba por ahí" },
+                { id: "Mosquito", emoji: "🫰", texto: "¡Ese pica!" },
+                { id: "Polilla", emoji: "🦋", texto: "Busca la luz" },
+                { id: "Escarabajo", emoji: "🪲", texto: "Camina lentamente" },
+                { id: "Gusano", emoji: "🪱", texto: "Se retuerce en la tierra" },
+                { id: "Araña Pequeña", emoji: "🕷️", texto: "Teje su telarañita" },
+                { id: "Tijereta", emoji: "🦗", texto: "Con sus pinzas en la colita" }
+            ];
+            encontrado = bichosComunes[Math.floor(Math.random() * bichosComunes.length)];
+
         } else {
             // Fallo
             await registrarEstadistica(userId, "bichos_fallados", 1, interaction);
@@ -171,7 +230,7 @@ export async function execute(interaction, bostezo) {
             sql: `INSERT INTO inventario_economia (user_id, item_id, cantidad) 
             VALUES (?, ?, ?) 
             ON CONFLICT(user_id, item_id) DO UPDATE SET cantidad = cantidad + excluded.cantidad`,
-            args: [userId, itemId, cantidad]
+            args: [userId, encontrado.id, cantidad]
         });
 
         await db.execute({
@@ -181,9 +240,18 @@ export async function execute(interaction, bostezo) {
             args: [userId, ahora + (20 * 60 * 1000)]
         });
 
+        const mensajesCaptura = [
+            "Empiezas a buscar entre las plantitas...",
+            "Observas cuidadosamente el follaje...",
+            "Acechas silenciosamente...",
+            "Mueves la red con delicadeza...",
+            "Escuchas un zumbido cerca..."
+        ];
+        const mensajeAleatorio = mensajesCaptura[Math.floor(Math.random() * mensajesCaptura.length)];
+
         // 5. Mensaje de éxito
         return interaction.followUp(
-            `🐛 *Empiezas a buscar entre las plantitas...* \n\n${mensajeObtencion}` +
+            `🐛 *${mensajeAleatorio}* \n\n${encontrado.texto} Has capturado **${cantidad}x ${encontrado.emoji} ${encontrado.id}** *(Nv. Caza: ${nivelCaza})*${comboMsg}` +
             `\n🛠️ Durabilidad de ${RED_META[red.itemId]?.nombre || "Red básica"}: **${durRestante}/${red.maxDurabilidad}**` +
             `${patronCount >= 3 ? "\n\n⚠️ Señal anti-macro: detecté un patrón demasiado preciso en tus tiempos. Juega con ritmo más natural para mantener drops óptimos." : ""}`
         );

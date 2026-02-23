@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, PermissionFlagsBits } from "discord.js";
+import { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } from "discord.js";
 import { lanzarEstrellaFugaz } from "../../core/utils.js";
 import { lanzarTriviaAleatoria } from "../../features/trivia.js";
 
@@ -19,7 +19,7 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction, bostezo) {
     const tipo = interaction.options.getString("tipo");
 
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     try {
         if (tipo === "estrella") {

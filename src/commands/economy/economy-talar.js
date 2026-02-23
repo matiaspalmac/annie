@@ -101,6 +101,8 @@ export async function execute(interaction, bostezo) {
 
         const chanceAbejas = Math.max((10 - bonoNivel + climaAbejas) - (amuletoActivo ? 4 : 0), 1); // Mínimo 1% de abejas
         const chanceMonedas = Math.min(20 + bonoNivel + bonusSuerte + climaMonedas + (bonusHacha / 2), 55); // Máximo 55% de lluvia
+        const chanceFrutaEpica = Math.min(5 + bonusEstacion + bonusSuerte + (bonusHacha / 2), 25);
+        const chanceFrutaRara = Math.min(12 + bonusEstacion + bonusSuerte + bonusHacha, 40);
         const chanceEventoRaro = Math.min(8 + bonusEstacion + (bonusSuerte / 2) + bonusHacha, 28);
 
         const rand = Math.random() * 100;
@@ -120,7 +122,7 @@ export async function execute(interaction, bostezo) {
         if (rand <= chanceEventoRaro) {
             const subRand = Math.random() * 100;
 
-            if (subRand <= 33) {
+            if (subRand <= 20) {
                 await db.execute({
                     sql: `INSERT INTO inventario_economia (user_id, item_id, cantidad)
                           VALUES (?, 'Pluma brillante', 1)
@@ -136,7 +138,47 @@ export async function execute(interaction, bostezo) {
                 );
             }
 
-            if (subRand <= 66) {
+            if (subRand <= 40) {
+                const nidoTipo = Math.floor(Math.random() * 3);
+                if (nidoTipo === 0) {
+                    await db.execute({
+                        sql: `INSERT INTO inventario_economia (user_id, item_id, cantidad)
+                              VALUES (?, 'Huevo de Pájaro', 1)
+                              ON CONFLICT(user_id, item_id) DO UPDATE SET cantidad = cantidad + 1`,
+                        args: [userId]
+                    });
+                    return interaction.followUp(
+                        `🥚 **¡Evento: nido con huevito!**\n` +
+                        `¡Qué ternura! Encontraste **1x 🥚 Huevo de Pájaro** en un nido oculto.` +
+                        textoDurabilidad
+                    );
+                } else if (nidoTipo === 1) {
+                    const pajaritos = Math.floor(Math.random() * 5) + 3;
+                    await db.execute({
+                        sql: "UPDATE usuarios SET monedas = monedas + ? WHERE id = ?",
+                        args: [pajaritos, userId]
+                    });
+                    return interaction.followUp(
+                        `🐦 **¡Evento: nido de pajaritos!**\n` +
+                        `Los pichoncitos pió pió y su mamá te dio **${pajaritos} moneditas** de agradecimiento.` +
+                        textoDurabilidad
+                    );
+                } else {
+                    await db.execute({
+                        sql: `INSERT INTO inventario_economia (user_id, item_id, cantidad)
+                              VALUES (?, 'Rama Dorada', 1)
+                              ON CONFLICT(user_id, item_id) DO UPDATE SET cantidad = cantidad + 1`,
+                        args: [userId]
+                    });
+                    return interaction.followUp(
+                        `✨ **¡Evento: rama mágica!**\n` +
+                        `¡Una rama del árbol brillaba en dorado! Recogiste **1x 🌿 Rama Dorada**.` +
+                        textoDurabilidad
+                    );
+                }
+            }
+
+            if (subRand <= 60) {
                 const perdida = Math.floor(Math.random() * 9) + 7;
                 await db.execute({
                     sql: "UPDATE usuarios SET monedas = MAX(0, monedas - ?) WHERE id = ?",
@@ -150,16 +192,30 @@ export async function execute(interaction, bostezo) {
                 );
             }
 
-            const monedasDorado = Math.floor(Math.random() * 31) + 25;
+            if (subRand <= 80) {
+                const monedasDorado = Math.floor(Math.random() * 31) + 25;
+                await db.execute({
+                    sql: "UPDATE usuarios SET monedas = monedas + ? WHERE id = ?",
+                    args: [monedasDorado, userId]
+                });
+
+                return interaction.followUp(
+                    `🍎 **¡Evento raro: fruto dorado!**\n` +
+                    `Cayó un fruto dorado mágico y lo cambiaste por **${monedasDorado} moneditas**.\n` +
+                    `📊 Tabla de drops base: Abejas ${chanceAbejas.toFixed(1)}% • Monedas ${chanceMonedas.toFixed(1)}% • Frutas resto` +
+                    textoDurabilidad
+                );
+            }
+
+            // Nuevo evento: ardilla traviesa
+            const ardillaLoot = Math.floor(Math.random() * 15) + 10;
             await db.execute({
                 sql: "UPDATE usuarios SET monedas = monedas + ? WHERE id = ?",
-                args: [monedasDorado, userId]
+                args: [ardillaLoot, userId]
             });
-
             return interaction.followUp(
-                `🍎 **¡Evento raro: fruto dorado!**\n` +
-                `Cayó un fruto dorado mágico y lo cambiaste por **${monedasDorado} moneditas**.\n` +
-                `📊 Tabla de drops base: Abejas ${chanceAbejas.toFixed(1)}% • Monedas ${chanceMonedas.toFixed(1)}% • Frutas resto` +
+                `🐿️ **¡Evento: ardilla traviesa!**\n` +
+                `¡Una ardillita dejó caer su tesoro escondido! Ganaste **${ardillaLoot} moneditas**.` +
                 textoDurabilidad
             );
         }
@@ -180,39 +236,89 @@ export async function execute(interaction, bostezo) {
                 `Saliste corriendo pero te picaron igual. En el escándalo, se te cayeron **${monedasPerdidas} moneditas**. ¡Pobrecito mi niño! *(Nv. Recolección: ${nivelRecoleccion})*` +
                 textoDurabilidad
             );
-        } else if (rand <= chanceAbejas + chanceMonedas) {
-            // Lluvia de monedas - gana 10 a 30 monedas + bono
-            const monedasGanadas = Math.floor(Math.random() * 21) + 10 + (nivelRecoleccion * 2);
-
-            await db.execute({
-                sql: `INSERT INTO usuarios (id, monedas, xp, nivel) 
-              VALUES (?, ?, 0, 1) 
-              ON CONFLICT(id) DO UPDATE SET monedas = usuarios.monedas + excluded.monedas`,
-                args: [userId, monedasGanadas]
-            });
-
-            await registrarBitacora(userId, `¡Encontró una bolsa mágica de moneditas en un árbol!`);
-
-            return interaction.followUp(
-                `🌳 *Shake, shake...* \n\n💰 **¡CLINK CLINK!** \n\n` +
-                `¡En vez de frutas, te llovieron del cielo **${monedasGanadas} moneditas**! A veces la magia del pueblito te sorprende. *(Nv. Recolección: ${nivelRecoleccion})*` +
-                textoDurabilidad
-            );
-        } else {
-            // Frutas normales - 3 manzanas
-            const itemId = "Manzanas";
-            const emoji = "🍎";
-
+        } else if (rand <= chanceAbejas + chanceMonedas + chanceFrutaEpica) {
+            // Frutas EPICAS
+            const frutasEpicas = [
+                { id: "Manzana Dorada", emoji: "🍎", cantidad: 1, texto: "¡Brilla como el sol!" },
+                { id: "Duraz no Plateado", emoji: "🍒", cantidad: 1, texto: "Su piel parece metal precioso" },
+                { id: "Pera Cristalina", emoji: "🍐", texto: "¡Casi transparente y brillante!" },
+                { id: "Ciruela Mágica", emoji: "🫐", cantidad: 1, texto: "Emana un aura mística" }
+            ];
+            
+            const elegida = frutasEpicas[Math.floor(Math.random() * frutasEpicas.length)];
+            
             await db.execute({
                 sql: `INSERT INTO inventario_economia (user_id, item_id, cantidad) 
-              VALUES (?, ?, 3) 
-              ON CONFLICT(user_id, item_id) DO UPDATE SET cantidad = cantidad + 3`,
-                args: [userId, itemId]
+              VALUES (?, ?, ?) 
+              ON CONFLICT(user_id, item_id) DO UPDATE SET cantidad = cantidad + ?`,
+                args: [userId, elegida.id, elegida.cantidad || 1, elegida.cantidad || 1]
+            });
+
+            await registrarBitacora(userId, `¡Sacó una ${elegida.id} épica del árbol!`);
+
+            return interaction.followUp(
+                `🌳 *El árbol brilla...* \n\n✨ **¡FRUTA ÉPICA!** \n` +
+                `${elegida.texto} Has recogido **${elegida.cantidad}x ${elegida.emoji} ${elegida.id}**. *(Nv. Recolección: ${nivelRecoleccion})*` +
+                textoDurabilidad
+            );
+        } else if (rand <= chanceAbejas + chanceMonedas + chanceFrutaEpica + chanceFrutaRara) {
+            // Frutas RARAS
+            const frutasRaras = [
+                { id: "Naranjas", emoji: "🍊", cantidad: 4, texto: "¡Muy jugosas!" },
+                { id: "Peras", emoji: "🍐", cantidad: 3, texto: "¡Dulces y maduras!" },
+                { id: "Duraznos", emoji: "🍑", cantidad: 3, texto: "¡Suavecitos y fragantes!" },
+                { id: "Ciruelas", emoji: "🫐", cantidad: 4, texto: "Moraditas perfectas" },
+                { id: "Cerezas", emoji: "🍒", cantidad: 5, texto: "Rojitas y brillantes" },
+                { id: "Lim ones", emoji: "🍋", cantidad: 4, texto: "¡Ac iditos!" }
+            ];
+            
+            const elegida = frutasRaras[Math.floor(Math.random() * frutasRaras.length)];
+            
+            await db.execute({
+                sql: `INSERT INTO inventario_economia (user_id, item_id, cantidad) 
+              VALUES (?, ?, ?) 
+              ON CONFLICT(user_id, item_id) DO UPDATE SET cantidad = cantidad + ?`,
+                args: [userId, elegida.id, elegida.cantidad, elegida.cantidad]
             });
 
             return interaction.followUp(
                 `🌳 *Shake, shake... thump!* \n\n` +
-                `¡Cayeron unos frutos deliciosos, tesoro! Has recogido **3x ${emoji} ${itemId}**.\n` +
+                `${elegida.texto} Has recogido **${elegida.cantidad}x ${elegida.emoji} ${elegida.id}**. *(Nv. Recolección: ${nivelRecoleccion})*` +
+                textoDurabilidad
+            );
+        } else {
+            // Frutas COMUNES
+            const frutasComunes = [
+                { id: "Manzanas", emoji: "🍎", cantidad: 3 },
+                { id: "Coco", emoji: "🥥", cantidad: 2 },
+                { id: "Plátanos", emoji: "🍌", cantidad: 4 },
+                { id: "Fresas", emoji: "🍓", cantidad: 5 },
+                { id: "Uvas", emoji: "🍇", cantidad: 6 },
+                { id: "Sandía", emoji: "🍉", cantidad: 1 },
+                { id: "Melón", emoji: "🍈", cantidad: 1 }
+            ];
+            
+            const elegida = frutasComunes[Math.floor(Math.random() * frutasComunes.length)];
+
+            await db.execute({
+                sql: `INSERT INTO inventario_economia (user_id, item_id, cantidad) 
+              VALUES (?, ?, ?) 
+              ON CONFLICT(user_id, item_id) DO UPDATE SET cantidad = cantidad + ?`,
+                args: [userId, elegida.id, elegida.cantidad, elegida.cantidad]
+            });
+
+            const mensajesSacudir = [
+                "¡Cayeron unos frutos deliciosos, tesoro!",
+                "*Thump thump!* ¡Mira cuántas frutas!",
+                "¡Qué lindo! El árbol estaba cargadito.",
+                "*Plop!* Ca yeron frutas maduritas.",
+                "¡Excelente cosecha, mi cielo!"
+            ];
+            const mensajeAleatorio = mensajesSacudir[Math.floor(Math.random() * mensajesSacudir.length)];
+
+            return interaction.followUp(
+                `🌳 *Shake, shake... thump!* \n\n` +
+                `${mensajeAleatorio} Has recogido **${elegida.cantidad}x ${elegida.emoji} ${elegida.id}**.\n` +
                 `Guárdalas en la canasta para venderlas después, ¿ya? *(Nv. Recolección: ${nivelRecoleccion})*\n\n` +
                 `📊 Tabla de drops base: Abejas ${chanceAbejas.toFixed(1)}% • Monedas ${chanceMonedas.toFixed(1)}% • Frutas resto` +
                 textoDurabilidad
