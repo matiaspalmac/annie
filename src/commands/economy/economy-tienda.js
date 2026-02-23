@@ -1,7 +1,7 @@
 import { SlashCommandBuilder, MessageFlags } from "discord.js";
 import { CONFIG } from "../../core/config.js";
 import { db } from "../../services/db.js";
-import { crearEmbed, enviarPaginado } from "../../core/utils.js";
+import { crearEmbed } from "../../core/utils.js";
 
 const tipoMeta = {
     rol: { emoji: "🎨", titulo: "Tintes y Colores" },
@@ -130,39 +130,198 @@ export async function execute(interaction, bostezo) {
         return interaction.reply({ content: bostezo, embeds: [embed] });
     }
 
-    // 3. Usar enviarPaginado
-    const baseEmbed = crearEmbed(CONFIG.COLORES.DORADO);
+    // 3. Agrupar items por tipo para mejor visualización
+    const itemsPorTipo = {};
+    for (const item of ITEMS_TIENDA) {
+        const tipo = String(item.tipo || "other");
+        if (!itemsPorTipo[tipo]) itemsPorTipo[tipo] = [];
+        itemsPorTipo[tipo].push(item);
+    }
 
-    await enviarPaginado({
-        interaction,
-        baseEmbed,
-        items: ITEMS_TIENDA,
-        itemsPorPagina: 6,
-        titulo: "🛒 Mercadito Encantado de Annie",
-        descripcion: 
-            `💰 **Moneditas disponibles:** ${userMonedas.toLocaleString("es-CL")}\n\n` +
-            `🔥 **Destacados de hoy:** ${featuredIds.map(id => `\`${id}\``).join(" • ")}\n` +
-            `Usa **/comprar** y elige el item con sugerencias automáticas.\n`,
-        renderItem: (item) => {
-            const tipo = String(item.tipo || "other");
-            const meta = tipoMeta[tipo] || { emoji: "🧺", titulo: "Otros" };
-            const isFeatured = featuredIds.includes(String(item.id));
-            const isNuevo = nuevosSet.has(String(item.id));
-            const tags = [
-                isFeatured ? "🔥 OFERTA" : null,
-                isNuevo ? "🆕 NUEVO" : null,
-            ].filter(Boolean).join(" · ");
+    // Ordenar tipos según importancia
+    const ordenTipos = ["herramienta", "mascota", "tema", "marco", "rol", "consumible", "servicio"];
+    const tiposOrdenados = ordenTipos.filter(t => itemsPorTipo[t]).concat(
+        Object.keys(itemsPorTipo).filter(t => !ordenTipos.includes(t))
+    );
 
-            return {
-                name: `${meta.emoji} ${item.nombre}${tags ? ` [${tags}]` : ""}`,
-                value: 
-                    `ID: \`${item.id}\` • Tipo: ${meta.titulo}\n` +
-                    `${item.descripcion}\n` +
-                    `💰 **${Number(item.precio_monedas).toLocaleString("es-CL")} moneditas**`,
-                inline: false
-            };
-        },
+    // Crear páginas agrupadas por tipo
+    const paginas = [];
+    let paginaActual = [];
+    let itemsEnPagina = 0;
+
+    for (const tipo of tiposOrdenados) {
+        const items = itemsPorTipo[tipo];
+        const meta = tipoMeta[tipo] || { emoji: "🧺", titulo: "Otros" };
+        
+        // Si agregar esta categoría completa excede 5 items, crear nueva página
+        if (itemsEnPagina > 0 && itemsEnPagina + items.length > 5) {
+            paginas.push(paginaActual);
+            paginaActual = [];
+            itemsEnPagina = 0;
+        }
+
+        // Agregar header de categoría
+        paginaActual.push({
+            tipo: 'header',
+            categoria: tipo,
+            meta: meta,
+            count: items.length
+        });
+
+        // Agregar items de esta categoría
+        for (const item of items) {
+            paginaActual.push({
+                tipo: 'item',
+                data: item
+            });
+            itemsEnPagina++;
+        }
+    }
+
+    // Agregar última página si tiene items
+    if (paginaActual.length > 0) {
+        paginas.push(paginaActual);
+    }
+
+    if (paginas.length === 0) {
+        const embed = crearEmbed(CONFIG.COLORES.DORADO)
+            .setTitle("🛒 Mercadito Encantado de Annie")
+            .setDescription("La tienda está vacía por ahora. Vuelve más ratito ✨");
+        return interaction.reply({ content: bostezo, embeds: [embed] });
+    }
+
+    // 4. Renderizar con paginación mejorada
+    await interaction.deferReply();
+    
+    const embeds = paginas.map((items, index) => {
+        const embed = crearEmbed(CONFIG.COLORES.DORADO)
+            .setTitle("🛒 Mercadito Encantado de Annie")
+            .setDescription(
+                `💰 **Tu balance:** ${userMonedas.toLocaleString("es-CL")} moneditas\n` +
+                `🔥 **Destacados de hoy:** ${featuredIds.map(id => `\`${id}\``).join(" • ")}\n\n` +
+                `✨ Usa **/comprar** para adquirir items\n` +
+                `━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
+            )
+            .setFooter({ text: `Página ${index + 1} de ${paginas.length} • Total: ${ITEMS_TIENDA.length} items` });
+
+        for (const entrada of items) {
+            if (entrada.tipo === 'header') {
+                // Header de categoría
+                embed.addFields({
+                    name: `\n${entrada.meta.emoji} ━━━ **${entrada.meta.titulo.toUpperCase()}** ━━━`,
+                    value: `┗━ ${entrada.count} ${entrada.count === 1 ? 'item disponible' : 'items disponibles'}`,
+                    inline: false
+                });
+            } else {
+                // Item individual
+                const item = entrada.data;
+                const isFeatured = featuredIds.includes(String(item.id));
+                const isNuevo = nuevosSet.has(String(item.id));
+                
+                const badges = [];
+                if (isFeatured) badges.push("🔥 OFERTA DEL DÍA");
+                if (isNuevo) badges.push("🆕 NUEVO");
+                
+                const canAfford = userMonedas >= Number(item.precio_monedas);
+                const pricePrefix = canAfford ? "✅" : "❌";
+
+                embed.addFields({
+                    name: `${item.nombre}${badges.length > 0 ? ` (${badges.join(' • ')})` : ''}`,
+                    value: 
+                        `┣ **ID:** \`${item.id}\`\n` +
+                        `┣ ${item.descripcion}\n` +
+                        `┗ ${pricePrefix} **${Number(item.precio_monedas).toLocaleString("es-CL")}** 💰`,
+                    inline: false
+                });
+            }
+        }
+
+        return embed;
+    });
+
+    // Crear botones de navegación si hay múltiples páginas
+    if (embeds.length === 1) {
+        return interaction.editReply({ content: bostezo, embeds: [embeds[0]] });
+    }
+
+    const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = await import("discord.js");
+    
+    let currentPage = 0;
+    const message = await interaction.editReply({
         content: bostezo,
-        timeout: 300000
+        embeds: [embeds[0]],
+        components: [{
+            type: 1,
+            components: [
+                {
+                    type: 2,
+                    style: ButtonStyle.Secondary,
+                    label: "◀ Anterior",
+                    custom_id: "prev",
+                    disabled: true
+                },
+                {
+                    type: 2,
+                    style: ButtonStyle.Primary,
+                    label: `${currentPage + 1} / ${embeds.length}`,
+                    custom_id: "page_info",
+                    disabled: true
+                },
+                {
+                    type: 2,
+                    style: ButtonStyle.Secondary,
+                    label: "Siguiente ▶",
+                    custom_id: "next",
+                    disabled: embeds.length === 1
+                }
+            ]
+        }]
+    });
+
+    const collector = message.createMessageComponentCollector({ 
+        time: 300000, // 5 minutos
+        filter: (i) => i.user.id === interaction.user.id 
+    });
+
+    collector.on('collect', async (i) => {
+        if (i.customId === 'next') {
+            currentPage++;
+        } else if (i.customId === 'prev') {
+            currentPage--;
+        }
+
+        await i.update({
+            embeds: [embeds[currentPage]],
+            components: [{
+                type: 1,
+                components: [
+                    {
+                        type: 2,
+                        style: ButtonStyle.Secondary,
+                        label: "◀ Anterior",
+                        custom_id: "prev",
+                        disabled: currentPage === 0
+                    },
+                    {
+                        type: 2,
+                        style: ButtonStyle.Primary,
+                        label: `${currentPage + 1} / ${embeds.length}`,
+                        custom_id: "page_info",
+                        disabled: true
+                    },
+                    {
+                        type: 2,
+                        style: ButtonStyle.Secondary,
+                        label: "Siguiente ▶",
+                        custom_id: "next",
+                        disabled: currentPage === embeds.length - 1
+                    }
+                ]
+            }]
+        });
+    });
+
+    collector.on('end', () => {
+        message.edit({ components: [] }).catch(() => {});
     });
 }

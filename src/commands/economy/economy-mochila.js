@@ -28,7 +28,7 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction, bostezo) {
     const userId = interaction.user.id;
 
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply();
 
     try {
         const [invRes, toolsRes] = await Promise.all([

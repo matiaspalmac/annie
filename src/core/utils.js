@@ -31,25 +31,55 @@ const FOOTERS_ANNIE = [
   "Preparado con tecito y amor \uD83C\uDF75",
 ];
 
+// Constantes de tiempo
+const DURACION_ESTRELLA_FUGAZ = 5 * 60 * 1000; // 5 minutos
+const TIMEOUT_PAGINACION_DEFAULT = 300000; // 5 minutos
+
+/**
+ * Obtiene la hora actual en Chile (0-23)
+ * @returns {number} Hora en formato 24h
+ */
 export function getHoraChile() {
-  return parseInt(
-    new Date().toLocaleString("en-US", {
-      timeZone: CONFIG.TIMEZONE,
-      hour: "numeric",
-      hour12: false,
-    })
-  );
-}
-
-export function getFechaChile() {
-  return new Intl.DateTimeFormat("sv-SE", {
+  const horaStr = new Date().toLocaleString("en-US", {
     timeZone: CONFIG.TIMEZONE,
-  }).format(new Date());
+    hour: "numeric",
+    hour12: false,
+  });
+  const hora = parseInt(horaStr, 10);
+  return isNaN(hora) ? 0 : hora;
 }
 
+/**
+ * Obtiene la fecha actual en Chile (formato YYYY-MM-DD)
+ * @returns {string} Fecha en formato ISO
+ */
+export function getFechaChile() {
+  try {
+    return new Intl.DateTimeFormat("sv-SE", {
+      timeZone: CONFIG.TIMEZONE,
+    }).format(new Date());
+  } catch (error) {
+    console.error("Error obteniendo fecha Chile:", error);
+    return new Date().toISOString().split('T')[0];
+  }
+}
+
+/**
+ * Obtiene el canal general del servidor
+ * @param {Client} client - Cliente de Discord
+ * @returns {Channel|null} Canal general o null
+ */
 export function getCanalGeneral(client) {
+  if (!client?.guilds?.cache) {
+    console.error("Cliente de Discord no inicializado correctamente");
+    return null;
+  }
   const guild = client.guilds.cache.get(CONFIG.GUILD_ID);
-  return guild?.channels.cache.get(CONFIG.CANAL_GENERAL_ID) ?? null;
+  if (!guild) {
+    console.warn(`Guild ${CONFIG.GUILD_ID} no encontrado`);
+    return null;
+  }
+  return guild.channels.cache.get(CONFIG.CANAL_GENERAL_ID) ?? null;
 }
 
 let _estaDurmiendo = false;
@@ -64,19 +94,47 @@ export function setEstrellaActiva(val) { _estrellaActiva = val; }
 let _itemEnDemanda = null; // Guardará el nombre del ítem que están comprando caro
 let _demandaActivaHasta = 0; // Timestamp hasta cuándo dura la oferta
 
+/**
+ * Obtiene el item actualmente en demanda (evento Mercader Doris)
+ * @returns {string|null} Nombre del item o null si no hay demanda activa
+ */
 export function getItemEnDemanda() {
   const ahora = Date.now();
   if (_itemEnDemanda && ahora < _demandaActivaHasta) {
     return _itemEnDemanda;
   }
+  // Limpiar item vencido
+  if (_itemEnDemanda && ahora >= _demandaActivaHasta) {
+    _itemEnDemanda = null;
+    _demandaActivaHasta = 0;
+  }
   return null;
 }
 
+/**
+ * Establece un item en demanda por duración específica
+ * @param {string} item - Nombre del item
+ * @param {number} duracionMs - Duración en milisegundos
+ */
 export function setItemEnDemanda(item, duracionMs) {
+  if (!item || typeof item !== 'string') {
+    console.warn("setItemEnDemanda: item inválido", item);
+    return;
+  }
+  if (!duracionMs || duracionMs <= 0) {
+    console.warn("setItemEnDemanda: duración inválida", duracionMs);
+    return;
+  }
   _itemEnDemanda = item;
   _demandaActivaHasta = Date.now() + duracionMs;
 }
 
+/**
+ * Crea un embed con el estilo de Annie
+ * @param {string} color - Color del embed (hex)
+ * @param {string} [categoria] - Categoría para personalización futura
+ * @returns {EmbedBuilder} Embed configurado
+ */
 export function crearEmbed(color, categoria) {
   const embed = new EmbedBuilder()
     .setColor(color || CONFIG.COLORES.ROSA)
@@ -99,16 +157,20 @@ export function lanzarEstrellaFugaz(client) {
       .setDescription("*Annie se asoma rápido por la ventanita de la oficinita...*\n\n¡Oh! Acabo de ver caer una estrella brillante en el pueblito... **¡El primero que escriba `/deseo` se la lleva!** ✨");
     canal.send({ embeds: [embed] }).catch(console.error);
 
-    // La estrella caduca en 5 minutos
+    // La estrella caduca después de la duración configurada
     setTimeout(() => {
       if (isEstrellaActiva()) {
         setEstrellaActiva(false);
         canal.send("❄️ La chispita de la estrella se apagó solita... ¡Ojalá para la próxima estemos más atentos!").catch(() => { });
       }
-    }, 5 * 60 * 1000);
+    }, DURACION_ESTRELLA_FUGAZ);
   }
 }
 
+/**
+ * Obtiene mensaje de saludo según el estado de Annie
+ * @returns {string} Mensaje personalizado
+ */
 export function getBostezo() {
   if (_estaDurmiendo) {
     return "*(Bostezo suave)* Ya po... aqui tiene, corazón, pero no me despierte mucho, ya?\n\n";
@@ -116,6 +178,11 @@ export function getBostezo() {
   return `Wena, ${getTrato()}! Aqui le traigo su cosita con cariño.\n\n`;
 }
 
+/**
+ * Agrega narrativa y sugerencias de Annie al embed
+ * @param {EmbedBuilder} embed - Embed a modificar
+ * @param {string} categoria - Categoría del contenido
+ */
 export function agregarNarrativa(embed, categoria) {
   const frase = getFraseAnnie(categoria);
   const em = EMOJI_CATEGORIA[categoria] || EMOJI_CATEGORIA.general;
@@ -125,7 +192,7 @@ export function agregarNarrativa(embed, categoria) {
     const sug = getSugerencia(categoria);
     if (sug) {
       embed.addFields({
-        name: "\uD83D\uDCA1 Quizas te interese...",
+        name: "\uD83D\uDCA1 Quizás te interese...",
         value: sug,
         inline: false,
       });
@@ -133,20 +200,40 @@ export function agregarNarrativa(embed, categoria) {
   }
 }
 
+/**
+ * Crea un embed de error personalizado
+ * @param {string} categoria - Categoría del contenido
+ * @param {string} itemBuscado - Item que no se encontró
+ * @returns {EmbedBuilder} Embed de error
+ */
 export function crearEmbedError(categoria, itemBuscado) {
   const color = CONFIG.COLORES[categoria?.toUpperCase()] || CONFIG.COLORES.ROSA;
   const em = EMOJI_CATEGORIA[categoria] || EMOJI_CATEGORIA.general;
+  const itemSeguro = String(itemBuscado || "ese item").substring(0, 100); // Limitar longitud
   const embed = crearEmbed(color)
     .setTitle(`${em.icono} Ay, corazóncito!`)
     .setDescription(
       _estaDurmiendo
-        ? `*(Annie busca con ojitos cerrados)* Zzz... no encuentro "${itemBuscado}" en mi libretita...`
-        : `Ay, ${getTrato()}! No tengo anotado "${itemBuscado}" todavia... seguro que se escribe asi, tesoro?`
+        ? `*(Annie busca con ojitos cerrados)* Zzz... no encuentro "${itemSeguro}" en mi libretita...`
+        : `Ay, ${getTrato()}! No tengo anotado "${itemSeguro}" todavía... seguro que se escribe así, tesoro?`
     )
     .setFooter({ text: "\u2615 Annie busca mejor con cafecito y cariño" });
   return embed;
 }
 
+/**
+ * Envía un mensaje paginado con botones de navegación
+ * @param {Object} params - Parámetros de paginación
+ * @param {CommandInteraction} params.interaction - Interacción de Discord
+ * @param {EmbedBuilder} params.baseEmbed - Embed base
+ * @param {Array} params.items - Items a paginar
+ * @param {number} [params.itemsPorPagina=12] - Items por página
+ * @param {string} params.titulo - Título del embed
+ * @param {string} params.descripcion - Descripción del embed
+ * @param {Function} params.renderItem - Función para renderizar cada item
+ * @param {string} [params.content=null] - Contenido adicional del mensaje
+ * @param {number} [params.timeout=300000] - Timeout del collector en ms
+ */
 export async function enviarPaginado({
   interaction,
   baseEmbed,
@@ -156,8 +243,16 @@ export async function enviarPaginado({
   descripcion,
   renderItem,
   content = null,
-  timeout = 300000,
+  timeout = TIMEOUT_PAGINACION_DEFAULT,
 }) {
+  // Validaciones
+  if (!items || !Array.isArray(items) || items.length === 0) {
+    const embed = crearEmbed(CONFIG.COLORES.ROSA)
+      .setTitle(titulo)
+      .setDescription("No hay items para mostrar");
+    return interaction.reply({ content, embeds: [embed] });
+  }
+
   let paginaActual = 1;
   const totalPaginas = Math.ceil(items.length / itemsPorPagina);
 
@@ -166,12 +261,18 @@ export async function enviarPaginado({
     const fin = inicio + itemsPorPagina;
 
     const embed = EmbedBuilder.from(baseEmbed)
-      .setTitle(`${titulo} - Pagina ${pagina}/${totalPaginas}`)
+      .setTitle(`${titulo} - Página ${pagina}/${totalPaginas}`)
       .setDescription(descripcion);
 
     items.slice(inicio, fin).forEach((item) => {
-      const field = renderItem(item);
-      if (field) embed.addFields(field);
+      try {
+        const field = renderItem(item);
+        if (field && field.name && field.value) {
+          embed.addFields(field);
+        }
+      } catch (error) {
+        console.error("Error renderizando item:", error);
+      }
     });
 
     embed.setFooter({
@@ -216,15 +317,19 @@ export async function enviarPaginado({
   });
 
   collector.on("collect", async (i) => {
-    await i.deferUpdate();
-    if (i.customId === "prev") paginaActual--;
-    if (i.customId === "next") paginaActual++;
-    paginaActual = Math.max(1, Math.min(totalPaginas, paginaActual));
+    try {
+      await i.deferUpdate();
+      if (i.customId === "prev") paginaActual--;
+      if (i.customId === "next") paginaActual++;
+      paginaActual = Math.max(1, Math.min(totalPaginas, paginaActual));
 
-    await i.editReply({
-      embeds: [generarEmbedPagina(paginaActual)],
-      components: [crearBotones(paginaActual)],
-    });
+      await i.editReply({
+        embeds: [generarEmbedPagina(paginaActual)],
+        components: [crearBotones(paginaActual)],
+      });
+    } catch (error) {
+      console.error("Error en collector de paginación:", error);
+    }
   });
 
   collector.on("end", async () => {
