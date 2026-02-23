@@ -1,6 +1,18 @@
 import { createClient } from "@libsql/client";
 import { CONFIG } from "./config.js";
 
+if (!CONFIG.TURSO_URL) {
+  throw new Error(
+    "Falta TURSO_DATABASE_URL en variables de entorno. Crea/recupera el archivo .env con TURSO_DATABASE_URL y TURSO_AUTH_TOKEN."
+  );
+}
+
+if (!CONFIG.TURSO_TOKEN) {
+  throw new Error(
+    "Falta TURSO_AUTH_TOKEN en variables de entorno. Crea/recupera el archivo .env con TURSO_DATABASE_URL y TURSO_AUTH_TOKEN."
+  );
+}
+
 const db = createClient({
   url: CONFIG.TURSO_URL,
   authToken: CONFIG.TURSO_TOKEN,
