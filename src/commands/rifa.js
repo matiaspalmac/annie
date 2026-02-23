@@ -1,6 +1,6 @@
 import { SlashCommandBuilder } from "discord.js";
 import { db } from "../db.js";
-import { crearEmbed } from "../utils.js";
+import { crearEmbed, getFechaChile } from "../utils.js";
 import { CONFIG } from "../config.js";
 
 // El costo fijo de cada boleto de rifa
@@ -20,7 +20,7 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction, bostezo) {
     const subcomando = interaction.options.getSubcommand();
-    const hoyStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const hoyStr = getFechaChile(); // YYYY-MM-DD en horario Chile
 
     await interaction.deferReply();
 

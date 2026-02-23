@@ -15,7 +15,14 @@ export async function execute(interaction, bostezo) {
     try {
         // 1. Obtener mascotas compradas
         const resMascotas = await db.execute({
-            sql: "SELECT item_id FROM inventario_economia WHERE user_id = ? AND item_id LIKE 'mascota_%' AND cantidad > 0",
+                        sql: `SELECT ie.item_id, mn.nombre
+                                    FROM inventario_economia ie
+                                    LEFT JOIN mascota_nombres mn
+                                        ON mn.user_id = ie.user_id
+                                     AND mn.mascota_id = ie.item_id
+                                    WHERE ie.user_id = ?
+                                        AND ie.item_id LIKE 'mascota_%'
+                                        AND ie.cantidad > 0`,
             args: [userId]
         });
 
@@ -29,9 +36,20 @@ export async function execute(interaction, bostezo) {
             args: [userId]
         });
 
+        const nombresMap = new Map();
+        for (const row of resMascotas.rows) {
+            nombresMap.set(String(row.item_id), String(row.nombre || "").trim());
+        }
+
+        const nombreVisibleMascota = (itemId) => {
+            const base = String(itemId || "").replace("mascota_", "");
+            const custom = String(nombresMap.get(String(itemId)) || "").trim();
+            return custom || base;
+        };
+
         let mascotaActiva = "Ninguna";
         if (resUsuario.rows.length > 0 && resUsuario.rows[0].mascota_activa !== "default") {
-            mascotaActiva = String(resUsuario.rows[0].mascota_activa).replace('mascota_', '');
+            mascotaActiva = nombreVisibleMascota(resUsuario.rows[0].mascota_activa);
         }
 
         const opcionesMascotas = [];
@@ -46,11 +64,11 @@ export async function execute(interaction, bostezo) {
 
         resMascotas.rows.forEach(r => {
             const rawId = String(r.item_id);
-            const nombreMascota = rawId.replace('mascota_', '');
+            const nombreMascota = nombreVisibleMascota(rawId);
 
             opcionesMascotas.push(
                 new StringSelectMenuOptionBuilder()
-                    .setLabel(nombreMascota)
+                    .setLabel(nombreMascota.slice(0, 100))
                     .setDescription(`Equipar a ${nombreMascota}`)
                     .setValue(rawId)
             );
@@ -95,7 +113,7 @@ export async function execute(interaction, bostezo) {
                 let mensajeAlerta = "Tu amiguito se ha ido a dormir a su casita.";
 
                 if (eleccion !== "default") {
-                    mensajeAlerta = `¡**${eleccion.replace('mascota_', '')}** está saltando de alegría! Ahora te acompañará a todas partes. 🐾`;
+                    mensajeAlerta = `¡**${nombreVisibleMascota(eleccion)}** está saltando de alegría! Ahora te acompañará a todas partes. 🐾`;
                 }
 
                 await i.editReply({

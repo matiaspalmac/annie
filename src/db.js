@@ -162,6 +162,14 @@ export async function initDB() {
           )
         `);
     await db.execute(`
+          CREATE TABLE IF NOT EXISTS mascota_nombres (
+            user_id TEXT,
+            mascota_id TEXT,
+            nombre TEXT NOT NULL,
+            PRIMARY KEY(user_id, mascota_id)
+          )
+        `);
+    await db.execute(`
           CREATE TABLE IF NOT EXISTS boosts_activos (
             user_id TEXT,
             boost_id TEXT,
@@ -419,6 +427,7 @@ async function seedTienda() {
 
     // Servicio
     { id: "reset_racha_perdon", tipo: "servicio", nombre: "Perdón de Racha", descripcion: "Recupera tu racha rota (1 vez por semana).", precio_monedas: 1200 },
+    { id: "etiqueta_mascota", tipo: "servicio", nombre: "Etiqueta para Mascota", descripcion: "Permite usar /renombrar opcion:mascota para ponerle un nombre personalizado a una de tus mascotas.", precio_monedas: 250 },
 
     // Marcos Web (F17)
     { id: "marco_perfil_bronce", tipo: "marco", nombre: "Marco de Perfil Bronce", descripcion: "Marco cálido y elegante para tu avatar en la web.", precio_monedas: 450 },

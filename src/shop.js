@@ -78,6 +78,25 @@ export async function procesarCompraTienda(interaction, itemSeleccionado) {
   }
 
   if (tipoItem === "servicio") {
+    if (itemSeleccionado === "etiqueta_mascota") {
+      await db.execute({
+        sql: "UPDATE usuarios SET monedas = monedas - ? WHERE id = ?",
+        args: [precio, interaction.user.id],
+      });
+
+      await db.execute({
+        sql: `INSERT INTO inventario_economia (user_id, item_id, cantidad)
+              VALUES (?, ?, 1)
+              ON CONFLICT(user_id, item_id) DO UPDATE SET cantidad = inventario_economia.cantidad + 1`,
+        args: [interaction.user.id, itemSeleccionado],
+      });
+
+      return {
+        ok: true,
+        message: "🏷️ Compraste una **Etiqueta para Mascota**. Usa **/renombrar opcion:mascota** para ponerle nombre a tu compañerito.",
+      };
+    }
+
     if (itemSeleccionado !== "reset_racha_perdon") {
       return { ok: false, message: "Este servicio aún no está disponible." };
     }

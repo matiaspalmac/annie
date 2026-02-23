@@ -23,7 +23,7 @@ import {
 import {
   getHoraChile, estaDurmiendo, setDurmiendo, getCanalGeneral,
   crearEmbed, getBostezo, isEstrellaActiva, setEstrellaActiva,
-  lanzarEstrellaFugaz, getItemEnDemanda, setItemEnDemanda
+  lanzarEstrellaFugaz, getItemEnDemanda, setItemEnDemanda, getFechaChile
 } from "./utils.js";
 import { initDB, loadConfig, buildAutocompleteCache, db, getLatestLogId, getLogsSince } from "./db.js";
 import { setAutocompleteCache } from "./data.js";
@@ -145,18 +145,22 @@ let rifaSorteadaHoy = false;
 async function procesarSorteoRifa() {
   try {
     const ahora = new Date();
-    // Obtener la hora y minutos en el timezone correcto (Chile)
-    const options = { timeZone: CONFIG.TIMEZONE, hour: 'numeric', minute: 'numeric', hour12: false };
-    const [, hm] = ahora.toLocaleString('en-US', options).match(/(\d+):(\d+)/) || [];
+    const horaEnChile = parseInt(
+      ahora.toLocaleString("en-US", { timeZone: CONFIG.TIMEZONE, hour: "numeric", hour12: false }),
+      10
+    );
 
-    // Si no son las 23:5X (o 59) reseteamos la flag y salimos
-    if (hm && parseInt(hm, 10) !== 23) {
+    // Fuera de las 23:xx, reseteamos la flag para permitir sorteo al siguiente día.
+    if (horaEnChile !== 23) {
       rifaSorteadaHoy = false;
       return;
     }
 
     // Queremos correrlo a las 23:59 (minuto 59). Si ya lo sorteamos hoy, evitar doble sorteo.
-    const minutoEnChile = parseInt(ahora.toLocaleString('en-US', { timeZone: CONFIG.TIMEZONE, minute: 'numeric' }), 10);
+    const minutoEnChile = parseInt(
+      ahora.toLocaleString("en-US", { timeZone: CONFIG.TIMEZONE, minute: "numeric" }),
+      10
+    );
 
     // Solo sorteamos si es exactamente 23:59 y no se ha sorteado aún
     if (minutoEnChile === 59 && !rifaSorteadaHoy) {
@@ -164,12 +168,25 @@ async function procesarSorteoRifa() {
       const canal = getCanalGeneral(client);
       if (!canal) return;
 
-      const hoyStr = ahora.toISOString().split('T')[0]; // YYYY-MM-DD
+      const hoyStr = getFechaChile(); // YYYY-MM-DD en horario Chile
 
-      const resBoletos = await db.execute({
+      let resBoletos = await db.execute({
         sql: "SELECT id, user_id FROM rifa_boletos WHERE fecha = ?",
         args: [hoyStr]
       });
+
+      // Compatibilidad por cambio de criterio de fecha:
+      // antes se guardaba con UTC (toISOString), así que algunos boletos históricos
+      // del mismo "día Chile" pueden quedar bajo la fecha UTC siguiente.
+      if (resBoletos.rows.length === 0) {
+        const hoyUtc = ahora.toISOString().split("T")[0];
+        if (hoyUtc !== hoyStr) {
+          resBoletos = await db.execute({
+            sql: "SELECT id, user_id FROM rifa_boletos WHERE fecha = ?",
+            args: [hoyUtc]
+          });
+        }
+      }
 
       if (resBoletos.rows.length === 0) {
         // Nadie compró boletos
@@ -1023,7 +1040,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
           args: [targetUserId]
         });
         const resConsumibles = await db.execute({
-          sql: "SELECT item_id, cantidad FROM inventario_economia WHERE user_id = ? AND item_id IN ('booster_xp_30m','amuleto_suerte_15m','reset_racha_perdon') AND cantidad > 0",
+          sql: "SELECT item_id, cantidad FROM inventario_economia WHERE user_id = ? AND item_id IN ('booster_xp_30m','amuleto_suerte_15m','reset_racha_perdon','etiqueta_mascota') AND cantidad > 0",
           args: [targetUserId]
         });
         const resTitulos = await db.execute({

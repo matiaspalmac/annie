@@ -206,7 +206,13 @@ export async function execute(interaction, bostezo) {
 
     let mascotaActivaText = "";
     if (userData.mascota_activa && userData.mascota_activa !== "default") {
-        mascotaActivaText = `\n🐕 **Mascota Acompañante:** ${userData.mascota_activa.replace('mascota_', '')}`;
+        const resNombreMascota = await db.execute({
+            sql: "SELECT nombre FROM mascota_nombres WHERE user_id = ? AND mascota_id = ? LIMIT 1",
+            args: [targetUser.id, userData.mascota_activa]
+        });
+        const nombreCustom = String(resNombreMascota.rows[0]?.nombre || "").trim();
+        const nombreBase = String(userData.mascota_activa).replace('mascota_', '');
+        mascotaActivaText = `\n🐕 **Mascota Acompañante:** ${nombreCustom || nombreBase}`;
     }
 
     let temaActivoText = "";

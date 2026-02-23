@@ -41,6 +41,12 @@ export function getHoraChile() {
   );
 }
 
+export function getFechaChile() {
+  return new Intl.DateTimeFormat("sv-SE", {
+    timeZone: CONFIG.TIMEZONE,
+  }).format(new Date());
+}
+
 export function getCanalGeneral(client) {
   const guild = client.guilds.cache.get(CONFIG.GUILD_ID);
   return guild?.channels.cache.get(CONFIG.CANAL_GENERAL_ID) ?? null;

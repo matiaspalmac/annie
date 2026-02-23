@@ -23,6 +23,7 @@ export async function execute(interaction, bostezo) {
                     "✨ `/perfil` — Mira tu nivel, experiencia y moneditas acumuladas.\n" +
                     "🛒 `/tienda [pagina]` — Revisa el catálogo por páginas.\n" +
                     "🧾 `/comprar [item]` — Compra directo con sugerencias automáticas.\n" +
+                    "🏷️ `/renombrar opcion:mascota mascota:[tu mascota] nombre:[nuevo nombre]` — Usa una Etiqueta para Mascota y ponle nombre.\n" +
                     "🖌️ `/color [hex]` — Aplica tu Pincel Mágico personalizado.",
                 inline: false,
             },
