@@ -50,6 +50,10 @@ export async function execute(interaction, bostezo) {
                 if (nombreTema === "bosque") desc = "Tonos esmeraldas y naturaleza";
                 if (nombreTema === "playa") desc = "Brisas oceánicas y cian";
                 if (nombreTema === "noche") desc = "Misteriosos tonos índigo";
+                if (nombreTema === "morado") desc = "Tonos púrpura y lavanda mágicos";
+                if (nombreTema === "negro") desc = "Negro elegante y misterioso";
+                if (nombreTema === "rojo") desc = "Carmesí apasionado y energético";
+                if (nombreTema === "celestial") desc = "Blancos perlados y pastel serenos";
 
                 opcionesTemas.push(
                     new StringSelectMenuOptionBuilder()

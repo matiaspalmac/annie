@@ -528,6 +528,10 @@ async function seedTienda() {
     { id: "tema_bosque", tipo: "tema", nombre: "Fondo: Bosque Mágico", descripcion: "Pinta tu Libretita Web de color verde musgo, hojas y espíritu aventurero.", precio_monedas: 350 },
     { id: "tema_playa", tipo: "tema", nombre: "Fondo: Playa Sirena", descripcion: "Lleva la arena amarilla y el sonido del mar azul a tu página web de Heartopia.", precio_monedas: 350 },
     { id: "tema_noche", tipo: "tema", nombre: "Fondo: Noche Estrellada", descripcion: "Oscurece la libretita de tu perfil bajo un hermoso manto estelar.", precio_monedas: 550 },
+    { id: "tema_morado", tipo: "tema", nombre: "Fondo: Jardín Violeta", descripcion: "Envuelve tu libretita en tonos púrpura y lavanda, perfecta para las almas mágicas.", precio_monedas: 400 },
+    { id: "tema_negro", tipo: "tema", nombre: "Fondo: Abismo Oscuro", descripcion: "Un negro profundo y elegante para las almas misteriosas del pueblito.", precio_monedas: 600 },
+    { id: "tema_rojo", tipo: "tema", nombre: "Fondo: Corazón Ardiente", descripcion: "Rojos apasionados y carmesí para un perfil lleno de energía.", precio_monedas: 450 },
+    { id: "tema_celestial", tipo: "tema", nombre: "Fondo: Amanecer Soñado", descripcion: "Blancos perlados y tonos pastel suaves, para los espíritus más serenos.", precio_monedas: 350 },
 
     // Consumibles
     { id: "booster_xp_30m", tipo: "consumible", nombre: "Booster XP 30m", descripcion: "Otorga +25% XP durante 30 minutos.", precio_monedas: 800 },
