@@ -4,7 +4,7 @@ import { getGameId, saveGameId } from "../../services/db.js";
 import { crearEmbed } from "../../core/utils.js";
 
 export const data = new SlashCommandBuilder()
-    .setName("linkid")
+    .setName("admin-linkid")
     .setDescription("Vincula un Game ID a un usuario (Solo Admins)")
     .addUserOption(o => o.setName("usuario").setDescription("El usuario al que vincular").setRequired(true))
     .addStringOption(o => o.setName("game_id").setDescription("El Game ID del usuario").setRequired(true));

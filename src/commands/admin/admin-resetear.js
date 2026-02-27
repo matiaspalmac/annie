@@ -4,7 +4,7 @@ import { crearEmbed } from "../../core/utils.js";
 import { CONFIG } from "../../core/config.js";
 
 export const data = new SlashCommandBuilder()
-    .setName("resetear")
+    .setName("admin-resetear")
     .setDescription("Resetea los XP y Moneditas de un usuario a 0 (Solo Administradores)")
     .addUserOption(o => o.setName("vecino").setDescription("El vecinito a resetear").setRequired(true))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);

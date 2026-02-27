@@ -5,7 +5,7 @@ import { lanzarEstrellaFugaz } from "../../core/utils.js";
 import { lanzarTriviaAleatoria } from "../../features/trivia.js";
 
 export const data = new SlashCommandBuilder()
-    .setName("evento")
+    .setName("admin-evento")
     .setDescription("Lanza un evento especial en el pueblito (Admin).")
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addStringOption(option =>

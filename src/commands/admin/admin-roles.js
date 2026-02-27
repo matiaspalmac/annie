@@ -3,7 +3,7 @@ import { CONFIG } from "../../core/config.js";
 import { crearEmbed } from "../../core/utils.js";
 
 export const data = new SlashCommandBuilder()
-    .setName("roles")
+    .setName("admin-roles")
     .setDescription("Envía el mensaje de selección de roles")
     .addChannelOption(o => o.setName("canal").setDescription("Canal donde enviar (por defecto: canal actual)").setRequired(false));
 

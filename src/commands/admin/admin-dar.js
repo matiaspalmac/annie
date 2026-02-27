@@ -6,7 +6,7 @@ import { CONFIG } from "../../core/config.js";
 const OWNER_ID = "457299957955821569";
 
 export const data = new SlashCommandBuilder()
-    .setName("dar")
+    .setName("admin-dar")
     .setDescription("Otorga XP y/o Moneditas a un vecino desde la bóveda celestial (Solo Owner)")
     .addUserOption(o => o.setName("vecino").setDescription("El vecinito afortunado").setRequired(true))
     .addIntegerOption(o => o.setName("monedas").setDescription("Cantidad de moneditas a regalar").setMinValue(1))
