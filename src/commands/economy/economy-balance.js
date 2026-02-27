@@ -49,7 +49,7 @@ export async function execute(interaction, bostezo) {
 
     try {
         // 2. Consulta optimizada a base de datos
-        const [userResult, rankingResult] = await Promise.all([
+        const [userResult, rankingResult, bancoResult] = await Promise.all([
             db.execute({
                 sql: "SELECT monedas, xp, nivel FROM usuarios WHERE id = ?",
                 args: [targetUser.id]
@@ -59,8 +59,26 @@ export async function execute(interaction, bostezo) {
                       FROM usuarios 
                       WHERE monedas > (SELECT monedas FROM usuarios WHERE id = ?)`,
                 args: [targetUser.id]
+            }),
+            db.execute({
+                sql: "SELECT monedas, ultimo_interes FROM banco WHERE user_id = ?",
+                args: [targetUser.id]
             })
         ]);
+
+        // Aplicar intereses del banco silenciosamente (solo al propio usuario)
+        let monedas_banco = Number(bancoResult.rows[0]?.monedas ?? 0);
+        if (esPropioBalance && monedas_banco > 0 && bancoResult.rows.length > 0) {
+            const ultimoInteres = Number(bancoResult.rows[0].ultimo_interes || 0);
+            const diasPasados = Math.floor((Date.now() - ultimoInteres) / (24 * 60 * 60 * 1000));
+            if (diasPasados > 0) {
+                monedas_banco = Math.floor(monedas_banco * Math.pow(1.02, diasPasados));
+                await db.execute({
+                    sql: "UPDATE banco SET monedas = ?, ultimo_interes = ? WHERE user_id = ?",
+                    args: [monedas_banco, Date.now(), targetUser.id]
+                });
+            }
+        }
 
         // 3. Validar existencia del usuario en la base de datos
         if (userResult.rows.length === 0) {
@@ -92,8 +110,18 @@ export async function execute(interaction, bostezo) {
         // Información principal
         embed.addFields(
             {
-                name: "💰 Moneditas",
+                name: "💰 Bolsillo",
                 value: `\`\`\`diff\n+ ${formatNumber(monedas)} 🪙\`\`\``,
+                inline: true
+            },
+            {
+                name: "🏦 Banco",
+                value: `\`\`\`diff\n+ ${formatNumber(monedas_banco)} 🪙\`\`\``,
+                inline: true
+            },
+            {
+                name: "📊 Ranking",
+                value: `\`\`\`yaml\n#${posicionRanking}\`\`\``,
                 inline: true
             },
             {
@@ -102,8 +130,8 @@ export async function execute(interaction, bostezo) {
                 inline: true
             },
             {
-                name: "📊 Ranking",
-                value: `\`\`\`yaml\n#${posicionRanking}\`\`\``,
+                name: "💎 Total",
+                value: `\`\`\`diff\n+ ${formatNumber(monedas + monedas_banco)} 🪙\`\`\``,
                 inline: true
             }
         );

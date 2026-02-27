@@ -349,6 +349,14 @@ export async function procesarCompraTienda(interaction, itemSeleccionado) {
 
     // ── MARCOS ──────────────────────────────────────────────────────────────────────────────────────
     if (tipoItem === "marco") {
+      const resYaLoTiene = await db.execute({
+        sql: "SELECT cantidad FROM inventario_economia WHERE user_id = ? AND item_id = ?",
+        args: [interaction.user.id, itemSeleccionado],
+      });
+      if (resYaLoTiene.rows.length > 0 && resYaLoTiene.rows[0].cantidad > 0) {
+        return { ok: false, message: `Ya tienes el ${nombreItem} en tu colección, no necesitas comprarlo de nuevo. 💖` };
+      }
+
       await db.execute({
         sql: "UPDATE usuarios SET monedas = monedas - ?, marco_perfil = ? WHERE id = ?",
         args: [precio, itemSeleccionado, interaction.user.id],
@@ -366,6 +374,14 @@ export async function procesarCompraTienda(interaction, itemSeleccionado) {
 
     // ── TEMAS ───────────────────────────────────────────────────────────────────────────────────────
     if (tipoItem === "tema") {
+      const resYaLoTiene = await db.execute({
+        sql: "SELECT cantidad FROM inventario_economia WHERE user_id = ? AND item_id = ?",
+        args: [interaction.user.id, itemSeleccionado],
+      });
+      if (resYaLoTiene.rows.length > 0 && resYaLoTiene.rows[0].cantidad > 0) {
+        return { ok: false, message: `Ya tienes el ${nombreItem} en tu colección, no necesitas comprarlo de nuevo. 💖` };
+      }
+
       await db.execute({
         sql: "UPDATE usuarios SET monedas = monedas - ?, tema_perfil = ? WHERE id = ?",
         args: [precio, itemSeleccionado, interaction.user.id],
@@ -383,6 +399,14 @@ export async function procesarCompraTienda(interaction, itemSeleccionado) {
 
     // ── MASCOTAS ────────────────────────────────────────────────────────────────────────────────────
     if (tipoItem === "mascota") {
+      const resYaLoTiene = await db.execute({
+        sql: "SELECT cantidad FROM inventario_economia WHERE user_id = ? AND item_id = ?",
+        args: [interaction.user.id, itemSeleccionado],
+      });
+      if (resYaLoTiene.rows.length > 0 && resYaLoTiene.rows[0].cantidad > 0) {
+        return { ok: false, message: `Ya adoptaste a ${nombreItem}, no puedes adoptarlo dos veces. 💖` };
+      }
+
       await db.execute({
         sql: "UPDATE usuarios SET monedas = monedas - ?, mascota_activa = ? WHERE id = ?",
         args: [precio, itemSeleccionado, interaction.user.id],

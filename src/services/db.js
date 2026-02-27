@@ -320,6 +320,32 @@ export async function initDB() {
         PRIMARY KEY(user_id, titulo)
       )
         `);
+    await db.execute(`
+          CREATE TABLE IF NOT EXISTS mascotas_estado(
+        user_id TEXT PRIMARY KEY,
+        mascota_id TEXT,
+        felicidad INTEGER DEFAULT 70,
+        hambre INTEGER DEFAULT 50,
+        ultima_interaccion INTEGER DEFAULT 0
+      )
+        `);
+    await db.execute(`
+          CREATE TABLE IF NOT EXISTS banco(
+        user_id TEXT PRIMARY KEY,
+        monedas INTEGER DEFAULT 0,
+        ultimo_interes INTEGER DEFAULT 0
+      )
+        `);
+    await db.execute(`
+          CREATE TABLE IF NOT EXISTS recetas(
+        id TEXT PRIMARY KEY,
+        nombre_resultado TEXT NOT NULL,
+        cantidad_resultado INTEGER DEFAULT 1,
+        emoji_resultado TEXT DEFAULT '🎁',
+        ingredientes TEXT NOT NULL,
+        descripcion TEXT DEFAULT ''
+      )
+        `);
 
     // Migraciones seguras para columnas añadidas posteriormente
     try { await db.execute("ALTER TABLE usuarios ADD COLUMN banner_url TEXT DEFAULT NULL"); } catch (e) { /* Ignorar si ya existe */ }
@@ -637,6 +663,21 @@ async function seedItemsEconomia() {
     { id: "Anchoa Nocturna", nombre: "Anchoa Nocturna", emoji: "🐟", tipo: "pez", rareza: "comun", precio_venta: 8 },
     { id: "Boquerón", nombre: "Boquerón", emoji: "🐠", tipo: "pez", rareza: "comun", precio_venta: 7 },
     { id: "Botella con mensaje", nombre: "Botella con mensaje", emoji: "🍾", tipo: "tesoro", rareza: "raro", precio_venta: 0 },
+
+    // FOTOS (Fotografiar)
+    { id: "Foto de Fénix", nombre: "Foto de Fénix", emoji: "🔥", tipo: "foto", rareza: "mitico", precio_venta: 250 },
+    { id: "Foto de Pájaro Trueno", nombre: "Foto de Pájaro Trueno", emoji: "⚡", tipo: "foto", rareza: "mitico", precio_venta: 230 },
+    { id: "Foto de Águila Real", nombre: "Foto de Águila Real", emoji: "🦅", tipo: "foto", rareza: "legendario", precio_venta: 120 },
+    { id: "Foto de Búho Nival", nombre: "Foto de Búho Nival", emoji: "🦉", tipo: "foto", rareza: "legendario", precio_venta: 110 },
+    { id: "Foto de Halcón Peregrino", nombre: "Foto de Halcón Peregrino", emoji: "🦅", tipo: "foto", rareza: "epico", precio_venta: 65 },
+    { id: "Foto de Martín Pescador", nombre: "Foto de Martín Pescador", emoji: "🐦", tipo: "foto", rareza: "epico", precio_venta: 60 },
+    { id: "Foto de Tucán", nombre: "Foto de Tucán", emoji: "🦜", tipo: "foto", rareza: "raro", precio_venta: 35 },
+    { id: "Foto de Picaflor", nombre: "Foto de Picaflor", emoji: "🪶", tipo: "foto", rareza: "raro", precio_venta: 30 },
+    { id: "Foto de Loro Macho", nombre: "Foto de Loro Macho", emoji: "🦜", tipo: "foto", rareza: "poco_comun", precio_venta: 18 },
+    { id: "Foto de Golondrina", nombre: "Foto de Golondrina", emoji: "🐦", tipo: "foto", rareza: "poco_comun", precio_venta: 15 },
+    { id: "Foto de Paloma", nombre: "Foto de Paloma", emoji: "🕊️", tipo: "foto", rareza: "comun", precio_venta: 5 },
+    { id: "Foto de Gorrión", nombre: "Foto de Gorrión", emoji: "🐦", tipo: "foto", rareza: "comun", precio_venta: 4 },
+    { id: "Foto Borrosa", nombre: "Foto Borrosa", emoji: "📷", tipo: "foto", rareza: "comun", precio_venta: 1 },
 
     // FRUTAS (Talar)
     { id: "Manzana Dorada", nombre: "Manzana Dorada", emoji: "🍎", tipo: "fruta", rareza: "epico", precio_venta: 60 },

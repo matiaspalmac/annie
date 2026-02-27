@@ -126,10 +126,33 @@ export async function execute(interaction, bostezo) {
         const bonusSuerte = amuletoActivo ? 8 : 0;
         const bonusRod = ROD_META[rod.itemId] || { bonusRare: 0, bonusLegend: 0, nombre: "Caña Básica" };
 
-        const chanceMitico = Math.min(0.5 + (bonoNivel * 0.1) + bonusSuerte + bonusRod.bonusLegend + bonusCebo, 8);
-        const chanceLegendaria = Math.min(3 + (bonoNivel * 0.25) + bonusSuerte + bonusRod.bonusLegend + bonusCebo, 18);
-        const chanceEpica = Math.min(8 + (bonoNivel * 0.4) + bonusSuerte + bonusRod.bonusRare + bonusCebo, 30);
-        const chanceRara = Math.min(15 + (bonoNivel * 0.6) + bonusSuerte + bonusRod.bonusRare + bonusCebo, 45);
+        // 🌦️ Bonos por Clima actual del pueblito
+        let bonusClimaPeces = 0;
+        let mensajeClima = "";
+        try {
+            const resClima = await db.execute("SELECT texto FROM clima WHERE id = 'hoy'");
+            if (resClima.rows.length > 0) {
+                const climaTexto = String(resClima.rows[0].texto || "").toLowerCase();
+                if (climaTexto.includes("lluvia") || climaTexto.includes("tormenta") || climaTexto.includes("llovizna")) {
+                    bonusClimaPeces = 6; // Lluvia: los peces suben a la superficie
+                    mensajeClima = "☔ *La lluvia del pueblito hace que los peces suban a la superficie. +6% de suerte hoy!*\n";
+                } else if (climaTexto.includes("sol")) {
+                    bonusClimaPeces = 0; // Soleado: normal
+                    mensajeClima = "☀️ *El sol calienta el río y los peces nadan tranquilos. Condiciones normales.*\n";
+                } else if (climaTexto.includes("nieve") || climaTexto.includes("frio") || climaTexto.includes("frío")) {
+                    bonusClimaPeces = -5; // Frío: los peces se van al fondo
+                    mensajeClima = "❄️ *El frío del pueblito hace que los peces se escondan en el fondo. -5% de suerte hoy...*\n";
+                } else if (climaTexto.includes("nublado") || climaTexto.includes("nube")) {
+                    bonusClimaPeces = 2;
+                    mensajeClima = "⛅ *El cielo nublado hace el ambiente perfecto para pescar. +2% de suerte!*\n";
+                }
+            }
+        } catch { /* Si falla el clima, solo ignoramos el bono */ }
+
+        const chanceMitico = Math.min(0.5 + (bonoNivel * 0.1) + bonusSuerte + bonusRod.bonusLegend + bonusCebo + bonusClimaPeces, 8);
+        const chanceLegendaria = Math.min(3 + (bonoNivel * 0.25) + bonusSuerte + bonusRod.bonusLegend + bonusCebo + bonusClimaPeces, 18);
+        const chanceEpica = Math.min(8 + (bonoNivel * 0.4) + bonusSuerte + bonusRod.bonusRare + bonusCebo + bonusClimaPeces, 30);
+        const chanceRara = Math.min(15 + (bonoNivel * 0.6) + bonusSuerte + bonusRod.bonusRare + bonusCebo + bonusClimaPeces, 45);
         const chanceBotella = Math.min(20 + bonoNivel + bonusSuerte + bonusRod.bonusRare + bonusCebo, 60);
         const rand = Math.random() * 100;
 
@@ -152,20 +175,21 @@ export async function execute(interaction, bostezo) {
                 { id: "Sirena Escamosa", emoji: "🧜", texto: "¡NO PUEDE SER! ¿Una Sirena? ¡Esto desafía toda lógica!" }
             ];
             const elegido = pecesmiticos[Math.floor(Math.random() * pecesmiticos.length)];
-            
+
             await db.execute({
                 sql: `INSERT INTO inventario_economia (user_id, item_id, cantidad)
                       VALUES (?, ?, 1)
                       ON CONFLICT(user_id, item_id) DO UPDATE SET cantidad = cantidad + 1`,
                 args: [userId, elegido.id]
             });
-            
+
             await registrarBitacora(userId, `¡¡CAPTURÓ UN ${elegido.id.toUpperCase()} MÍTICO!!`);
 
             return interaction.followUp(
                 `🌊 **¡¡EVENTO MÍTICO DE PESCA!!** 🌊\n` +
                 `${elegido.texto}\n` +
                 `Has capturado: **${elegido.emoji} ${elegido.id}**\n` +
+                `${mensajeClima}` +
                 `${consumioCebo ? "🎣 Se consumió 1x cebo_simple.\n" : ""}` +
                 `🛠️ Durabilidad de caña: **${durabilidadRestante}/${rod.maxDurabilidad}** *(Nv. Pesca: ${nivelPesca})*`
             );
@@ -181,21 +205,22 @@ export async function execute(interaction, bostezo) {
                 { id: "Manta Raya Celeste", emoji: "🫶", texto: "Planea suavemente bajo el agua" },
                 { id: "Atún Gigante", emoji: "🐟", texto: "¡Qué fuerza! Casi te arrastra al agua" }
             ];
-            
+
             const elegido = pecesLegendarios[Math.floor(Math.random() * pecesLegendarios.length)];
-            
+
             await db.execute({
                 sql: `INSERT INTO inventario_economia (user_id, item_id, cantidad)
                       VALUES (?, ?, 1)
                       ON CONFLICT(user_id, item_id) DO UPDATE SET cantidad = cantidad + 1`,
                 args: [userId, elegido.id]
             });
-            
+
             await registrarBitacora(userId, `Capturó un legendario ${elegido.id}!`);
 
             return interaction.followUp(
                 `🌊 **¡Mini-evento legendario de pesca!**\n` +
                 `${elegido.texto} y capturaste **${elegido.emoji} ${elegido.id}**.\n` +
+                `${mensajeClima}` +
                 `${consumioCebo ? "🎣 Se consumió 1x cebo_simple.\n" : ""}` +
                 `🛠️ Durabilidad de caña: **${durabilidadRestante}/${rod.maxDurabilidad}** *(Nv. Pesca: ${nivelPesca})*`
             );
@@ -210,9 +235,9 @@ export async function execute(interaction, bostezo) {
                 { id: "Caballito de Mar Dorado", emoji: "🫘", texto: "Diminuto pero valioso" },
                 { id: "Medusa Luna", emoji: "🌙", texto: "Translucida y brillante" }
             ];
-            
+
             const elegido = pecesEpicos[Math.floor(Math.random() * pecesEpicos.length)];
-            
+
             await db.execute({
                 sql: `INSERT INTO inventario_economia (user_id, item_id, cantidad)
                       VALUES (?, ?, 1)
@@ -223,6 +248,7 @@ export async function execute(interaction, bostezo) {
             return interaction.followUp(
                 `🎣 *¡Tirón fuerte!*\n\n` +
                 `¡${elegido.texto}! Has pescado **${elegido.emoji} ${elegido.id}** (${franja}).\n` +
+                `${mensajeClima}` +
                 `${consumioCebo ? "🎣 Se consumió 1x cebo_simple.\n" : ""}` +
                 `🛠️ Durabilidad de caña: **${durabilidadRestante}/${rod.maxDurabilidad}** *(Nv. Pesca: ${nivelPesca})*`
             );
@@ -237,9 +263,9 @@ export async function execute(interaction, bostezo) {
                 { id: "Morena Verde", emoji: "🐍", texto: "Larga y resbaladiza" },
                 { id: "Perca Dorada", emoji: "🟡", texto: "Brilla con tonos dorados" }
             ];
-            
+
             const elegido = pecesRaros[Math.floor(Math.random() * pecesRaros.length)];
-            
+
             await db.execute({
                 sql: `INSERT INTO inventario_economia (user_id, item_id, cantidad)
                       VALUES (?, ?, 1)
@@ -250,6 +276,7 @@ export async function execute(interaction, bostezo) {
             return interaction.followUp(
                 `🎣 *Splash...*\n\n` +
                 `¡${elegido.texto}! Has pescado **${elegido.emoji} ${elegido.id}** (${franja}).\n` +
+                `${mensajeClima}` +
                 `${consumioCebo ? "🎣 Se consumió 1x cebo_simple.\n" : ""}` +
                 `🛠️ Durabilidad de caña: **${durabilidadRestante}/${rod.maxDurabilidad}** *(Nv. Pesca: ${nivelPesca})*`
             );
@@ -324,6 +351,7 @@ export async function execute(interaction, bostezo) {
             return interaction.followUp(
                 `🎣 ${mensajeAleatorio}\n\n` +
                 `¡Ha picado algo! Has pescado **${elegido.emoji} ${elegido.id}** (${franja}).\n` +
+                `${mensajeClima}` +
                 `${consumioCebo ? "🎣 Se consumió 1x cebo_simple.\n" : ""}` +
                 `🛠️ Durabilidad de caña: **${durabilidadRestante}/${rod.maxDurabilidad}** *(Nv. Pesca: ${nivelPesca})*`
             );

@@ -85,7 +85,7 @@ export async function ganarXP(userId, habilidad, cantidad, interaction) {
         // 5. Notificar si aplica
         if (subioNivel && interaction) {
             const nombreHabilidad = habilidad.charAt(0).toUpperCase() + habilidad.slice(1);
-            interaction.followUp(`🌟 *¡Tatachán!* Has subido al **Nivel ${nivelActual}** de \`${nombreHabilidad.toUpperCase()}\`.`).catch(() => {});
+            interaction.followUp(`🌟 *¡Tatachán!* Has subido al **Nivel ${nivelActual}** de \`${nombreHabilidad.toUpperCase()}\`.`).catch(() => { });
             await registrarBitacora(userId, `Alcanzó el Nivel ${nivelActual} de ${nombreHabilidad}`);
         }
 
@@ -194,14 +194,39 @@ async function verificarTitulos(userId, interaction) {
         // Desbloqueos de títulos
         const titulosParaDesbloquear = [];
 
-        // 1. "El/La Desplumado(a)": Al fallar 50 veces cazando bichos
+        // 🍂 Fallas
+        if (statsMap["bichos_fallados"] >= 10) titulosParaDesbloquear.push("El/La Torpe con la Red");
         if (statsMap["bichos_fallados"] >= 50) titulosParaDesbloquear.push("El/La Desplumado(a)");
+        if (statsMap["bichos_fallados"] >= 200) titulosParaDesbloquear.push("Enemigo de los Bichos");
 
-        // 2. "Robin Hood": Robarle a un perfil con más de 10,000 monedas 1 vez (acción: robar_rico)
-        if (statsMap["robar_rico"] >= 1) titulosParaDesbloquear.push("Robin Hood");
+        // 🎣 Pesca
+        if (statsMap["peces_pescados"] >= 10) titulosParaDesbloquear.push("Pescador/a de Domingo");
+        if (statsMap["peces_pescados"] >= 100) titulosParaDesbloquear.push("El/La Pescador(a) Paciente");
+        if (statsMap["peces_pescados"] >= 500) titulosParaDesbloquear.push("Maestro/a de los Mares");
+        if (statsMap["peces_pescados"] >= 1500) titulosParaDesbloquear.push("Leyenda del Río");
 
-        // 3. "Manos de Tijera": Sacudir árboles 100 veces
+        // 🪲 Bichos
+        if (statsMap["bichos_capturados"] >= 10) titulosParaDesbloquear.push("Cazainsectos Amateur");
+        if (statsMap["bichos_capturados"] >= 100) titulosParaDesbloquear.push("Guardián del Bosque");
+        if (statsMap["bichos_capturados"] >= 500) titulosParaDesbloquear.push("El/La Gran Bichero(a)");
+
+        // ⛏️ Minería
+        if (statsMap["minerales_minados"] >= 10) titulosParaDesbloquear.push("Aprendiz Minero/a");
+        if (statsMap["minerales_minados"] >= 100) titulosParaDesbloquear.push("Excavador/a Dedicado(a)");
+        if (statsMap["minerales_minados"] >= 500) titulosParaDesbloquear.push("El/La Buscadiamantes");
+
+        // 📸 Fotografía
+        if (statsMap["fotos_tomadas"] >= 1) titulosParaDesbloquear.push("Fotógrafo/a del Pueblito");
+        if (statsMap["fotos_tomadas"] >= 25) titulosParaDesbloquear.push("Naturalista del Pueblo");
+        if (statsMap["fotos_tomadas"] >= 100) titulosParaDesbloquear.push("El/La Paparazzi de Aves");
+
+        // 🌲 Árboles
+        if (statsMap["arboles_sacudidos"] >= 50) titulosParaDesbloquear.push("Amigo/a de los Árboles");
         if (statsMap["arboles_sacudidos"] >= 100) titulosParaDesbloquear.push("Manos de Tijera");
+
+        // 🥷 Robo
+        if (statsMap["robar_rico"] >= 1) titulosParaDesbloquear.push("Robin Hood");
+        if (statsMap["robar_rico"] >= 10) titulosParaDesbloquear.push("Ladrón(a) Empedernido(a)");
 
         for (const t of titulosParaDesbloquear) {
             // Intentar Insertarlo. Si ya existe (ya lo tiene), ignorar con DO NOTHING
@@ -214,7 +239,7 @@ async function verificarTitulos(userId, interaction) {
                 const embed = crearEmbed(CONFIG?.COLORES?.DORADO ?? "#FFD700")
                     .setTitle("🏆 ¡Nuevo Título Desbloqueado!")
                     .setDescription(`¡Felicidades, <@${userId}>!\nPor tus hazañas en el pueblito, te has ganado el derecho a llamarte:\n\n**✨ ${t} ✨**\n\n*(Puedes equiparlo luego usando \`/titulos\` para que aparezca en tu perfil)*`);
-                interaction.followUp({ embeds: [embed] }).catch(() => {});
+                interaction.followUp({ embeds: [embed] }).catch(() => { });
                 await registrarBitacora(userId, `Desbloqueó el título: ${t}`);
             }
         }
