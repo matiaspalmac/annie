@@ -694,10 +694,8 @@ client.on(Events.MessageCreate, async (message) => {
     }
   }
 
-  // Mondongo detector 🍲
   if (/mondongo/i.test(texto)) {
     await msg.reply({
-      content: "🍲",
       files: [{ attachment: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTb-m0Yqk1nEAvN0Z1GN4QuHY5lXXFDTj6CyA&s", name: "mondongo.jpg" }]
     }).catch(console.error);
   }
