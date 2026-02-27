@@ -1,6 +1,6 @@
 import { SlashCommandBuilder, ActionRowBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder } from "discord.js";
 import { db } from "../../services/db.js";
-import { getBostezo, crearEmbed } from "../../core/utils.js";
+import { crearEmbed } from "../../core/utils.js";
 import { CONFIG } from "../../core/config.js";
 
 export const data = new SlashCommandBuilder()
@@ -15,7 +15,7 @@ export async function execute(interaction, bostezo) {
     try {
         // 1. Obtener mascotas compradas
         const resMascotas = await db.execute({
-                        sql: `SELECT ie.item_id, mn.nombre
+            sql: `SELECT ie.item_id, mn.nombre
                                     FROM inventario_economia ie
                                     LEFT JOIN mascota_nombres mn
                                         ON mn.user_id = ie.user_id
@@ -110,17 +110,20 @@ export async function execute(interaction, bostezo) {
                     args: [eleccion, userId]
                 });
 
-                let mensajeAlerta = "Tu amiguito se ha ido a dormir a su casita.";
-
                 if (eleccion !== "default") {
-                    mensajeAlerta = `¡**${nombreVisibleMascota(eleccion)}** está saltando de alegría! Ahora te acompañará a todas partes. 🐾`;
+                    const embedMascota = crearEmbed(CONFIG.COLORES.MENTA)
+                        .setTitle("🐾 ¡Mascota equipada!")
+                        .setDescription(
+                            `¡**${nombreVisibleMascota(eleccion)}** está saltando de alegría! Ahora te acompañará en todas tus aventuras por el pueblito. 🐾`
+                        )
+                        .addFields({ name: "🐾 Compañero activo", value: `**${nombreVisibleMascota(eleccion)}**`, inline: true });
+                    await i.editReply({ embeds: [embedMascota], components: [] });
+                } else {
+                    const embedMascota = crearEmbed(CONFIG.COLORES.ROSA)
+                        .setTitle("💭 Mascota descansando")
+                        .setDescription(`Tu amiguito se fue a descansar a su casita. ¡Vuelve cuando quieras llamarlo de nuevo! 🏠`);
+                    await i.editReply({ embeds: [embedMascota], components: [] });
                 }
-
-                await i.editReply({
-                    content: `✅ ${mensajeAlerta}`,
-                    embeds: [],
-                    components: []
-                });
 
             } catch (err) {
                 console.error("Error cambiando mascota:", err);
@@ -139,6 +142,9 @@ export async function execute(interaction, bostezo) {
 
     } catch (error) {
         console.error("Error en comando /mascota:", error);
-        return interaction.followUp(`${bostezo}Las llaves del refugio se me perdieron... Intenta llamar a tu mascota de nuevo porfi.`);
+        const embedErr = crearEmbed(CONFIG.COLORES.ROSA)
+            .setTitle("❌ ¡Refugio cerrado!")
+            .setDescription(`${bostezo}Las llaves del refugio se me perdieron... Intenta llamar a tu mascota de nuevo porfi.`);
+        return interaction.followUp({ embeds: [embedErr] });
     }
 }

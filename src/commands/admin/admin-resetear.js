@@ -1,5 +1,7 @@
 import { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } from "discord.js";
 import { db } from "../../services/db.js";
+import { crearEmbed } from "../../core/utils.js";
+import { CONFIG } from "../../core/config.js";
 
 export const data = new SlashCommandBuilder()
     .setName("resetear")
@@ -17,7 +19,10 @@ export async function execute(interaction, bostezo) {
         });
 
         if (resDb.rows.length === 0) {
-            return interaction.reply({ content: `Ese vecinito (**${targetUser.username}**) aún no tiene cuenta en el pueblito.`, flags: MessageFlags.Ephemeral });
+            const embed = crearEmbed(CONFIG.COLORES.NARANJA)
+                .setTitle("🔍 Vecinito no encontrado")
+                .setDescription(`**${targetUser.username}** aún no tiene cuenta en el pueblito. No hay nada que resetear, corazón.`);
+            return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
         }
 
         await db.execute({
@@ -25,9 +30,23 @@ export async function execute(interaction, bostezo) {
             args: [targetUser.id]
         });
 
-        return interaction.reply({ content: `✅ Limpieza hecha. He reseteado a 0 la experiencia, nivel y las moneditas de **${targetUser.username}**.`, flags: MessageFlags.Ephemeral });
+        const embed = crearEmbed(CONFIG.COLORES.ROJO)
+            .setTitle("🗑️ ¡Reseteo Completado!")
+            .setDescription(`Se ha limpiado el perfil de **${targetUser.username}** y sus datos han vuelto a cero.`)
+            .setThumbnail(targetUser.displayAvatarURL({ dynamic: true }))
+            .addFields(
+                { name: "👤 Usuario", value: `<@${targetUser.id}>`, inline: true },
+                { name: "💰 Monedas", value: "`0`", inline: true },
+                { name: "✨ XP / Nivel", value: "`0 XP / Nivel 1`", inline: true }
+            );
+
+        return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
+
     } catch (e) {
         console.error("Error al resetear usuario:", e);
-        return interaction.reply({ content: "❌ Ocurrió un error al intentar resetear al usuario. Revisa los logs.", flags: MessageFlags.Ephemeral });
+        const embed = crearEmbed(CONFIG.COLORES.ROSA)
+            .setTitle("❌ ¡Error al resetear!")
+            .setDescription("Ocurrió un error al intentar resetear al usuario. Revisa los logs, corazón.");
+        return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
     }
 }

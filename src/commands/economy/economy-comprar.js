@@ -1,6 +1,8 @@
 import { SlashCommandBuilder, MessageFlags } from "discord.js";
 import { db } from "../../services/db.js";
 import { procesarCompraTienda } from "../../features/shop.js";
+import { crearEmbed } from "../../core/utils.js";
+import { CONFIG } from "../../core/config.js";
 
 export const data = new SlashCommandBuilder()
   .setName("comprar")
@@ -20,10 +22,10 @@ export async function autocomplete(interaction) {
 
     const res = await db.execute({
       sql: `SELECT id, nombre, precio_monedas
-            FROM tienda_items
-            WHERE LOWER(id) LIKE ? OR LOWER(nombre) LIKE ?
-            ORDER BY precio_monedas ASC, nombre ASC
-            LIMIT 25`,
+                  FROM tienda_items
+                  WHERE LOWER(id) LIKE ? OR LOWER(nombre) LIKE ?
+                  ORDER BY precio_monedas ASC, nombre ASC
+                  LIMIT 25`,
       args: [term, term],
     });
 
@@ -35,7 +37,7 @@ export async function autocomplete(interaction) {
     await interaction.respond(options);
   } catch (e) {
     console.error("Error autocomplete /comprar", e);
-    await interaction.respond([]).catch(() => {});
+    await interaction.respond([]).catch(() => { });
   }
 }
 
@@ -46,10 +48,23 @@ export async function execute(interaction, bostezo) {
 
   try {
     const result = await procesarCompraTienda(interaction, item);
-    const content = result.ok ? result.message : `${bostezo}${result.message}`;
-    await interaction.editReply({ content });
+
+    if (result.ok) {
+      const embed = crearEmbed(CONFIG.COLORES.VERDE)
+        .setTitle("🛒 ¡Compra Exitosa!")
+        .setDescription(`${bostezo}${result.message}`);
+      await interaction.editReply({ embeds: [embed] });
+    } else {
+      const embed = crearEmbed(CONFIG.COLORES.NARANJA)
+        .setTitle("⚠️ No se pudo comprar")
+        .setDescription(`${bostezo}${result.message}`);
+      await interaction.editReply({ embeds: [embed] });
+    }
   } catch (e) {
     console.error("Error en /comprar", e);
-    await interaction.editReply({ content: "Ocurrió un error mágico al procesar tu compra." });
+    const embed = crearEmbed(CONFIG.COLORES.ROSA)
+      .setTitle("❌ Error mágico")
+      .setDescription("Ocurrió un error mágico al procesar tu compra. Inténtalo de nuevo.");
+    await interaction.editReply({ embeds: [embed] });
   }
 }

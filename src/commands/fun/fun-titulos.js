@@ -1,7 +1,12 @@
 import { SlashCommandBuilder, ActionRowBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder } from "discord.js";
 import { db } from "../../services/db.js";
-import { getBostezo, crearEmbed } from "../../core/utils.js";
+import { crearEmbed } from "../../core/utils.js";
 import { CONFIG } from "../../core/config.js";
+
+const SKILL_EMOJI = {
+    pesca: "🎣", mineria: "⛏️", recoleccion: "🌿", caza: "🐛",
+    fotografia: "📸", cocina: "🍳", exploracion: "🗺️", comercio: "🛒"
+};
 
 export const data = new SlashCommandBuilder()
     .setName("titulos")
@@ -19,25 +24,15 @@ export async function execute(interaction, bostezo) {
             args: [userId]
         });
 
-        let textoHabilidades = "";
-        if (resHabilidades.rows.length === 0) {
-            textoHabilidades = "Aún no has descubierto tus talentos ocultos.";
-        } else {
-            resHabilidades.rows.forEach(r => {
-                textoHabilidades += `**${String(r.habilidad).toUpperCase()}:** Nivel ${r.nivel}\n`;
-            });
-        }
-
         // 2. Obtener títulos del usuario
         const resTitulos = await db.execute({
             sql: "SELECT titulo, equipado FROM titulos WHERE user_id = ?",
             args: [userId]
         });
 
-        let tituloEquipado = "*(Ninguno)*";
+        let tituloEquipado = "*(Ninguno todavía — ¡sigue aventurando!)*";
         const opcionesTitulos = [];
 
-        // Agregar la opción de desequipar
         opcionesTitulos.push(
             new StringSelectMenuOptionBuilder()
                 .setLabel("Ninguno")
@@ -48,20 +43,37 @@ export async function execute(interaction, bostezo) {
         resTitulos.rows.forEach(r => {
             const t = String(r.titulo);
             const isEquipado = Number(r.equipado) === 1;
-
-            if (isEquipado) tituloEquipado = `✨ **${t}** ✨`;
-
+            if (isEquipado) tituloEquipado = `✨ **${t}**`;
             opcionesTitulos.push(
                 new StringSelectMenuOptionBuilder()
-                    .setLabel(t)
+                    .setLabel(t.slice(0, 100))
                     .setDescription("Equipar este título")
                     .setValue(t)
             );
         });
 
         const embed = crearEmbed(CONFIG.COLORES.ROSA)
-            .setTitle(`👑 Perfil y Títulos de ${interaction.user.username}`)
-            .setDescription(`Aquí puedes ver tu nivel de experiencia en las tareas del pueblito.\n\n📖 **Tus Habilidades:**\n${textoHabilidades}\n\n🏆 **Tu Título Equipado:**\n${tituloEquipado}`);
+            .setTitle(`👑 Perfil de ${interaction.user.username}`)
+            .setDescription(`Aquí puedes ver tu nivel de experiencia en las tareas del pueblito y elegir tu título visible en el perfil.`)
+            .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true, size: 128 }))
+            .addFields(
+                { name: "🏆 Título equipado", value: tituloEquipado, inline: false }
+            );
+
+        // Añadir habilidades como inline fields
+        if (resHabilidades.rows.length === 0) {
+            embed.addFields({ name: "📖 Habilidades", value: "Aún no has descubierto tus talentos ocultos.", inline: false });
+        } else {
+            for (const r of resHabilidades.rows) {
+                const habilidad = String(r.habilidad);
+                const emoji = SKILL_EMOJI[habilidad] || "⭐";
+                embed.addFields({
+                    name: `${emoji} ${habilidad.charAt(0).toUpperCase() + habilidad.slice(1)}`,
+                    value: `Nivel **${r.nivel}**`,
+                    inline: true
+                });
+            }
+        }
 
         if (resTitulos.rows.length === 0) {
             embed.setFooter({ text: "Sigue jugando para desbloquear títulos secretos." });
@@ -100,20 +112,29 @@ export async function execute(interaction, bostezo) {
                     args: [userId]
                 });
 
-                let mensajeAlerta = "Has desequipado tu título.";
+                let tituloNuevo = "*(Ninguno)*";
 
                 if (eleccion !== "desequipar") {
-                    // Equipar el nuevo
                     await db.execute({
                         sql: "UPDATE titulos SET equipado = 1 WHERE user_id = ? AND titulo = ?",
                         args: [userId, eleccion]
                     });
-                    mensajeAlerta = `Te has equipado el título: **${eleccion}** ✨`;
+                    tituloNuevo = `✨ **${eleccion}**`;
                 }
 
+                const embedConfirm = crearEmbed(
+                    eleccion === "desequipar" ? CONFIG.COLORES.ROSA : CONFIG.COLORES.DORADO
+                )
+                    .setTitle(eleccion === "desequipar" ? "🎽 Título desequipado" : "👑 ¡Título equipado!")
+                    .setDescription(
+                        eleccion === "desequipar"
+                            ? `Has guardado tu título. Ahora aparecerás sin título en tu perfil.`
+                            : `¡Ahora luces tu nuevo título en el pueblito, corazón! 🌸`
+                    )
+                    .addFields({ name: "🏆 Título activo", value: tituloNuevo, inline: false });
+
                 await i.editReply({
-                    content: `✅ ${mensajeAlerta}`,
-                    embeds: [],
+                    embeds: [embedConfirm],
                     components: []
                 });
 
@@ -125,15 +146,15 @@ export async function execute(interaction, bostezo) {
 
         collector.on('end', async (collected, reason) => {
             if (reason === 'time') {
-                await interaction.editReply({
-                    components: [],
-                    content: `${bostezo}La libretita de títulos se cerró. Usa el comando otra vez si quieres cambiarlo.`
-                }).catch(() => { });
+                await interaction.editReply({ components: [] }).catch(() => { });
             }
         });
 
     } catch (error) {
         console.error("Error en comando /titulos:", error);
-        return interaction.followUp(`${bostezo}Uy, se me cayeron las medallas. Intenta de nuevo porfi.`);
+        const embedErr = crearEmbed(CONFIG.COLORES.ROSA)
+            .setTitle("❌ ¡Ay, las medallas!")
+            .setDescription(`${bostezo}Uy, se me cayeron las medallas del estante. Intenta de nuevo porfi.`);
+        return interaction.followUp({ embeds: [embedErr] });
     }
 }

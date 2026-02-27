@@ -1,10 +1,10 @@
 import { SlashCommandBuilder } from "discord.js";
 import { db } from "../../services/db.js";
-import { getBostezo } from "../../core/utils.js";
+import { crearEmbed, crearEmbedCooldown, crearEmbedDrop } from "../../core/utils.js";
+import { CONFIG } from "../../core/config.js";
 import { ganarXP, registrarBitacora, tieneBoostActivo } from "../../features/progreso.js";
 
-// Cooldown de 5 minutos = 300000 ms
-const COOLDOWN_MINAR = 300000;
+const COOLDOWN_MINAR = 300000; // 5 minutos
 
 const PICK_META = {
     herr_pico_acero: { bonusRare: 14, nombre: "Pico de Acero", maxDurabilidad: 120 },
@@ -13,10 +13,8 @@ const PICK_META = {
 
 function getSeasonBonus() {
     const month = new Date().getMonth() + 1;
-    // Invierno austral: junio-agosto
-    if ([6, 7, 8].includes(month)) return 1.15;
-    // Verano austral: diciembre-febrero
-    if ([12, 1, 2].includes(month)) return 0.95;
+    if ([6, 7, 8].includes(month)) return 1.15;   // Invierno austral
+    if ([12, 1, 2].includes(month)) return 0.95;   // Verano austral
     return 1;
 }
 
@@ -67,40 +65,46 @@ export async function execute(interaction, bostezo) {
             const limite = Number(resCd.rows[0].fecha_limite);
             if (ahora < limite) {
                 const faltanMinutos = Math.ceil((limite - ahora) / 60000);
-                return interaction.followUp(`${bostezo}Ay mi tesoro, tienes los bracitos cansados. Espera **${faltanMinutos} minutos** antes de volver a picar piedritas.`);
+                const embed = crearEmbedCooldown(faltanMinutos, bostezo.trim(), "minar")
+                    .setDescription(
+                        `*${bostezo.trim()}*\n\n` +
+                        `⛏️ Ay mi tesoro, tienes los bracitos cansados. ¡Descansa un poco!\n` +
+                        `⌛ Vuelve a picar piedritas en **${faltanMinutos} minutos**.`
+                    );
+                return interaction.editReply({ embeds: [embed] });
             }
         }
 
         // 2. Establecer nuevo cooldown
-        const nuevoLimite = ahora + COOLDOWN_MINAR;
         await db.execute({
-            sql: `INSERT INTO cooldowns (user_id, comando, extra_id, fecha_limite) 
-            VALUES (?, 'minar', 'global', ?) 
+            sql: `INSERT INTO cooldowns (user_id, comando, extra_id, fecha_limite)
+            VALUES (?, 'minar', 'global', ?)
             ON CONFLICT(user_id, comando, extra_id) DO UPDATE SET fecha_limite = excluded.fecha_limite`,
-            args: [userId, nuevoLimite]
+            args: [userId, ahora + COOLDOWN_MINAR]
         });
 
         const pick = await getEquippedPick(userId);
         if (pick.durabilidad <= 0) {
-            return interaction.followUp(`${bostezo}Tu pico equipado está roto, corazón. Necesitas repararlo o comprar una herramienta en **/tienda**.`);
+            const embed = crearEmbed(CONFIG.COLORES.ROJO)
+                .setTitle("⛏️ ¡Pico roto!")
+                .setDescription(
+                    `${bostezo}Tu pico equipado está en pedacitos, corazón. No puedes minar así.\n\n` +
+                    `🛒 Consigue una herramienta nueva en la \`/tienda\` o equipa otra con \`/equipar\`.`
+                );
+            return interaction.editReply({ embeds: [embed] });
         }
 
-        // Ganar XP de Minería (10 a 20 xp por intento)
+        // Ganar XP de Minería
         const xpGanada = Math.floor(Math.random() * 11) + 10;
         const nivelMineria = await ganarXP(userId, "mineria", xpGanada, interaction);
 
         // 3. Lógica de drops
         const bonoNivel = (nivelMineria - 1) * 0.5;
         const rand = Math.random() * 100;
-        let itemId = "";
-        let emoji = "";
-        let rarezaTexto = "";
-
         const amuletoActivo = await tieneBoostActivo(userId, "amuleto_suerte_15m");
         const bonusSuerte = amuletoActivo ? 10 : 0;
         const bonusPick = PICK_META[pick.itemId]?.bonusRare || 0;
-        
-        // Estructura de drops mejorada con más variedad
+
         const chanceDiamante = Math.min(1 + (bonoNivel * 0.15) + bonusSuerte + bonusPick, 8);
         const chanceEsmeralda = Math.min(2 + (bonoNivel * 0.2) + bonusSuerte + bonusPick, 12);
         const chanceRubi = Math.min(3 + (bonoNivel * 0.25) + bonusSuerte + bonusPick, 18);
@@ -111,16 +115,22 @@ export async function execute(interaction, bostezo) {
         const chanceCuarzo = Math.min(20 + (bonoNivel * 1.2) + bonusSuerte, 60);
         const chanceMineral = Math.min(35 + (bonoNivel * 1.5) + bonusSuerte, 75);
 
+        // Desgastar herramienta
         await db.execute({
             sql: "UPDATE herramientas_durabilidad SET durabilidad = MAX(0, durabilidad - 1) WHERE user_id = ? AND item_id = ?",
             args: [userId, pick.itemId]
         });
-
         const resPickAfter = await db.execute({
             sql: "SELECT durabilidad FROM herramientas_durabilidad WHERE user_id = ? AND item_id = ?",
             args: [userId, pick.itemId]
         });
         const durRestante = Number(resPickAfter.rows[0]?.durabilidad || 0);
+
+        const nombrePick = PICK_META[pick.itemId]?.nombre || "Pico Básico";
+        const camposBase = [
+            { name: "⛏️ Pico usado", value: `**${nombrePick}** — \`${durRestante}/${pick.maxDurabilidad} dur.\``, inline: true },
+            { name: "📊 Nv. Minería", value: `\`${nivelMineria}\``, inline: true },
+        ];
 
         // Evento raro de minería
         const chanceEventoRaro = Math.min(4 + (nivelMineria * 0.15) + bonusPick, 25);
@@ -128,6 +138,7 @@ export async function execute(interaction, bostezo) {
             const evento = Math.random() < 0.5 ? "veta" : "caverna";
             const recompensa = evento === "veta" ? 2 : 1;
             const itemEvento = evento === "veta" ? "Mineral" : "Fluorita impecable";
+            const emojiEvento = evento === "veta" ? "⛰️" : "🟢";
 
             await db.execute({
                 sql: `INSERT INTO inventario_economia (user_id, item_id, cantidad)
@@ -136,97 +147,106 @@ export async function execute(interaction, bostezo) {
                 args: [userId, itemEvento, recompensa]
             });
 
-            return interaction.followUp(
-                `⛏️ **¡Evento raro de minería!**\n` +
-                `${evento === "veta" ? "Encontraste una veta rica escondida." : "Diste con una mini-caverna cristalina."}\n` +
-                `Ganaste **${recompensa}x ${itemEvento}**.\n` +
-                `🛠️ Durabilidad de ${PICK_META[pick.itemId]?.nombre || "Pico básico"}: **${durRestante}/${pick.maxDurabilidad}** *(Nv. Minería: ${nivelMineria})*`
-            );
+            const embed = crearEmbedDrop({
+                emoji: emojiEvento,
+                nombre: itemEvento,
+                rareza: "raro",
+                narrativa:
+                    `⛏️ *¡Evento raro de minería!*\n\n` +
+                    (evento === "veta"
+                        ? `¡Encontraste una veta rica escondida detrás de la roca! Salieron **${recompensa}x Mineral** de ahí.`
+                        : `¡Diste con una mini-caverna cristalina! La Fluorita brillaba en la oscuridad.`),
+                extras: [
+                    { name: "📦 Obtenido", value: `**${recompensa}x ${emojiEvento} ${itemEvento}**`, inline: true },
+                    ...camposBase
+                ]
+            });
+
+            return interaction.editReply({ embeds: [embed] });
         }
 
+        // Resolver el drop principal
+        let itemId = "", emoji = "", rareza = "", narrativa = "";
+        let cantidadDrop = 1;
+
         if (rand <= chanceDiamante) {
-            itemId = "Diamante puro";
-            emoji = "💎";
-            rarezaTexto = "¡¡DIAMANTE!! ¡Ay por Dios, esto vale una fortuna! ¡Te vas a hacer rico/a!";
-            await registrarBitacora(userId, `¡Encontró un DIAMANTE PURO de valor incalculable!`);
+            itemId = "Diamante puro"; emoji = "💎"; rareza = "mitico";
+            narrativa = "¡¡DIAMANTE!! Las rocas se abrieron y dentro brillaba un diamante puro. ¡Eso vale una FORTUNA, corazón!";
+            await registrarBitacora(userId, `¡Encontró un DIAMANTE PURO!`);
         } else if (rand <= chanceEsmeralda) {
-            itemId = "Esmeralda brillante";
-            emoji = "💚";
-            rarezaTexto = "¡Santo cielo! ¡Una esmeralda verde como el bosque chileno!";
-            await registrarBitacora(userId, `Desenterró una preciosa Esmeralda brillante.`);
+            itemId = "Esmeralda brillante"; emoji = "💚"; rareza = "epico";
+            narrativa = "¡Santo cielo! Una esmeralda verde como el bosque chileno brilló entre las piedras.";
+            await registrarBitacora(userId, `Desenterró una Esmeralda brillante.`);
         } else if (rand <= chanceRubi) {
-            itemId = "Rubí carmesí";
-            emoji = "❤️";
-            rarezaTexto = "¡Qué maravilla! Un rubí rojo sangre que brilla como fuego.";
-            await registrarBitacora(userId, `Extrajo un valioso Rubí carmesí.`);
+            itemId = "Rubí carmesí"; emoji = "❤️"; rareza = "epico";
+            narrativa = "¡Qué maravilla! Un rubí rojo sangre que brilla como fuego en tus manos.";
         } else if (rand <= chanceZafiro) {
-            itemId = "Zafiro estelar";
-            emoji = "💙";
-            rarezaTexto = "¡Precioso! Un zafiro azul profundo como el cielo nocturno.";
-            await registrarBitacora(userId, `Halló un hermoso Zafiro estelar.`);
+            itemId = "Zafiro estelar"; emoji = "💙"; rareza = "epico";
+            narrativa = "¡Precioso! Un zafiro azul profundo como el cielo nocturno del pueblito.";
         } else if (rand <= chanceAmatista) {
-            itemId = "Amatista cristalina";
-            emoji = "💜";
-            rarezaTexto = "¡Qué linda! Una amatista púrpura que refleja la luz.";
-            await registrarBitacora(userId, `Descubrió una Amatista cristalina reluciente.`);
+            itemId = "Amatista cristalina"; emoji = "💜"; rareza = "raro";
+            narrativa = "¡Qué lindura! Una amatista púrpura que refleja la luz en mil destellos.";
         } else if (rand <= chanceFluorita) {
-            itemId = "Fluorita impecable";
-            emoji = "🟢";
-            rarezaTexto = "¡Excelente! Fluorita de calidad premium, perfecta para coleccionar.";
-            await registrarBitacora(userId, `Desenterró una codiciada Fluorita impecable.`);
+            itemId = "Fluorita impecable"; emoji = "🟢"; rareza = "raro";
+            narrativa = "¡Excelente! Fluorita de calidad premium. ¡Perfecta para coleccionar!";
         } else if (rand <= chanceTopacio) {
-            itemId = "Topacio dorado";
-            emoji = "🟡";
-            rarezaTexto = "¡Qué descubrimiento! Un topacio que brilla como el sol.";
+            itemId = "Topacio dorado"; emoji = "🟡"; rareza = "poco_comun";
+            narrativa = "¡Qué descubrimiento! Un topacio que brilla como el sol del pueblito.";
         } else if (rand <= chanceCuarzo) {
-            itemId = "Cuarzo rosa";
-            emoji = "🩷";
-            rarezaTexto = "¡Bonito! Cuarzo rosa suavecito, perfecto para decorar.";
+            itemId = "Cuarzo rosa"; emoji = "🩷"; rareza = "poco_comun";
+            narrativa = "¡Bonito! Cuarzo rosa suavecito, con un brillo tenue y relajante.";
         } else if (rand <= chanceMineral) {
             const mineralesComunes = [
                 { id: "Hierro", emoji: "⚙️", texto: "Mineral de hierro útil para herramientas." },
-                { id: "Cobre", emoji: "🟠", texto: "Cobre brillante, siempre necesario." },
+                { id: "Cobre", emoji: "🟠", texto: "Cobre brillante y maleable, siempre necesario." },
                 { id: "Obsidiana", emoji: "⬛", texto: "Obsidiana negra y filosa como espejo." },
-                { id: "Jade", emoji: "🟩", texto: "Jade verdecito, suave al tacto." },
-                { id: "Ópalo", emoji: "🌈", texto: "Ópalo que cambia de color con la luz." }
+                { id: "Jade", emoji: "🟩", texto: "Jade verdecito y suave al tacto." },
+                { id: "Ópalo", emoji: "🌈", texto: "Ópalo que cambia de color con la luz." },
             ];
             const elegido = mineralesComunes[Math.floor(Math.random() * mineralesComunes.length)];
-            itemId = elegido.id;
-            emoji = elegido.emoji;
-            rarezaTexto = `¡Conseguiste ${elegido.texto}!`;
+            itemId = elegido.id; emoji = elegido.emoji; rareza = "comun";
+            narrativa = `⛏️ *Clink, clink... clank!*\n\n${elegido.texto}`;
         } else {
             const piedrasComunes = [
-                { id: "Piedra", emoji: "🪨", texto: "Piedrecilla sólida y rústica." },
-                { id: "Grava", emoji: "🔸", texto: "Grava simple, nada especial." },
-                { id: "Roca común", emoji: "🗿", texto: "Roca común y corriente." }
+                { id: "Piedra", emoji: "🪨", texto: "Piedrecilla sólida y rústica. Sirve para algo!" },
+                { id: "Grava", emoji: "🔸", texto: "Grava simple. No es lo más emocionante, pero aquí está." },
+                { id: "Roca común", emoji: "🗿", texto: "Roca común y corriente. Siguiente vez mejor, tesoro." },
             ];
             const elegida = piedrasComunes[Math.floor(Math.random() * piedrasComunes.length)];
-            itemId = elegida.id;
-            emoji = elegida.emoji;
-            rarezaTexto = `${elegida.texto}`;
+            itemId = elegida.id; emoji = elegida.emoji; rareza = "comun";
+            narrativa = `⛏️ *Clink... clink...*\n\n${elegida.texto}`;
         }
 
-        // 4. Guardar en inventario (ajuste económico estacional)
+        // Guardar en inventario (ajuste estacional)
         const seasonFactor = getSeasonBonus();
-        const cantidadDrop = (itemId === "Piedra" || seasonFactor < 1) ? 1 : Math.random() < (seasonFactor - 1) ? 2 : 1;
+        cantidadDrop = (itemId === "Piedra" || seasonFactor < 1) ? 1 : Math.random() < (seasonFactor - 1) ? 2 : 1;
 
         await db.execute({
-            sql: `INSERT INTO inventario_economia (user_id, item_id, cantidad) 
-            VALUES (?, ?, ?) 
+            sql: `INSERT INTO inventario_economia (user_id, item_id, cantidad)
+            VALUES (?, ?, ?)
             ON CONFLICT(user_id, item_id) DO UPDATE SET cantidad = cantidad + excluded.cantidad`,
             args: [userId, itemId, cantidadDrop]
         });
 
-        // 5. Mensaje de éxito
-        return interaction.followUp(
-            `⛏️ *Clink, clink... clank!*\n\n${rarezaTexto}\n` +
-            `Has obtenido **${cantidadDrop}x ${emoji} ${itemId}**.\n` +
-            `📈 Ajuste estacional: **x${seasonFactor.toFixed(2)}**\n` +
-            `🛠️ Durabilidad de ${PICK_META[pick.itemId]?.nombre || "Pico básico"}: **${durRestante}/${pick.maxDurabilidad}** *(Nv. Minería: ${nivelMineria})*`
-        );
+        const embed = crearEmbedDrop({
+            emoji,
+            nombre: cantidadDrop > 1 ? `${cantidadDrop}x ${itemId}` : itemId,
+            rareza,
+            narrativa,
+            extras: [
+                { name: "📦 Obtenido", value: `**${cantidadDrop}x ${emoji} ${itemId}**`, inline: true },
+                ...camposBase,
+                ...(amuletoActivo ? [{ name: "🍀 Amuleto activo", value: "Suerte aumentada +10%", inline: true }] : []),
+            ]
+        });
+
+        return interaction.editReply({ embeds: [embed] });
 
     } catch (error) {
         console.error("Error en comando /minar:", error);
-        return interaction.followUp(`${bostezo}Uy... la pala se me resbaló y no pude picar nada. ¡Inténtalo de nuevo más ratito!`);
+        const embed = crearEmbed(CONFIG.COLORES.ROSA)
+            .setTitle("❌ ¡Algo falló en la mina!")
+            .setDescription(`${bostezo}Uy... la pala se me resbaló y no pude picar nada. ¡Inténtalo de nuevo en un ratito!`);
+        return interaction.editReply({ embeds: [embed] });
     }
 }

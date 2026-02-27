@@ -1,7 +1,7 @@
 import { SlashCommandBuilder, MessageFlags } from "discord.js";
 import { CONFIG } from "../../core/config.js";
 import { getGameId, saveGameId } from "../../services/db.js";
-import { crearEmbed, agregarNarrativa } from "../../core/utils.js";
+import { crearEmbed } from "../../core/utils.js";
 
 export const data = new SlashCommandBuilder()
     .setName("linkid")
@@ -11,10 +11,10 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction, bostezo) {
     if (!interaction.member.permissions.has("Administrator")) {
-        return interaction.reply({
-            content: "Ay, tesorito... solo los administradores pueden vincular IDs del juego.",
-            flags: MessageFlags.Ephemeral,
-        });
+        const embed = crearEmbed(CONFIG.COLORES.ROJO)
+            .setTitle("🚫 Sin permisos")
+            .setDescription("Ay, tesorito... solo los administradores pueden vincular IDs del juego.");
+        return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
     }
 
     const usuario = interaction.options.getUser("usuario");
@@ -23,13 +23,21 @@ export async function execute(interaction, bostezo) {
     try {
         await saveGameId(usuario.id, gameId);
 
-        const embed = crearEmbed(CONFIG.COLORES.ROSA)
-            .setTitle("✨ Game ID Vinculado ✨")
-            .setDescription(`Listo, corazón! He vinculado el Game ID **${gameId}** al usuario ${usuario}.`);
+        const embed = crearEmbed(CONFIG.COLORES.VERDE)
+            .setTitle("🎮 Game ID Vinculado")
+            .setDescription(`${bostezo}¡Listo, corazón! He anotado el Game ID en mi libretita. 📝`)
+            .setThumbnail(usuario.displayAvatarURL({ dynamic: true }))
+            .addFields(
+                { name: "👤 Usuario", value: `${usuario}`, inline: true },
+                { name: "🎮 Game ID", value: `\`${gameId}\``, inline: true }
+            );
 
-        agregarNarrativa(embed, "general");
-        return interaction.reply({ content: bostezo, embeds: [embed], flags: MessageFlags.Ephemeral });
+        return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
     } catch (err) {
-        throw err;
+        console.error("Error en /linkid:", err);
+        const embed = crearEmbed(CONFIG.COLORES.ROSA)
+            .setTitle("❌ Error al vincular")
+            .setDescription("Ocurrió un error al guardar el Game ID. Revisa los logs, corazón.");
+        return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
     }
 }

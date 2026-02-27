@@ -11,16 +11,18 @@ export async function execute(interaction) {
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     if (!interaction.member.permissions.has("ManageRoles")) {
-        return interaction.editReply({
-            content: "Ay, tesorito... este comando es solo para quienes cuidan el pueblito (necesitas permiso de gestionar roles).",
-        });
+        const embed = crearEmbed(CONFIG.COLORES.ROJO)
+            .setTitle("🚫 Sin permisos")
+            .setDescription("Ay, tesorito... este comando es solo para quienes cuidan el pueblito. Necesitas permiso de **Gestionar Roles**.");
+        return interaction.editReply({ embeds: [embed] });
     }
 
     const canalObjetivo = interaction.options.getChannel("canal") || interaction.channel;
     if (!canalObjetivo.isTextBased()) {
-        return interaction.editReply({
-            content: "Ese canal no es de texto, corazoncito... elige uno donde pueda escribir Annie."
-        });
+        const embed = crearEmbed(CONFIG.COLORES.NARANJA)
+            .setTitle("⚠️ Canal no válido")
+            .setDescription("Ese canal no es de texto, corazoncito... Elige uno donde pueda escribir Annie.");
+        return interaction.editReply({ embeds: [embed] });
     }
 
     const embed = crearEmbed(CONFIG.COLORES.ROSA)
@@ -52,13 +54,19 @@ export async function execute(interaction) {
         const emojis = Object.keys(CONFIG.REACTION_ROLES);
         for (const emoji of emojis) await msg.react(emoji);
 
-        await interaction.editReply({
-            content: `¡Listo, corazoncito! El mensajito de roles quedó publicado en ${canalObjetivo}.\n**ID del mensaje:** \`${msg.id}\``,
-        });
+        const confirmEmbed = crearEmbed(CONFIG.COLORES.VERDE)
+            .setTitle("✅ ¡Mensaje de roles publicado!")
+            .setDescription(`El mensajito de roles quedó listo en ${canalObjetivo}. ¡Los vecinos ya pueden elegir sus roles!`)
+            .addFields(
+                { name: "📌 Canal", value: `${canalObjetivo}`, inline: true },
+                { name: "🔖 ID del mensaje", value: `\`${msg.id}\``, inline: true }
+            );
+        await interaction.editReply({ embeds: [confirmEmbed] });
     } catch (err) {
         console.error("Error enviando mensaje de roles:", err);
-        await interaction.editReply({
-            content: "Ay no... se me enredó el delantal y no pude enviar el mensaje. Revisa mis permisos en ese canal, tesoro.",
-        });
+        const errEmbed = crearEmbed(CONFIG.COLORES.ROJO)
+            .setTitle("❌ ¡Error al publicar!")
+            .setDescription("Ay no... se me enredó el delantal y no pude enviar el mensaje. Revisa mis permisos en ese canal, tesoro.");
+        await interaction.editReply({ embeds: [errEmbed] });
     }
 }

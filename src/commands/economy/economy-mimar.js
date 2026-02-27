@@ -1,5 +1,7 @@
 import { SlashCommandBuilder, MessageFlags } from "discord.js";
 import { db } from "../../services/db.js";
+import { crearEmbed, crearEmbedCooldown } from "../../core/utils.js";
+import { CONFIG } from "../../core/config.js";
 import { registrarBitacora } from "../../features/progreso.js";
 
 const COOLDOWN_MIMAR = 60 * 60 * 1000; // 1 hora
@@ -22,7 +24,13 @@ export async function execute(interaction, bostezo) {
         });
 
         if (resMascota.rows.length === 0 || !resMascota.rows[0].mascota_id) {
-            return interaction.followUp(`${bostezo}¡No tienes ninguna mascota activa! Compra una en la **/tienda** y equípala con **/equipar**.`);
+            const embed = crearEmbed(CONFIG.COLORES.ROSA)
+                .setTitle("🐾 Ay, no tienes mascota activa...")
+                .setDescription(
+                    `${bostezo}¡Todavía no tienes ninguna mascota activa, corazoncito!\n\n` +
+                    `🛒 Compra una en la **\`/tienda\`** y actívala con **\`/equipar\`** para poder mimarla.`
+                );
+            return interaction.editReply({ embeds: [embed] });
         }
 
         const mascotaId = String(resMascota.rows[0].mascota_id);
@@ -39,7 +47,13 @@ export async function execute(interaction, bostezo) {
             const limite = Number(resCd.rows[0].fecha_limite);
             if (ahora < limite) {
                 const faltanMin = Math.ceil((limite - ahora) / 60000);
-                return interaction.followUp(`${bostezo}Tu mascota ya está super contenta ahorita. Vuelve en **${faltanMin} minutos** a mimarla de nuevo.`);
+                const embed = crearEmbedCooldown(faltanMin, bostezo.trim(), "mimar")
+                    .setDescription(
+                        `*${bostezo.trim()}*\n\n` +
+                        `🐾 **${nombreCapital}** ya está super contenta ahoritita.\n` +
+                        `⌛ Vuelve a mimarla en **${faltanMin} minutos**... ¡te esperará con la colita moviéndose!`
+                    );
+                return interaction.editReply({ embeds: [embed] });
             }
         }
 
@@ -69,30 +83,86 @@ export async function execute(interaction, bostezo) {
         const felicidad = Number(resEstado.rows[0]?.felicidad ?? 80);
         const hambre = Number(resEstado.rows[0]?.hambre ?? 50);
         const tieneBuff = felicidad >= 80 && hambre <= 30;
+
+        // Barras visuales de progreso
+        const llenos = Math.floor(felicidad / 10);
+        const vacios = 10 - llenos;
         const barraFelicidad = "💗".repeat(Math.floor(felicidad / 20)) + "🤍".repeat(5 - Math.floor(felicidad / 20));
+        const barraHambre = "🍖".repeat(5 - Math.floor(hambre / 20)) + "🩶".repeat(Math.floor(hambre / 20));
 
         const mensajes = [
-            `le rascaste la barriguita`,
+            `le rascaste la barriguita con mucho amor`,
             `le diste una sesión de mimos dobles`,
-            `le cantaste su canción favorita`,
+            `le cantaste su canción favorita al oído`,
             `le dijiste que es la mascota más bonita del pueblo`,
-            `le hiciste cosquillas en las orejas`
+            `le hiciste cosquillitas en las orejas`,
+            `le diste un abrazo apretado con cariño`,
+            `la peinaste con mucho estilo y ternura`,
         ];
         const mensaje = mensajes[Math.floor(Math.random() * mensajes.length)];
 
+        // Determinar color según felicidad
+        const colorEmbed = felicidad >= 80
+            ? CONFIG.COLORES.MENTA || "#3EB489"
+            : felicidad >= 50
+                ? CONFIG.COLORES.VERDE || "#4CAF50"
+                : CONFIG.COLORES.NARANJA || "#F8961E";
+
+        const embed = crearEmbed(colorEmbed)
+            .setAuthor({
+                name: `${interaction.user.username} mimó a ${nombreCapital}`,
+                iconURL: interaction.user.displayAvatarURL({ dynamic: true })
+            })
+            .setTitle(`🐾 ¡${nombreCapital} está feliz!`)
+            .setDescription(
+                `*Tú ${mensaje}...*\n\n` +
+                `**${nombreCapital}** ronronea/mueve la colita de la emoción. 🥹`
+            )
+            .addFields(
+                {
+                    name: "❤️ Felicidad",
+                    value: `${barraFelicidad} \`${felicidad}/100\``,
+                    inline: true
+                },
+                {
+                    name: "🍖 Hambre",
+                    value: `${barraHambre} \`${hambre}/100\``,
+                    inline: true
+                }
+            );
+
+        // Estado del buff
+        if (tieneBuff) {
+            embed.addFields({
+                name: "✨ ¡BUFF ACTIVO!",
+                value: "**Compañero Feliz** — Tu mascota feliz te da **+5% de drops** en tus próximas aventuras.",
+                inline: false
+            });
+        } else if (hambre > 60) {
+            embed.addFields({
+                name: "⚠️ Tiene un poco de hambre...",
+                value: `**${nombreCapital}** tiene pancita vacía. Usa \`/alimentar\` para darle algo rico.`,
+                inline: false
+            });
+        } else {
+            embed.addFields({
+                name: "💫 ¡Sigue así!",
+                value: `Con más mimos y comidita llegarás al buff del Compañero Feliz. ¡Ánimo!`,
+                inline: false
+            });
+        }
+
+        embed.setThumbnail(interaction.user.displayAvatarURL({ dynamic: true, size: 128 }));
+
         await registrarBitacora(userId, `Mimó a su mascota ${nombreCapital}`);
 
-        return interaction.followUp(
-            `🐾 *${bostezo} ${nombreCapital} parece muy feliz contigo...*\n\n` +
-            `¡${mensaje}! **${nombreCapital}** está radiante de felicidad.\n\n` +
-            `❤️ Felicidad: ${barraFelicidad} (${felicidad}/100)\n` +
-            `🍖 Hambre: ${hambre}/100\n\n` +
-            (tieneBuff ? `✨ ***¡BUFF ACTIVO!*** Tu compañero feliz te da **+5% de drops** en tus próximas aventuras!` :
-                hambre > 60 ? `⚠️ *${nombreCapital} tiene un poquito de hambre... usa /alimentar para darle algo rico.*` :
-                    `💫 ¡Sigue mimándola para activar el buff del Compañero Feliz!`)
-        );
+        return interaction.editReply({ embeds: [embed] });
+
     } catch (e) {
         console.error("Error en /mimar:", e);
-        return interaction.followUp(`${bostezo}Ay, algo salió mal al intentar mimar a tu mascota...`);
+        const embed = crearEmbed(CONFIG.COLORES.ROSA)
+            .setTitle("❌ Ay, algo salió mal...")
+            .setDescription(`${bostezo}Algo salió mal al intentar mimar a tu mascota, corazoncito. ¡Intentémoslo de nuevo!`);
+        return interaction.editReply({ embeds: [embed] });
     }
 }

@@ -1,4 +1,6 @@
 import { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } from "discord.js";
+import { crearEmbed } from "../../core/utils.js";
+import { CONFIG } from "../../core/config.js";
 import { lanzarEstrellaFugaz } from "../../core/utils.js";
 import { lanzarTriviaAleatoria } from "../../features/trivia.js";
 
@@ -24,13 +26,30 @@ export async function execute(interaction, bostezo) {
     try {
         if (tipo === "estrella") {
             lanzarEstrellaFugaz(interaction.client);
-            await interaction.followUp("🌠 ¡Estrella fugaz lanzada con éxito!");
+            const embed = crearEmbed(CONFIG.COLORES.DORADO)
+                .setTitle("🌠 ¡Estrella Fugaz Lanzada!")
+                .setDescription(
+                    `${bostezo}¡Zuum! La estrella fugaz ya está surcando el cielo del pueblito.\n\n` +
+                    `Los vecinos tienen unos segundos para usar \`/deseo\` antes de que desaparezca. ¡Que tengan suerte!`
+                );
+            return interaction.editReply({ embeds: [embed] });
+
         } else if (tipo === "trivia") {
             lanzarTriviaAleatoria(interaction.client);
-            await interaction.followUp("🧠 ¡Trivia lanzada con éxito!");
+            const embed = crearEmbed(CONFIG.COLORES.CIELO)
+                .setTitle("🧠 ¡Trivia del Pueblito Lanzada!")
+                .setDescription(
+                    `${bostezo}¡Ding ding! La trivia ya apareció en el canal correspondiente.\n\n` +
+                    `¡Los vecinos más listos del pueblito van a brillar!`
+                );
+            return interaction.editReply({ embeds: [embed] });
         }
+
     } catch (error) {
         console.error("Error al lanzar evento:", error);
-        await interaction.followUp("Hubo un problema al lanzar el evento.");
+        const embed = crearEmbed(CONFIG.COLORES.ROJO)
+            .setTitle("❌ ¡Error al lanzar evento!")
+            .setDescription("Hubo un problema al lanzar el evento. Revisa los logs, corazón.");
+        return interaction.editReply({ embeds: [embed] });
     }
 }

@@ -4,6 +4,12 @@ import { esTodos } from "../../core/data.js";
 import { db } from "../../services/db.js";
 import { crearEmbed, crearEmbedError, agregarNarrativa, enviarPaginado, EMOJI_CATEGORIA } from "../../core/utils.js";
 
+const CATEGORIA_EMOJI = {
+    pesca: "🎣", mineria: "⛏️", recoleccion: "🌿", caza: "🐛",
+    fotografia: "📸", cocina: "🍳", exploracion: "🗺️", comercio: "🛒",
+    social: "👥", casino: "🎰", general: "🏆"
+};
+
 export const data = new SlashCommandBuilder()
     .setName("logros")
     .setDescription("Consulta los logros y títulos del pueblito")
@@ -29,12 +35,15 @@ export async function execute(interaction, bostezo) {
             items,
             itemsPorPagina: 10,
             titulo: `${em.titulo} Logros de Heartopia ${em.titulo}`,
-            descripcion: "Metas lindas que puedes alcanzar en el pueblito. ¡Tú puedes, tesoro!",
+            descripcion: "Metas lindas que puedes alcanzar en el pueblito. \u00a1Tú puedes, tesoro! 🌸",
             content: bostezo,
-            renderItem: ([nombre, l]) => ({
-                name: `${em.icono} ${nombre}`,
-                value: `**${l.titulo || "--"}**\n🏆 ${l.requisito} | 📂 ${l.categoria}`,
-            }),
+            renderItem: ([nombre, l]) => {
+                const catEmoji = CATEGORIA_EMOJI[String(l.categoria).toLowerCase()] || "🏆";
+                return {
+                    name: `${catEmoji} ${nombre}`,
+                    value: `**${l.titulo || "Logro secreto"}**\n📋 ${l.requisito} | 📂 ${l.categoria}`
+                };
+            }
         });
     }
 
@@ -56,17 +65,21 @@ export async function execute(interaction, bostezo) {
         consejos: row.consejos
     };
 
+    const catEmoji = CATEGORIA_EMOJI[String(row.categoria || "").toLowerCase()] || "🏆";
+
     const embed = crearEmbed(color)
-        .setTitle(`${em.titulo} Logro: ${row.id}`)
-        .setDescription(`**Título recompensa:** ${l.titulo_recompensa || "Ninguno"}\n**Categoría:** ${l.categoria}`)
+        .setTitle(`🏆 ${row.id}`)
+        .setDescription(
+            `${catEmoji} **${l.titulo_recompensa || "Logro sin título"}** — Categoría: **${l.categoria}**`
+        )
         .addFields(
-            { name: "📋 Requisito", value: l.requisito, inline: false },
+            { name: "📋 Requisito", value: l.requisito || "--", inline: false },
         );
-    if (row.titulo_recompensa) {
-        embed.addFields([{ name: "Recompensa", value: row.titulo_recompensa, inline: true }]);
+    if (l.titulo_recompensa) {
+        embed.addFields({ name: "🥇 Título desbloqueado", value: `**${l.titulo_recompensa}**`, inline: true });
     }
-    if (row.consejos) {
-        embed.addFields([{ name: "Consejos", value: row.consejos, inline: false }]);
+    if (l.consejos) {
+        embed.addFields({ name: "💡 Consejos de Annie", value: l.consejos, inline: false });
     }
 
     agregarNarrativa(embed, "logros");

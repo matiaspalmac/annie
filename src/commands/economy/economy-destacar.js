@@ -43,10 +43,14 @@ export async function execute(interaction, bostezo) {
     });
 
     if (resCheck.rows.length === 0) {
-        return interaction.reply({
-            content: `Ay corazón... he revisado tu libretita pero no veo que tengas anotado ningún "${nombreItemRaw}" en recolecciones de ${categoria}. ¡Tienes que descubrirlo primero!`,
-            flags: MessageFlags.Ephemeral
-        });
+        const embed = crearEmbed(CONFIG.COLORES.NARANJA)
+            .setTitle("🔍 No está en tu colección")
+            .setDescription(
+                `Ay corazón... he revisado tu libretita pero no veo que tengas anotado ningún **"${nombreItemRaw}"** en recolecciones de ${categoria}.
+
+¡Tienes que descubrirlo primero antes de destacarlo!`
+            );
+        return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
     }
 
     // Usamos el id oficial que trajo la base de datos de colecciones para prevenir typos
@@ -62,12 +66,20 @@ export async function execute(interaction, bostezo) {
 
         const embed = crearEmbed(CONFIG.COLORES.DORADO)
             .setTitle("📌 ¡Vitrina Actualizada!")
-            .setDescription(`He pegado fotitos de tu **${itemIdConfirmado}** en la ranura #${slot} de tu perfil web.\n\n[Míralo haciendo clic aquí](${CONFIG.WIKI_URL}perfil/${userId})`);
+            .setDescription(`${bostezo}He pegado fotitos de tu **${itemIdConfirmado}** en la vitrina de tu perfil web. 💖`)
+            .addFields(
+                { name: "📂 Categoría", value: categoria, inline: true },
+                { name: "📌 Ranura", value: `#${slot}`, inline: true },
+                { name: "🌐 Ver perfil", value: `[Haz clic aquí](${CONFIG.WIKI_URL}perfil/${userId})`, inline: true }
+            );
 
-        await interaction.reply({ content: bostezo, embeds: [embed] });
+        await interaction.reply({ embeds: [embed] });
 
     } catch (e) {
         console.error("Error comando destacar:", e.message);
-        return interaction.reply({ content: `${bostezo}Se me acabó mi cinta adhesiva para pegarlo... intentalo en un ratito.`, flags: MessageFlags.Ephemeral });
+        const embed = crearEmbed(CONFIG.COLORES.ROSA)
+            .setTitle("❌ ¡Cinta adhesiva agotada!")
+            .setDescription(`${bostezo}Se me acabó la cinta adhesiva para pegarlo... inténtalo en un ratito.`);
+        return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
     }
 }

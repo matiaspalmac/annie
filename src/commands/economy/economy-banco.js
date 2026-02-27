@@ -1,10 +1,11 @@
 import { SlashCommandBuilder, MessageFlags } from "discord.js";
 import { db } from "../../services/db.js";
+import { crearEmbed } from "../../core/utils.js";
+import { CONFIG } from "../../core/config.js";
 import { registrarBitacora } from "../../features/progreso.js";
 
 const TASA_INTERES_DIARIA = 0.02; // 2% diario
 const MS_DIA = 24 * 60 * 60 * 1000;
-const MAX_DEPOSITO_DIA = 50_000; // límite de depósito por día
 
 // Aplica el interés acumulado desde la última vez que se accedió al banco
 async function aplicarIntereses(userId) {
@@ -29,7 +30,6 @@ async function aplicarIntereses(userId) {
 
     if (diasPasados === 0) return { monedas, interesGanado: 0, diasPasados: 0 };
 
-    // Interés compuesto: (1 + 0.02)^días × capital
     const nuevoSaldo = Math.floor(monedas * Math.pow(1 + TASA_INTERES_DIARIA, diasPasados));
     const interesGanado = nuevoSaldo - monedas;
 
@@ -66,7 +66,6 @@ export async function execute(interaction, bostezo) {
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     try {
-        // Asegurar que el usuario tiene cuenta bancaria
         await db.execute({
             sql: `INSERT OR IGNORE INTO banco (user_id, monedas, ultimo_interes) VALUES (?, 0, ?)`,
             args: [userId, Date.now()]
@@ -74,22 +73,47 @@ export async function execute(interaction, bostezo) {
 
         if (subcomando === "balance") {
             const { monedas, interesGanado, diasPasados } = await aplicarIntereses(userId);
-
             const resWallet = await db.execute({ sql: "SELECT monedas FROM usuarios WHERE id = ?", args: [userId] });
             const monedaWallet = Number(resWallet.rows[0]?.monedas ?? 0);
 
-            let interesTexto = "";
+            const embed = crearEmbed(CONFIG.COLORES.AZUL)
+                .setTitle("🏦 Banco del Pueblito")
+                .setDescription(
+                    `${bostezo}Aquí tienes el estado de tu cuenta bancaria, corazoncito. ¡Tus ahorros están seguridísimos!`
+                )
+                .addFields(
+                    {
+                        name: "💰 En tu bolsillo",
+                        value: `**${monedaWallet.toLocaleString()} 🪙**`,
+                        inline: true
+                    },
+                    {
+                        name: "🏛️ En el banco",
+                        value: `**${monedas.toLocaleString()} 🪙**`,
+                        inline: true
+                    },
+                    {
+                        name: "📈 Tasa de interés",
+                        value: "**2% diario** (compuesto)",
+                        inline: true
+                    }
+                );
+
             if (interesGanado > 0) {
-                interesTexto = `\n\n✨ *¡Mientras dormías, tus moneditas trabajaron por ti! Ganaste **+${interesGanado} moneditas** de interés en ${diasPasados} día(s).*`;
+                embed.addFields({
+                    name: `✨ ¡Intereses ganados en ${diasPasados} día(s)!`,
+                    value: `Mientras dormías, tus moneditas trabajaron solas. Ganaste **+${interesGanado.toLocaleString()} 🪙**.`,
+                    inline: false
+                });
+            } else {
+                embed.addFields({
+                    name: "💡 Consejo de Annie",
+                    value: "¡Deposita más moneditas para que el interés trabaje por ti! El interés compuesto se aplica cada 24h.",
+                    inline: false
+                });
             }
 
-            return interaction.followUp(
-                `🏦 **Tu Cuenta en el Banco del Pueblito**\n\n` +
-                `💰 En tu bolsillo: **${monedaWallet.toLocaleString()} moneditas**\n` +
-                `🏛️ En el banco: **${monedas.toLocaleString()} moneditas**\n` +
-                `📈 Tasa de interés: **2% diario** (compuesto)\n` +
-                interesTexto
-            );
+            return interaction.editReply({ embeds: [embed] });
         }
 
         if (subcomando === "depositar") {
@@ -99,13 +123,16 @@ export async function execute(interaction, bostezo) {
             const monedaWallet = Number(resWallet.rows[0]?.monedas ?? 0);
 
             if (monedaWallet < cantidad) {
-                return interaction.followUp(`${bostezo}No tienes **${cantidad} moneditas** en el bolsillo (solo tienes ${monedaWallet}).`);
+                const embed = crearEmbed(CONFIG.COLORES.ROJO)
+                    .setTitle("❌ Sin fondos suficientes")
+                    .setDescription(
+                        `${bostezo}Solo tienes **${monedaWallet.toLocaleString()} moneditas** en el bolsillo. ¡No alcanza para depositar ${cantidad.toLocaleString()}!`
+                    );
+                return interaction.editReply({ embeds: [embed] });
             }
 
-            // Aplicar intereses antes de depositar
             await aplicarIntereses(userId);
 
-            // Transferir
             await db.execute({ sql: "UPDATE usuarios SET monedas = monedas - ? WHERE id = ?", args: [cantidad, userId] });
             await db.execute({ sql: "UPDATE banco SET monedas = monedas + ?, ultimo_interes = COALESCE(NULLIF(ultimo_interes, 0), ?) WHERE user_id = ?", args: [cantidad, Date.now(), userId] });
 
@@ -114,22 +141,44 @@ export async function execute(interaction, bostezo) {
 
             await registrarBitacora(userId, `Depositó ${cantidad} moneditas en el banco`);
 
-            return interaction.followUp(
-                `🏦 **¡Depósito exitoso!**\n\n` +
-                `📥 Depositaste: **${cantidad.toLocaleString()} moneditas**\n` +
-                `🏛️ Nuevo saldo bancario: **${nuevoSaldo.toLocaleString()} moneditas**\n\n` +
-                `📈 *Tu dinero ya está generando **2% de interés diario**. ¡Ahorra más para ganar más!*`
-            );
+            const embed = crearEmbed(CONFIG.COLORES.AZUL)
+                .setTitle("📥 ¡Depósito exitoso!")
+                .setDescription(
+                    `${bostezo}¡Listo, corazoncito! Tus moneditas ya están guardaditas y empezarán a crecer con el interés.`
+                )
+                .addFields(
+                    {
+                        name: "📥 Depositado",
+                        value: `**+${cantidad.toLocaleString()} 🪙**`,
+                        inline: true
+                    },
+                    {
+                        name: "🏛️ Nuevo saldo en banco",
+                        value: `**${nuevoSaldo.toLocaleString()} 🪙**`,
+                        inline: true
+                    },
+                    {
+                        name: "📈 Interés activo",
+                        value: "**2% diario compuesto** — ¡tus monedas trabajarán solas!",
+                        inline: false
+                    }
+                );
+
+            return interaction.editReply({ embeds: [embed] });
         }
 
         if (subcomando === "retirar") {
             const cantidad = interaction.options.getInteger("cantidad");
 
-            // Aplicar intereses antes de retirar
             const { monedas: saldoConInteres } = await aplicarIntereses(userId);
 
             if (saldoConInteres < cantidad) {
-                return interaction.followUp(`${bostezo}Solo tienes **${saldoConInteres.toLocaleString()} moneditas** en el banco.`);
+                const embed = crearEmbed(CONFIG.COLORES.ROJO)
+                    .setTitle("❌ Saldo insuficiente")
+                    .setDescription(
+                        `${bostezo}Solo tienes **${saldoConInteres.toLocaleString()} moneditas** en el banco. No puedes retirar más de lo que tienes.`
+                    );
+                return interaction.editReply({ embeds: [embed] });
             }
 
             await db.execute({ sql: "UPDATE banco SET monedas = monedas - ? WHERE user_id = ?", args: [cantidad, userId] });
@@ -140,15 +189,32 @@ export async function execute(interaction, bostezo) {
 
             await registrarBitacora(userId, `Retiró ${cantidad} moneditas del banco`);
 
-            return interaction.followUp(
-                `🏦 **¡Retiro exitoso!**\n\n` +
-                `📤 Retiraste: **${cantidad.toLocaleString()} moneditas** a tu bolsillo\n` +
-                `🏛️ Saldo restante en banco: **${saldoRestante.toLocaleString()} moneditas**`
-            );
+            const embed = crearEmbed(CONFIG.COLORES.VERDE)
+                .setTitle("📤 ¡Retiro exitoso!")
+                .setDescription(
+                    `${bostezo}¡Aquí tienes tus moneditas, corazón! Recuerda guardar algo en el banco para que sigan creciendo. 😊`
+                )
+                .addFields(
+                    {
+                        name: "📤 Retirado al bolsillo",
+                        value: `**+${cantidad.toLocaleString()} 🪙**`,
+                        inline: true
+                    },
+                    {
+                        name: "🏛️ Saldo restante en banco",
+                        value: `**${saldoRestante.toLocaleString()} 🪙**`,
+                        inline: true
+                    }
+                );
+
+            return interaction.editReply({ embeds: [embed] });
         }
 
     } catch (e) {
         console.error("Error en /banco:", e);
-        return interaction.followUp(`${bostezo}El banco tuvo un problemita técnico. ¡Tus moneditas están seguras, no te preocupes!`);
+        const embed = crearEmbed(CONFIG.COLORES.ROSA)
+            .setTitle("❌ ¡Problemas en el banco!")
+            .setDescription(`${bostezo}El banco tuvo un problemita técnico. ¡Tus moneditas están seguras, no te preocupes!`);
+        return interaction.editReply({ embeds: [embed] });
     }
 }

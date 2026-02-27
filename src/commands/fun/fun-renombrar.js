@@ -1,6 +1,7 @@
 import { SlashCommandBuilder, MessageFlags } from "discord.js";
 import { db } from "../../services/db.js";
-import { getBostezo } from "../../core/utils.js";
+import { crearEmbed } from "../../core/utils.js";
+import { CONFIG } from "../../core/config.js";
 
 function nombreMascotaBase(mascotaId) {
   return String(mascotaId || "").replace("mascota_", "");
@@ -28,23 +29,20 @@ export const data = new SlashCommandBuilder()
 export async function autocomplete(interaction) {
   try {
     const focused = interaction.options.getFocused(true);
-    if (focused.name !== "mascota") {
-      await interaction.respond([]);
-      return;
-    }
+    if (focused.name !== "mascota") { await interaction.respond([]); return; }
 
     const texto = String(focused.value || "").toLowerCase().trim();
 
     const res = await db.execute({
       sql: `SELECT ie.item_id, mn.nombre
-            FROM inventario_economia ie
-            LEFT JOIN mascota_nombres mn
-              ON mn.user_id = ie.user_id
-             AND mn.mascota_id = ie.item_id
-            WHERE ie.user_id = ?
-              AND ie.item_id LIKE 'mascota_%'
-              AND ie.cantidad > 0
-            ORDER BY ie.item_id ASC`,
+                  FROM inventario_economia ie
+                  LEFT JOIN mascota_nombres mn
+                    ON mn.user_id = ie.user_id
+                   AND mn.mascota_id = ie.item_id
+                  WHERE ie.user_id = ?
+                    AND ie.item_id LIKE 'mascota_%'
+                    AND ie.cantidad > 0
+                  ORDER BY ie.item_id ASC`,
       args: [interaction.user.id],
     });
 
@@ -62,7 +60,7 @@ export async function autocomplete(interaction) {
     await interaction.respond(opciones);
   } catch (error) {
     console.error("Error autocomplete /renombrar:", error);
-    await interaction.respond([]).catch(() => {});
+    await interaction.respond([]).catch(() => { });
   }
 }
 
@@ -75,7 +73,10 @@ export async function execute(interaction, bostezo) {
 
   try {
     if (!mascotaId.startsWith("mascota_")) {
-      return interaction.editReply({ content: `${bostezo}La mascota seleccionada no es válida.` });
+      const embed = crearEmbed(CONFIG.COLORES.ROSA)
+        .setTitle("❓ Mascota inválida")
+        .setDescription(`${bostezo}La mascota seleccionada no es válida. Usa el autocompletado para elegir una de tus mascotas.`);
+      return interaction.editReply({ embeds: [embed] });
     }
 
     const resMascota = await db.execute({
@@ -84,7 +85,10 @@ export async function execute(interaction, bostezo) {
     });
 
     if (resMascota.rows.length === 0 || Number(resMascota.rows[0].cantidad || 0) <= 0) {
-      return interaction.editReply({ content: `${bostezo}No tienes esa mascota en tu inventario.` });
+      const embed = crearEmbed(CONFIG.COLORES.ROSA)
+        .setTitle("❓ No tienes esa mascota")
+        .setDescription(`${bostezo}No tienes esa mascota en tu inventario, corazón.`);
+      return interaction.editReply({ embeds: [embed] });
     }
 
     const resEtiquetas = await db.execute({
@@ -94,22 +98,33 @@ export async function execute(interaction, bostezo) {
 
     const etiquetas = Number(resEtiquetas.rows[0]?.cantidad || 0);
     if (etiquetas <= 0) {
-      return interaction.editReply({
-        content: `${bostezo}Para renombrar a tu amiguito necesitas una **Etiqueta para Mascota**, corazón. La puedes comprar en **/tienda** con **/comprar item:etiqueta_mascota**.`,
-      });
+      const embed = crearEmbed(CONFIG.COLORES.NARANJA)
+        .setTitle("🏷️ ¡Necesitas una Etiqueta para Mascota!")
+        .setDescription(
+          `${bostezo}Para renombrar a tu amiguito necesitas una **Etiqueta para Mascota**, corazón.\n\n` +
+          `La puedes comprar en \`/tienda\` con \`/comprar item:etiqueta_mascota\`.`
+        );
+      return interaction.editReply({ embeds: [embed] });
     }
+
+    // Obtener nombre anterior
+    const resNombreAnterior = await db.execute({
+      sql: "SELECT nombre FROM mascota_nombres WHERE user_id = ? AND mascota_id = ?",
+      args: [userId, mascotaId],
+    });
+    const nombreAnterior = String(resNombreAnterior.rows[0]?.nombre || nombreMascotaBase(mascotaId));
 
     await db.execute({
       sql: `INSERT INTO mascota_nombres (user_id, mascota_id, nombre)
-            VALUES (?, ?, ?)
-            ON CONFLICT(user_id, mascota_id) DO UPDATE SET nombre = excluded.nombre`,
+                  VALUES (?, ?, ?)
+                  ON CONFLICT(user_id, mascota_id) DO UPDATE SET nombre = excluded.nombre`,
       args: [userId, mascotaId, nuevoNombre],
     });
 
     await db.execute({
       sql: `UPDATE inventario_economia
-            SET cantidad = cantidad - 1
-            WHERE user_id = ? AND item_id = 'etiqueta_mascota' AND cantidad > 0`,
+                  SET cantidad = cantidad - 1
+                  WHERE user_id = ? AND item_id = 'etiqueta_mascota' AND cantidad > 0`,
       args: [userId],
     });
 
@@ -118,13 +133,23 @@ export async function execute(interaction, bostezo) {
       args: [userId],
     });
 
-    const base = nombreMascotaBase(mascotaId);
-    const bostezito = getBostezo();
-    return interaction.editReply({
-      content: `${bostezito}🏷️ ¡Listo, mi cielo! Tu mascota **${base}** ahora se llama **${nuevoNombre}**. Se consumió **1 Etiqueta para Mascota**.`,
-    });
+    const embed = crearEmbed(CONFIG.COLORES.MENTA)
+      .setTitle("🏷️ ¡Mascota Renombrada!")
+      .setDescription(`${bostezo}¡Qué nombre tan bonito elegiste! Tu mascota ahora tiene un nombre oficial en el pueblito. 🌸`)
+      .addFields(
+        { name: "🐾 Mascota", value: `**${nombreMascotaBase(mascotaId)}**`, inline: true },
+        { name: "📛 Antes", value: `*${nombreAnterior}*`, inline: true },
+        { name: "✨ Ahora", value: `**${nuevoNombre}**`, inline: true },
+        { name: "🏷️ Etiquetas usadas", value: "**1x Etiqueta para Mascota** consumida", inline: false }
+      );
+
+    return interaction.editReply({ embeds: [embed] });
+
   } catch (error) {
     console.error("Error en comando /renombrar:", error);
-    return interaction.editReply({ content: `${bostezo}Se me enredó la etiquetita, inténtalo de nuevo en un ratito.` });
+    const embed = crearEmbed(CONFIG.COLORES.ROSA)
+      .setTitle("❌ ¡Error al renombrar!")
+      .setDescription(`${bostezo}Se me enredó la etiquetita, inténtalo de nuevo en un ratito.`);
+    return interaction.editReply({ embeds: [embed] });
   }
 }

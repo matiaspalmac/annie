@@ -1,7 +1,9 @@
-import { SlashCommandBuilder, EmbedBuilder, MessageFlags } from "discord.js";
+import { SlashCommandBuilder, MessageFlags } from "discord.js";
 import { CONFIG } from "../../core/config.js";
 import { db } from "../../services/db.js";
-import { crearEmbed, agregarNarrativa } from "../../core/utils.js";
+import { crearEmbed } from "../../core/utils.js";
+
+const MEDALLAS = ["🥇", "🥈", "🥉"];
 
 export const data = new SlashCommandBuilder()
     .setName("ranking")
@@ -11,8 +13,8 @@ export const data = new SlashCommandBuilder()
             .setDescription("¿Qué ranking quieres ver?")
             .setRequired(false)
             .addChoices(
-                { name: "Experiencia (XP)", value: "xp" },
-                { name: "Moneditas", value: "monedas" }
+                { name: "⭐ Experiencia (XP)", value: "xp" },
+                { name: "💰 Moneditas", value: "monedas" }
             )
     );
 
@@ -20,38 +22,58 @@ export async function execute(interaction, bostezo) {
     const tipo = interaction.options.getString("tipo") || "xp";
     const esXP = tipo === "xp";
 
+    await interaction.deferReply();
+
     const result = await db.execute(`
-        SELECT id, nivel, xp, monedas 
-        FROM usuarios 
-        ORDER BY ${esXP ? "xp" : "monedas"} DESC 
+        SELECT id, nivel, xp, monedas
+        FROM usuarios
+        ORDER BY ${esXP ? "xp" : "monedas"} DESC
         LIMIT 10
     `);
 
     if (result.rows.length === 0) {
-        return interaction.reply({
-            content: `${bostezo} Aún no hay nadie paseando por el pueblito... ¡se el primero!`,
-            flags: MessageFlags.Ephemeral
-        });
+        const embed = crearEmbed(CONFIG.COLORES.ROSA)
+            .setTitle("🏆 Ranking desierto...")
+            .setDescription(`${bostezo} Aún no hay nadie paseando por el pueblito... ¡sé el primero en aparecer aquí!`);
+        return interaction.editReply({ embeds: [embed] });
     }
 
     const embed = crearEmbed(CONFIG.COLORES.DORADO)
-        .setTitle(esXP ? "🏆 Ranking de Vecinos - Mayor XP" : "💰 Ranking de Vecinos - Más Moneditas")
-        .setDescription("Aquí están los corazones más activos de Heartopia. ¡Sigan así de lindos!");
-
-    let leaderboard = "";
+        .setTitle(esXP
+            ? "🏆 Ranking — Vecinos con más XP"
+            : "💰 Ranking — Vecinos más adinerados")
+        .setDescription(
+            esXP
+                ? "Los corazones más constantes y aventureros del pueblito. ¡Sigan así de lindos!"
+                : "Los vecinos más ricos del pueblito. ¡A ver si los alcanzan!"
+        );
 
     result.rows.forEach((row, index) => {
-        let medalla = `${index + 1}.`;
-        if (index === 0) medalla = "🥇";
-        else if (index === 1) medalla = "🥈";
-        else if (index === 2) medalla = "🥉";
+        const medalla = MEDALLAS[index] ?? `**${index + 1}.**`;
+        const valor = esXP
+            ? `✨ \`${Number(row.xp).toLocaleString("es-CL")} XP\`  ·  Nivel **${row.nivel}**`
+            : `💰 \`${Number(row.monedas).toLocaleString("es-CL")} 🪙\``;
 
-        const valor = esXP ? `✨ **${row.xp} XP** (Nivel ${row.nivel})` : `💰 **${row.monedas} Moneditas**`;
-        leaderboard += `${medalla} <@${row.id}> — ${valor}\n\n`;
+        embed.addFields({
+            name: `${medalla} <@${row.id}>`,
+            value: valor,
+            inline: false
+        });
     });
 
-    embed.addFields([{ name: "Top 10", value: leaderboard }]);
-    agregarNarrativa(embed, "general");
+    // Mostrar posición del usuario
+    const selfRes = await db.execute({
+        sql: `SELECT COUNT(*) + 1 AS pos FROM usuarios WHERE ${esXP ? "xp" : "monedas"} > (SELECT ${esXP ? "xp" : "monedas"} FROM usuarios WHERE id = ?)`,
+        args: [interaction.user.id]
+    });
+    const miPos = Number(selfRes.rows[0]?.pos ?? 0);
+    if (miPos > 10) {
+        embed.addFields({
+            name: `📍 Tu posición`,
+            value: `Estás en el puesto **#${miPos}** del ranking. ¡Sigue esforzándote!`,
+            inline: false
+        });
+    }
 
-    return interaction.reply({ content: bostezo, embeds: [embed] });
+    return interaction.editReply({ embeds: [embed] });
 }

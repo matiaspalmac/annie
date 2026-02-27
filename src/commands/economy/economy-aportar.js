@@ -1,7 +1,7 @@
 import { SlashCommandBuilder, MessageFlags } from "discord.js";
 import { db } from "../../services/db.js";
 import { CONFIG } from "../../core/config.js";
-import { crearEmbed } from "../../core/utils.js";
+import { crearEmbed, barraProgreso } from "../../core/utils.js";
 
 export const data = new SlashCommandBuilder()
     .setName("aportar")
@@ -20,7 +20,10 @@ export async function execute(interaction, bostezo) {
     const cantidad = Number(cantidadStr);
 
     if (isNaN(cantidad) || cantidad <= 0) {
-        return interaction.reply({ content: `Eso no parece una cantidad válida, tesoro.`, flags: MessageFlags.Ephemeral });
+        const embed = crearEmbed(CONFIG.COLORES.ROSA)
+            .setTitle("❓ Cantidad inválida")
+            .setDescription("Eso no parece una cantidad válida, tesoro. Ingresa un número mayor a 0.");
+        return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
     }
 
     try {
@@ -28,10 +31,14 @@ export async function execute(interaction, bostezo) {
         const resEvento = await db.execute("SELECT * FROM eventos_globales WHERE activo = 1 LIMIT 1");
 
         if (resEvento.rows.length === 0) {
-            return interaction.reply({
-                content: `${bostezo} En este momento no hay ningún proyecto o junta vecinal activa, corazoncito. ¡Guarda tus moneditas para más tarde!`,
-                flags: MessageFlags.Ephemeral
-            });
+            const embed = crearEmbed(CONFIG.COLORES.CIELO)
+                .setTitle("🏘️ Sin evento activo")
+                .setDescription(
+                    `${bostezo} En este momento no hay ningún proyecto o junta vecinal activa, corazoncito.
+                    
+¡Guarda tus moneditas para más tarde cuando el pueblito necesite tu ayuda!`
+                );
+            return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
         }
 
         const evento = resEvento.rows[0];
@@ -41,10 +48,14 @@ export async function execute(interaction, bostezo) {
         const progreso = Number(evento.progreso_monedas);
 
         if (progreso >= meta) {
-            return interaction.reply({
-                content: `¡Llegaste tarde, tesoro! Ya logramos la meta de **${titulo}**. ¡El pueblito está de fiesta!`,
-                flags: MessageFlags.Ephemeral
-            });
+            const embed = crearEmbed(CONFIG.COLORES.DORADO)
+                .setTitle("🎉 ¡Meta ya alcanzada!")
+                .setDescription(
+                    `¡Llegaste tarde, tesoro! Ya logramos la meta de **${titulo}**. ¡El pueblito está de fiesta celebrando!
+                    
+¡No te preocupes! Pronto llegará un nuevo proyecto comunitario. 🌸`
+                );
+            return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
         }
 
         // 2. Check if user has enough coins
@@ -54,10 +65,15 @@ export async function execute(interaction, bostezo) {
         });
 
         if (resUser.rows.length === 0 || Number(resUser.rows[0].monedas) < cantidad) {
-            return interaction.reply({
-                content: `¡Ay! Me parece que no tienes tantas moneditas en los bolsillos. Solo tienes **${resUser.rows.length ? resUser.rows[0].monedas : 0}** 💰.`,
-                flags: MessageFlags.Ephemeral
-            });
+            const tieneMon = resUser.rows.length ? Number(resUser.rows[0].monedas) : 0;
+            const embed = crearEmbed(CONFIG.COLORES.NARANJA)
+                .setTitle("💸 ¡Sin suficientes moneditas!")
+                .setDescription(`¡Ay! Me parece que no tienes tantas moneditas en los bolsillos.`)
+                .addFields(
+                    { name: "💰 Tienes", value: `**${tieneMon.toLocaleString()} 🪙**`, inline: true },
+                    { name: "🤝 Quieres donar", value: `**${cantidad.toLocaleString()} 🪙**`, inline: true }
+                );
+            return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
         }
 
         // 3. Process the donation
@@ -147,6 +163,9 @@ export async function execute(interaction, bostezo) {
 
     } catch (e) {
         console.error("Error comando aportar:", e.message, e.stack);
-        return interaction.reply({ content: "Parece que se me trabó la cajita fuerte... inténtalo en un ratito.", flags: MessageFlags.Ephemeral });
+        const embed = crearEmbed(CONFIG.COLORES.ROSA)
+            .setTitle("❌ ¡Error en la caja fuerte!")
+            .setDescription("Parece que se me trabó la cajita fuerte... inténtalo en un ratito.");
+        return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
     }
 }

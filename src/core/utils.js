@@ -23,12 +23,22 @@ export const EMOJI_CATEGORIA = {
 };
 
 const FOOTERS_ANNIE = [
-  "Hecho con amor por Annie \uD83C\uDF38",
-  "Con cariñito de tu carterita \u2764\uFE0F",
-  "Annie te manda un abrazote \uD83C\uDF3C",
-  "De la oficinita con ternura \u2615",
-  "Annie siempre cuida del pueblito \uD83C\uDF3B",
-  "Preparado con tecito y amor \uD83C\uDF75",
+  "Hecho con amor por Annie 🌸",
+  "Con cariñito de tu carterita ❤️",
+  "Annie te manda un abrazote 🌼",
+  "De la oficinita con ternura ☕",
+  "Annie siempre cuida del pueblito 🌻",
+  "Preparado con tecito y amor 🍵",
+  "Susurros del pueblito con cariñito 🌿",
+  "Annie dice: ¡Cuídate mucho, tesoro! 🫶",
+  "Con mimo y buen rollo de tu carterita 💌",
+  "Heartopia te quiere, corazón 🏡",
+  "Un abrazo apretado desde la oficinita 🤗",
+  "¡Wena, sigue adelante! Annie te apoya 🌈",
+  "Despachado con amor desde el correo 📬",
+  "Annie anotó esto con su mejor pluma 🖊️",
+  "Firmado y sellado con besitos de Annie 💝",
+  "Tu carterita favorita siempre aquí 🌺",
 ];
 
 // Constantes de tiempo
@@ -140,7 +150,118 @@ export function crearEmbed(color, categoria) {
     .setColor(color || CONFIG.COLORES.ROSA)
     .setThumbnail(CONFIG.ANNIE_IMG);
   const footerText = _estaDurmiendo
-    ? "Zzz... Annie te cuida desde la oficinita \u2661"
+    ? "Zzz... Annie te cuida desde la oficinita ♡"
+    : FOOTERS_ANNIE[Math.floor(Math.random() * FOOTERS_ANNIE.length)];
+  embed.setFooter({ text: footerText, iconURL: CONFIG.ANNIE_IMG });
+  return embed;
+}
+
+/**
+ * Genera una barra de progreso visual con emojis
+ * @param {number} valor - Valor actual (0-100)
+ * @param {string} [emojiLleno="█"] - Emoji para bloques llenos
+ * @param {string} [emojiVacio="░"] - Emoji para bloques vacíos
+ * @param {number} [bloques=10] - Número de bloques totales
+ * @returns {string} Barra de progreso visual
+ */
+export function barraProgreso(valor, emojiLleno = "█", emojiVacio = "░", bloques = 10) {
+  const porcentaje = Math.max(0, Math.min(100, Number(valor) || 0));
+  const llenos = Math.round((porcentaje / 100) * bloques);
+  const vacios = bloques - llenos;
+  return emojiLleno.repeat(llenos) + emojiVacio.repeat(vacios) + ` **${porcentaje}%**`;
+}
+
+/**
+ * Crea un embed de cooldown para mostrar tiempo de espera
+ * @param {number} minutosRestantes - Minutos restantes
+ * @param {string} [bostezo=""] - Saludo de Annie
+ * @param {string} [nombreComando=""] - Nombre del comando en cooldown
+ * @returns {EmbedBuilder} Embed de cooldown
+ */
+export function crearEmbedCooldown(minutosRestantes, bostezo = "", nombreComando = "") {
+  const tiempoTexto = minutosRestantes >= 60
+    ? `**${Math.floor(minutosRestantes / 60)}h ${minutosRestantes % 60}min**`
+    : `**${minutosRestantes} minutos**`;
+
+  return new EmbedBuilder()
+    .setColor(CONFIG.COLORES.ROJO || "#E74C3C")
+    .setTitle("⏳ Pausa, corazoncito...")
+    .setDescription(
+      `${bostezo ? `*${bostezo}*\n\n` : ""}` +
+      `${nombreComando ? `El comando \`/${nombreComando}\` ` : "Este comando "}todavía está descansando.\n\n` +
+      `⌛ Vuelve en ${tiempoTexto} y lo intentamos de nuevo.`
+    )
+    .setFooter({ text: "Annie te guarda el turno con cariño 🌸" });
+}
+
+/**
+ * Crea un embed visual para drops/resultados de recolección con tema por rareza
+ * @param {Object} params - Parámetros del drop
+ * @param {string} params.emoji - Emoji del ítem
+ * @param {string} params.nombre - Nombre del ítem
+ * @param {string} params.rareza - Rareza: comun|poco_comun|raro|epico|legendario|mitico
+ * @param {string} params.narrativa - Descripción narrativa del resultado
+ * @param {Object} [params.extras] - Campos adicionales {nombre, valor, inline}[]
+ * @returns {{ color: string, embed: EmbedBuilder }} Color y embed del drop
+ */
+export function crearEmbedDrop({ emoji, nombre, rareza, narrativa, extras = [] }) {
+  // Configuración visual por rareza
+  const CONFIG_RAREZA = {
+    mitico: { color: "#FF0080", etiqueta: "✨✨ MÍTICO ✨✨", prefijo: "🌟💫" },
+    legendario: { color: "#FFD700", etiqueta: "⭐ Legendario", prefijo: "🌟" },
+    epico: { color: "#9B59B6", etiqueta: "💜 Épico", prefijo: "💜" },
+    raro: { color: "#5B8DEF", etiqueta: "💙 Raro", prefijo: "✨" },
+    poco_comun: { color: "#2ECC71", etiqueta: "💚 Poco Común", prefijo: "🍀" },
+    comun: { color: "#95A5A6", etiqueta: "⬜ Común", prefijo: "" },
+  };
+
+  const cfg = CONFIG_RAREZA[rareza] || CONFIG_RAREZA.comun;
+
+  const embed = new EmbedBuilder()
+    .setColor(cfg.color)
+    .setTitle(`${cfg.prefijo} ${emoji} ${nombre}`.trim())
+    .setDescription(narrativa);
+
+  if (cfg.etiqueta) {
+    embed.addFields({ name: "✦ Rareza", value: cfg.etiqueta, inline: true });
+  }
+
+  for (const extra of extras) {
+    if (extra?.name && extra?.value) {
+      embed.addFields({ name: extra.name, value: extra.value, inline: extra.inline ?? true });
+    }
+  }
+
+  const footerText = _estaDurmiendo
+    ? "Zzz... Annie te cuida desde la oficinita ♡"
+    : FOOTERS_ANNIE[Math.floor(Math.random() * FOOTERS_ANNIE.length)];
+  embed.setFooter({ text: footerText, iconURL: CONFIG.ANNIE_IMG });
+
+  return embed;
+}
+
+/**
+ * Crea un embed de confirmación de éxito
+ * @param {string} titulo - Título del embed
+ * @param {string} descripcion - Descripción del resultado
+ * @param {string} [color] - Color hex (por defecto verde)
+ * @param {Object[]} [fields] - Campos adicionales
+ * @returns {EmbedBuilder} Embed de éxito
+ */
+export function crearEmbedExito(titulo, descripcion, color, fields = []) {
+  const embed = new EmbedBuilder()
+    .setColor(color || CONFIG.COLORES.VERDE || "#4CAF50")
+    .setTitle(`✅ ${titulo}`)
+    .setDescription(descripcion);
+
+  for (const f of fields) {
+    if (f?.name && f?.value) {
+      embed.addFields({ name: f.name, value: f.value, inline: f.inline ?? false });
+    }
+  }
+
+  const footerText = _estaDurmiendo
+    ? "Zzz... Annie te cuida desde la oficinita ♡"
     : FOOTERS_ANNIE[Math.floor(Math.random() * FOOTERS_ANNIE.length)];
   embed.setFooter({ text: footerText, iconURL: CONFIG.ANNIE_IMG });
   return embed;

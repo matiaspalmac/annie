@@ -1,7 +1,7 @@
 import { SlashCommandBuilder, MessageFlags } from "discord.js";
 import { CONFIG } from "../../core/config.js";
 import { db } from "../../services/db.js";
-import { crearEmbed, agregarNarrativa } from "../../core/utils.js";
+import { crearEmbed } from "../../core/utils.js";
 import { getTrato } from "../../core/personality.js";
 
 export const data = new SlashCommandBuilder()
@@ -16,14 +16,19 @@ export async function execute(interaction, bostezo) {
     const donante_id = interaction.user.id;
 
     if (recipiente.id === donante_id) {
-        return interaction.reply({ content: `${bostezo}¡Ay, mi tesoro! No puedes regalarte moneditas a ti mismo... ¡mejor compártelas con alguien más!`, flags: MessageFlags.Ephemeral });
+        const embed = crearEmbed(CONFIG.COLORES.ROSA)
+            .setTitle("🤭 ¡Ay, ay, ay!")
+            .setDescription(`${bostezo}¡No puedes regalarte moneditas a ti mismo, corazoncito! ¡Mejor compártelas con alguien más del pueblito!`);
+        return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
     }
 
     if (recipiente.bot) {
-        return interaction.reply({ content: `${bostezo}Qué amable eres, pero a los robots no nos sirven las moneditas... guarda eso para comprarte cositas lindas.`, flags: MessageFlags.Ephemeral });
+        const embed = crearEmbed(CONFIG.COLORES.ROSA)
+            .setTitle("🤖 Los robots no usamos monedas...")
+            .setDescription(`${bostezo}Qué amable eres, pero a los robots no nos sirven las moneditas. ¡Guarda eso para comprarte cositas lindas!`);
+        return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
     }
 
-    // Checking donor balance
     const resultDonante = await db.execute({
         sql: "SELECT monedas FROM usuarios WHERE id = ?",
         args: [donante_id]
@@ -32,45 +37,69 @@ export async function execute(interaction, bostezo) {
     const balanceDonante = resultDonante.rows.length > 0 ? Number(resultDonante.rows[0].monedas) : 0;
 
     if (balanceDonante < cantidad) {
-        return interaction.reply({
-            content: `Pucha ${getTrato()}... solo tienes **${balanceDonante}** moneditas en tu bolsita. No te alcanza para dar ${cantidad}. ¡Sigue paseando para encontrar más!`,
-            flags: MessageFlags.Ephemeral
-        });
+        const embed = crearEmbed(CONFIG.COLORES.ROJO)
+            .setTitle("💸 ¡No tienes suficiente!")
+            .setDescription(
+                `Pucha ${getTrato()}... solo tienes **${balanceDonante.toLocaleString()} 🪙** en tu bolsita.\n\n` +
+                `No te alcanza para dar **${cantidad.toLocaleString()}**. ¡Sigue aventurando para conseguir más!`
+            );
+        return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
     }
 
     try {
-        // Ejecutar transacción manualmente (SQLite no soporta transacciones nativas en la lib de esta de la misma forma, usamos 2 db.execute asíncronos rápidos)
-        // Restar al donante
         await db.execute({
             sql: "UPDATE usuarios SET monedas = monedas - ? WHERE id = ?",
             args: [cantidad, donante_id]
         });
 
-        // Sumar al recipiente
         await db.execute({
-            sql: `INSERT INTO usuarios (id, monedas, xp, nivel) 
-                  VALUES (?, ?, 0, 1) 
+            sql: `INSERT INTO usuarios (id, monedas, xp, nivel)
+                  VALUES (?, ?, 0, 1)
                   ON CONFLICT(id) DO UPDATE SET monedas = usuarios.monedas + excluded.monedas`,
             args: [recipiente.id, cantidad]
         });
 
-        const embed = crearEmbed(CONFIG.COLORES.ROSA)
-            .setTitle("🎁 ¡Un regalito llego!")
-            .setDescription(`¡Qué gesto más precioso! <@${donante_id}> le ha regalado con amor **${cantidad} moneditas** a <@${recipiente.id}>.\n\nQué lindo es ver lo generosos que son en nuestro pueblito.`);
+        const embed = crearEmbed(CONFIG.COLORES.MAGENTA)
+            .setTitle("🎁 ¡Un regalito llegó!")
+            .setDescription(
+                `¡Qué gesto más precioso! El pueblito se llena de alegría cuando veo estas cosas. 🌸\n\n` +
+                `<@${donante_id}> le regaló con amor **${cantidad.toLocaleString()} 🪙** a <@${recipiente.id}>.`
+            )
+            .addFields(
+                {
+                    name: "🎁 Regalo enviado",
+                    value: `**${cantidad.toLocaleString()} 🪙**`,
+                    inline: true
+                },
+                {
+                    name: "💌 Para",
+                    value: `${recipiente.username}`,
+                    inline: true
+                }
+            )
+            .setThumbnail(recipiente.displayAvatarURL({ dynamic: true, size: 128 }));
 
-        agregarNarrativa(embed, "general");
+        await interaction.reply({ embeds: [embed] });
 
-        await interaction.reply({ content: bostezo, embeds: [embed] });
-
-        // Intentar DM al recipiente
+        // DM al recipiente
         try {
-            await recipiente.send(`*Ding dong~* ¡Hola corazón! Annie por aquí. Te cuento que <@${donante_id}> te ha mandado de regalo **${cantidad} moneditas**. ¡Disfrútalas mucho!`);
+            const embedDM = crearEmbed(CONFIG.COLORES.MAGENTA)
+                .setTitle("🔔 ¡Recibiste un regalito!")
+                .setDescription(
+                    `*Ding dong~* ¡Hola ${recipiente.username}, corazón! Annie por aquí. 🌸\n\n` +
+                    `Te cuento que **<@${donante_id}>** te mandó de regalo **${cantidad.toLocaleString()} 🪙**.\n\n` +
+                    `¡Disfrútalas mucho y cuídate!`
+                );
+            await recipiente.send({ embeds: [embedDM] });
         } catch (e) {
-            // Usuario tiene los DMs cerrados, no pasa nada
+            // DMs cerrados, no pasa nada
         }
 
     } catch (e) {
         console.error("Error regalando monedas:", e.message);
-        return interaction.reply({ content: `${bostezo}Hubo un problemita guardando las moneditas... ¡Ups! Intentemos después.`, flags: MessageFlags.Ephemeral });
+        const embed = crearEmbed(CONFIG.COLORES.ROSA)
+            .setTitle("❌ ¡Ay, algo falló!")
+            .setDescription(`${bostezo}Hubo un problemita guardando las moneditas... ¡Ups! Intentemos después.`);
+        return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
     }
 }

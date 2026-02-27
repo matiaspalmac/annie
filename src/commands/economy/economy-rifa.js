@@ -1,9 +1,8 @@
-import { SlashCommandBuilder } from "discord.js";
+import { SlashCommandBuilder, MessageFlags } from "discord.js";
 import { db } from "../../services/db.js";
 import { crearEmbed, getFechaChile } from "../../core/utils.js";
 import { CONFIG } from "../../core/config.js";
 
-// El costo fijo de cada boleto de rifa
 const COSTO_BOLETO = 10;
 
 export const data = new SlashCommandBuilder()
@@ -20,13 +19,12 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction, bostezo) {
     const subcomando = interaction.options.getSubcommand();
-    const hoyStr = getFechaChile(); // YYYY-MM-DD en horario Chile
+    const hoyStr = getFechaChile();
 
     await interaction.deferReply();
 
     try {
         if (subcomando === "ver") {
-            // Contar boletos totales de hoy
             const countRes = await db.execute({
                 sql: "SELECT COUNT(*) as total FROM rifa_boletos WHERE fecha = ?",
                 args: [hoyStr]
@@ -35,42 +33,61 @@ export async function execute(interaction, bostezo) {
             const totalBoletos = Number(countRes.rows[0]?.total || 0);
             const pozoMonedas = totalBoletos * COSTO_BOLETO;
 
-            // Ver cuántos tiene este usuario
             const misBoletosRes = await db.execute({
                 sql: "SELECT COUNT(*) as mis FROM rifa_boletos WHERE fecha = ? AND user_id = ?",
                 args: [hoyStr, interaction.user.id]
             });
             const misBoletos = Number(misBoletosRes.rows[0]?.mis || 0);
+            const miChance = totalBoletos > 0 ? ((misBoletos / totalBoletos) * 100).toFixed(1) : "0";
 
             const embed = crearEmbed(CONFIG.COLORES.DORADO)
                 .setTitle("🎟️ La Rifa Diaria de Annie")
-                .setDescription("*A ver, a ver... veamos cómo va la cajita de los boletos...*")
+                .setDescription(
+                    `${bostezo}*A ver, a ver... veamos cómo va la cajita de los boletos...*\n\n` +
+                    `¡El sorteo es esta noche a las **23:59**! ¿Ya tienes tu boleto? 🌸`
+                )
                 .addFields(
-                    { name: "💰 Pozo Acumulado", value: `**${pozoMonedas}** Moneditas`, inline: true },
-                    { name: "🎫 Boletos Vendidos", value: `${totalBoletos}`, inline: true },
-                    { name: "Tu Participación", value: `Tienes **${misBoletos}** boleto(s).`, inline: false }
+                    { name: "💰 Pozo Acumulado", value: `**${pozoMonedas.toLocaleString()} 🪙**`, inline: true },
+                    { name: "🎫 Boletos Vendidos", value: `**${totalBoletos}**`, inline: true },
+                    {
+                        name: "🎯 Tu Participación", value: misBoletos > 0
+                            ? `**${misBoletos} boleto(s)** — ${miChance}% de ganar`
+                            : `*Aún no tienes boleto. Usa \`/rifa comprar\` para participar!*`,
+                        inline: false
+                    }
                 )
                 .setFooter({ text: "La rifa se sortea hoy a las 23:59. ¡Suerte!" });
 
             return interaction.followUp({ embeds: [embed] });
 
         } else if (subcomando === "comprar") {
-            // Chequear si el usuario tiene moneditas suficientes
             const userRes = await db.execute({
                 sql: "SELECT monedas FROM usuarios WHERE id = ?",
                 args: [interaction.user.id]
             });
 
             if (userRes.rows.length === 0) {
-                return interaction.followUp(`${bostezo}Ay corazón, todavía no te tengo anotado en mi libretita de vecinos. ¡Habla un poquito más por el chat general primero!`);
+                const embed = crearEmbed(CONFIG.COLORES.ROSA)
+                    .setTitle("📋 ¡Aún no estás registrado!")
+                    .setDescription(
+                        `${bostezo}Ay corazón, todavía no te tengo anotado en mi libretita de vecinos. ` +
+                        `¡Habla un poquito más por el chat general primero!`
+                    );
+                return interaction.followUp({ embeds: [embed] });
             }
 
             const monedasCurrent = Number(userRes.rows[0].monedas);
             if (monedasCurrent < COSTO_BOLETO) {
-                return interaction.followUp(`${bostezo}Pucha mi tesoro... un boleto cuesta **${COSTO_BOLETO} moneditas**, pero a ti te faltan **${COSTO_BOLETO - monedasCurrent}**. ¡Prueba charlando más en el pueblito para juntar plata!`);
+                const embed = crearEmbed(CONFIG.COLORES.NARANJA)
+                    .setTitle("💸 ¡Sin fondos para el boleto!")
+                    .setDescription(`${bostezo}Pucha mi tesoro... necesitas **${COSTO_BOLETO} 🪙** para un boleto.`)
+                    .addFields(
+                        { name: "💰 Tienes", value: `**${monedasCurrent} 🪙**`, inline: true },
+                        { name: "❌ Faltan", value: `**${COSTO_BOLETO - monedasCurrent} 🪙**`, inline: true }
+                    );
+                return interaction.followUp({ embeds: [embed] });
             }
 
-            // Descontar monedas e insertar boleto
             await db.execute({
                 sql: "UPDATE usuarios SET monedas = monedas - ? WHERE id = ?",
                 args: [COSTO_BOLETO, interaction.user.id]
@@ -81,10 +98,33 @@ export async function execute(interaction, bostezo) {
                 args: [interaction.user.id, hoyStr]
             });
 
-            return interaction.followUp(`🎟️ ¡Listo! Te acabo de anotar en la libretita de la rifa, <@${interaction.user.id}>. Te desconté **${COSTO_BOLETO} moneditas**. \n\n¡Ojalá tengas mucha suerte esta noche a las 23:59! 🌸`);
+            // Contar cuántos boletos tiene ahora
+            const boletosRes = await db.execute({
+                sql: "SELECT COUNT(*) as mis FROM rifa_boletos WHERE fecha = ? AND user_id = ?",
+                args: [hoyStr, interaction.user.id]
+            });
+            const totalMios = Number(boletosRes.rows[0]?.mis || 1);
+
+            const embed = crearEmbed(CONFIG.COLORES.MAGENTA)
+                .setTitle("🎟️ ¡Boleto Comprado!")
+                .setDescription(
+                    `${bostezo}¡Te acabo de anotar en la libretita de la rifa, <@${interaction.user.id}>!\n\n` +
+                    `*Annie firma el boleto con su mejor pluma y te lo entrega con una sonrisa.*`
+                )
+                .addFields(
+                    { name: "🎟️ Tus boletos hoy", value: `**${totalMios}**`, inline: true },
+                    { name: "💸 Costo", value: `**${COSTO_BOLETO} 🪙** descontados`, inline: true },
+                    { name: "⏰ Sorteo", value: "Esta noche a las **23:59**", inline: true }
+                );
+
+            return interaction.followUp({ embeds: [embed] });
         }
+
     } catch (error) {
         console.error("Error en comando /rifa:", error);
-        return interaction.followUp(`${bostezo}Uy... se me enredaron los boletos y no pude procesar eso. ¿Intentamos de nuevo más ratito?`);
+        const embed = crearEmbed(CONFIG.COLORES.ROSA)
+            .setTitle("❌ ¡Los boletos se enredaron!")
+            .setDescription(`${bostezo}Uy... se me enredaron los boletos y no pude procesar eso. ¿Intentamos de nuevo más ratito?`);
+        return interaction.followUp({ embeds: [embed] });
     }
 }

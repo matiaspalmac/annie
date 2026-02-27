@@ -1,38 +1,18 @@
 import { SlashCommandBuilder, MessageFlags } from "discord.js";
 import { db } from "../../services/db.js";
-import { getBostezo } from "../../core/utils.js";
+import { crearEmbed } from "../../core/utils.js";
+import { CONFIG } from "../../core/config.js";
 
 const TYPE_META = {
-    pico: {
-        like: "herr_pico_%",
-        defaultId: "herr_pico_basico",
-        defaultDur: 50,
-        nombre: "pico",
-    },
-    hacha: {
-        like: "herr_hacha_%",
-        defaultId: "herr_hacha_basica",
-        defaultDur: 55,
-        nombre: "hacha",
-    },
-    cana: {
-        like: "herr_cana_%",
-        defaultId: "herr_cana_basica",
-        defaultDur: 60,
-        nombre: "caña",
-    },
-    red: {
-        like: "herr_red_%",
-        defaultId: "herr_red_basica",
-        defaultDur: 60,
-        nombre: "red",
-    },
+    pico: { like: "herr_pico_%", defaultId: "herr_pico_basico", defaultDur: 50, nombre: "pico", emoji: "⛏️" },
+    hacha: { like: "herr_hacha_%", defaultId: "herr_hacha_basica", defaultDur: 55, nombre: "hacha", emoji: "🪓" },
+    cana: { like: "herr_cana_%", defaultId: "herr_cana_basica", defaultDur: 60, nombre: "caña", emoji: "🎣" },
+    red: { like: "herr_red_%", defaultId: "herr_red_basica", defaultDur: 60, nombre: "red", emoji: "🕸️" },
 };
 
 async function ensureDefaultTool(userId, typeKey) {
     const meta = TYPE_META[typeKey];
     if (!meta) return;
-
     await db.execute({
         sql: `INSERT OR IGNORE INTO herramientas_durabilidad (user_id, item_id, durabilidad, max_durabilidad, equipado)
               VALUES (?, ?, ?, ?, 0)`,
@@ -45,6 +25,14 @@ function normalizeTipo(value) {
     return TYPE_META[tipo] ? tipo : null;
 }
 
+function durColor(dur, max) {
+    const pct = max > 0 ? dur / max : 0;
+    if (pct >= 0.75) return "🟩";
+    if (pct >= 0.4) return "🟨";
+    if (pct > 0) return "🟥";
+    return "⬛";
+}
+
 export const data = new SlashCommandBuilder()
     .setName("equipar")
     .setDescription("Equipa la herramienta que prefieras (pico, hacha, caña o red).")
@@ -54,10 +42,10 @@ export const data = new SlashCommandBuilder()
             .setDescription("Familia de herramienta a equipar")
             .setRequired(true)
             .addChoices(
-                { name: "Pico", value: "pico" },
-                { name: "Hacha", value: "hacha" },
-                { name: "Caña", value: "cana" },
-                { name: "Red", value: "red" },
+                { name: "⛏️ Pico", value: "pico" },
+                { name: "🪓 Hacha", value: "hacha" },
+                { name: "🎣 Caña", value: "cana" },
+                { name: "🕸️ Red", value: "red" },
             )
     )
     .addStringOption((option) =>
@@ -73,10 +61,7 @@ export async function autocomplete(interaction) {
         const userId = interaction.user.id;
         const focused = interaction.options.getFocused(true).value?.trim().toLowerCase() || "";
         const tipo = normalizeTipo(interaction.options.getString("tipo"));
-        if (!tipo) {
-            await interaction.respond([]);
-            return;
-        }
+        if (!tipo) { await interaction.respond([]); return; }
 
         const likePattern = TYPE_META[tipo].like;
         const term = `%${focused}%`;
@@ -115,11 +100,17 @@ export async function execute(interaction, bostezo) {
 
     try {
         if (!tipo) {
-            return interaction.editReply(`${bostezo}Ese tipo de herramienta no existe.`);
+            const embed = crearEmbed(CONFIG.COLORES.ROSA)
+                .setTitle("❓ Tipo inválido")
+                .setDescription(`${bostezo}Ese tipo de herramienta no existe. Elige entre pico, hacha, caña o red.`);
+            return interaction.editReply({ embeds: [embed] });
         }
 
         if (!/^herr_[a-z_]+$/i.test(herramienta)) {
-            return interaction.editReply(`${bostezo}Ese identificador de herramienta no es válido.`);
+            const embed = crearEmbed(CONFIG.COLORES.ROSA)
+                .setTitle("❓ Herramienta inválida")
+                .setDescription(`${bostezo}Ese identificador no es válido. Usa el autocompletado para elegir correctamente.`);
+            return interaction.editReply({ embeds: [embed] });
         }
 
         const meta = TYPE_META[tipo];
@@ -137,13 +128,20 @@ export async function execute(interaction, bostezo) {
         });
 
         if (toolRes.rows.length === 0) {
-            return interaction.editReply(`${bostezo}No tienes esa ${meta.nombre} en tu mochila o no corresponde al tipo elegido.`);
+            const embed = crearEmbed(CONFIG.COLORES.ROJO)
+                .setTitle("❌ No encontrada")
+                .setDescription(`${bostezo}No tienes esa ${meta.nombre} en tu mochila o no corresponde al tipo elegido.`);
+            return interaction.editReply({ embeds: [embed] });
         }
 
         const durabilidad = Number(toolRes.rows[0].durabilidad || 0);
         const maxDurabilidad = Number(toolRes.rows[0].max_durabilidad || 0);
+
         if (durabilidad <= 0) {
-            return interaction.editReply(`${bostezo}Esa herramienta está rota. Equipa otra o compra una nueva en **/tienda**.`);
+            const embed = crearEmbed(CONFIG.COLORES.ROJO)
+                .setTitle("💔 ¡Herramienta rota!")
+                .setDescription(`${bostezo}Esa herramienta está rota. Equipa otra o compra una nueva en \`/tienda\`.`);
+            return interaction.editReply({ embeds: [embed] });
         }
 
         await db.execute({
@@ -154,14 +152,25 @@ export async function execute(interaction, bostezo) {
         });
 
         const nombre = String(toolRes.rows[0].nombre || herramienta);
-        const bostezito = getBostezo();
-        return interaction.editReply(
-            `${bostezito}🧰 ¡Listo, mi cielo! Equipaste **${nombre}** como tu ${meta.nombre} activa.\n` +
-            `🛠️ Durabilidad actual: **${durabilidad}/${maxDurabilidad}**\n` +
-            `Quedará guardada hasta que la cambies o se rompa. ¡A trabajar con cariño!`
-        );
+        const dc = durColor(durabilidad, maxDurabilidad);
+
+        const embed = crearEmbed(CONFIG.COLORES.VERDE)
+            .setTitle(`${meta.emoji} ¡Herramienta equipada!`)
+            .setDescription(
+                `${bostezo}¡Listo, mi cielo! Equipaste **${nombre}** como tu ${meta.nombre} activa. ¡A trabajar con cariño!`
+            )
+            .addFields(
+                { name: `${meta.emoji} Herramienta`, value: `**${nombre}**`, inline: true },
+                { name: "🔋 Durabilidad", value: `${dc} \`${durabilidad}/${maxDurabilidad}\``, inline: true }
+            );
+
+        return interaction.editReply({ embeds: [embed] });
+
     } catch (error) {
         console.error("Error en comando /equipar:", error);
-        return interaction.editReply(`${bostezo}No pude ajustar tu equipo ahora mismito.`);
+        const embed = crearEmbed(CONFIG.COLORES.ROSA)
+            .setTitle("❌ Error al equipar")
+            .setDescription(`${bostezo}No pude ajustar tu equipo ahora mismito. Inténtalo de nuevo.`);
+        return interaction.editReply({ embeds: [embed] });
     }
 }

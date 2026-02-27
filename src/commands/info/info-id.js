@@ -1,5 +1,7 @@
 import { SlashCommandBuilder, MessageFlags } from "discord.js";
 import { getGameId } from "../../services/db.js";
+import { crearEmbed } from "../../core/utils.js";
+import { CONFIG } from "../../core/config.js";
 
 export const data = new SlashCommandBuilder()
     .setName("id")
@@ -13,13 +15,24 @@ export async function execute(interaction, bostezo) {
         const gameId = await getGameId(usuario.id);
 
         if (!gameId) {
-            return interaction.reply({ content: `Ay no... no tengo ningún Game ID anotado para ${usuario} en mi libretita.`, flags: MessageFlags.Ephemeral });
+            const embed = crearEmbed(CONFIG.COLORES.ROSA)
+                .setTitle("📋 Game ID no encontrado")
+                .setDescription(
+                    `${bostezo}Ay no... no tengo ningún Game ID anotado para ${usuario} en mi libretita.\n\n` +
+                    `Un administrador puede vincularlo usando \`/linkid\`.`
+                );
+            return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
         }
 
-        return interaction.reply({
-            content: `El game ID de ${usuario} es **${gameId}**.`,
-            flags: MessageFlags.Ephemeral
-        });
+        const embed = crearEmbed(CONFIG.COLORES.CIELO)
+            .setTitle("🎮 Game ID Encontrado")
+            .setThumbnail(usuario.displayAvatarURL({ dynamic: true }))
+            .addFields(
+                { name: "👤 Usuario", value: `${usuario}`, inline: true },
+                { name: "🎮 Game ID", value: `\`${gameId}\``, inline: true }
+            );
+
+        return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
     } catch (err) {
         throw err;
     }
