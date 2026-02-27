@@ -69,7 +69,7 @@ function actualizarEstado() {
     const estado = estaDurmiendo()
       ? "Zzz... acurrucadita en la oficinita"
       : ACTIVIDADES[Math.floor(Math.random() * ACTIVIDADES.length)];
-    
+
     client.user.setActivity(estado, { type: ActivityType.Custom });
   } catch (error) {
     console.error('[Estado] Error actualizando estado:', error.message);
@@ -135,7 +135,7 @@ async function conectarOficina() {
       selfDeaf: true,
       selfMute: true,
     });
-    
+
     console.log('[Voz] Annie entró a su oficinita de voz');
   } catch (error) {
     console.error('[Voz] Error conectando al canal de voz:', error.message);
@@ -150,7 +150,7 @@ async function anunciarClima(forzado = false) {
   try {
     const hora = getHoraChile();
     const horaAnuncio = CONFIG.HORA_ANUNCIO_CLIMA || 19;
-    
+
     if (!forzado && hora !== horaAnuncio) return;
 
     const canal = getCanalGeneral(client);
@@ -181,14 +181,14 @@ async function anunciarClima(forzado = false) {
         value: horariosTexto,
       });
     }
-    
+
     embed.setFooter({ text: "Pronóstico hecho con amor | Annie" });
 
-    await canal.send({ 
-      content: "Annie les trae el clima con amor:", 
-      embeds: [embed] 
+    await canal.send({
+      content: "Annie les trae el clima con amor:",
+      embeds: [embed]
     });
-    
+
     console.log('[Clima] Clima anunciado exitosamente');
   } catch (error) {
     console.error('[Clima] Error anunciando clima:', error.message);
@@ -202,15 +202,15 @@ async function anunciarClima(forzado = false) {
 function ejecutarRutinaDiaria() {
   try {
     if (estaDurmiendo()) return;
-    
+
     const hora = getHoraChile();
     const rutina = RUTINAS.find(r => r.hora === hora);
-    
+
     if (!rutina || ultimaRutina === hora) return;
 
     ultimaRutina = hora;
     const canal = getCanalGeneral(client);
-    
+
     if (!canal) {
       console.warn('[Rutina] Canal general no encontrado');
       return;
@@ -692,6 +692,14 @@ client.on(Events.MessageCreate, async (message) => {
     } catch (e) {
       console.error("Error tarro chuchadas:", e.message);
     }
+  }
+
+  // Mondongo detector 🍲
+  if (/mondongo/i.test(texto)) {
+    await msg.reply({
+      content: "🍲",
+      files: [{ attachment: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTb-m0Yqk1nEAvN0Z1GN4QuHY5lXXFDTj6CyA&s", name: "mondongo.jpg" }]
+    }).catch(console.error);
   }
 
   if (message.channel.id === CONFIG.CANAL_GENERAL_ID) {
