@@ -469,8 +469,8 @@ client.once("clientReady", async () => {
   scheduleUpdate();
 
   function programarEstrellaFugaz() {
-    // Entre 30 y 120 minutos
-    const proxMinutos = Math.floor(Math.random() * 90) + 30;
+    // Entre 4 y 6 horas (240 a 360 minutos)
+    const proxMinutos = Math.floor(Math.random() * 120) + 240;
     setTimeout(async () => {
       lanzarEstrellaFugaz(client);
       programarEstrellaFugaz(); // loop infinito
@@ -486,10 +486,10 @@ client.once("clientReady", async () => {
 
   setInterval(actualizarEstado, 600000);
 
-  // Motor de Trivias (cada 2 horas)
+  // Motor de Trivias (cada 8 horas)
   setInterval(() => {
     lanzarTriviaAleatoria(client);
-  }, 1000 * 60 * 120);
+  }, 1000 * 60 * 60 * 8);
 
   // Comprobar si Doris aterriza (cada 1 hora y media)
   setInterval(chequearDoris, 1000 * 60 * 90);

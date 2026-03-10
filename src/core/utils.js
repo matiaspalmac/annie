@@ -100,6 +100,10 @@ let _estrellaActiva = false;
 export function isEstrellaActiva() { return _estrellaActiva; }
 export function setEstrellaActiva(val) { _estrellaActiva = val; }
 
+let _estrellaMensaje = null;
+export function getEstrellaMensaje() { return _estrellaMensaje; }
+export function setEstrellaMensaje(msg) { _estrellaMensaje = msg; }
+
 // ---- Evento Mercader Doris ----
 let _itemEnDemanda = null; // Guardará el nombre del ítem que están comprando caro
 let _demandaActivaHasta = 0; // Timestamp hasta cuándo dura la oferta
@@ -267,7 +271,7 @@ export function crearEmbedExito(titulo, descripcion, color, fields = []) {
   return embed;
 }
 
-export function lanzarEstrellaFugaz(client) {
+export async function lanzarEstrellaFugaz(client) {
   if (estaDurmiendo() || isEstrellaActiva()) return;
 
   setEstrellaActiva(true);
@@ -276,12 +280,21 @@ export function lanzarEstrellaFugaz(client) {
     const embed = crearEmbed(CONFIG.COLORES.DORADO)
       .setTitle("🌠 ¡Una Estrella Fugaz en el cielo!")
       .setDescription("*Annie se asoma rápido por la ventanita de la oficinita...*\n\n¡Oh! Acabo de ver caer una estrella brillante en el pueblito... **¡El primero que escriba `/deseo` se la lleva!** ✨");
-    canal.send({ embeds: [embed] }).catch(console.error);
+
+    try {
+      const msg = await canal.send({ embeds: [embed] });
+      setEstrellaMensaje(msg);
+    } catch (error) {
+      console.error("Error enviando estrella:", error);
+      setEstrellaActiva(false);
+      return;
+    }
 
     // La estrella caduca después de la duración configurada
     setTimeout(() => {
       if (isEstrellaActiva()) {
         setEstrellaActiva(false);
+        setEstrellaMensaje(null);
         canal.send("❄️ La chispita de la estrella se apagó solita... ¡Ojalá para la próxima estemos más atentos!").catch(() => { });
       }
     }, DURACION_ESTRELLA_FUGAZ);

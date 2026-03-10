@@ -385,33 +385,3 @@ export const FRASES_AMBIENT = [
   "Se me fue rapidisimo el dia entre cartas y pajaritos. Asi me gusta, po.",
   "Oye, recuerda que descansar tambien es productivo. No te exijas tanto, ya po?",
 ];
-
-/* 
-export const CLIMA_PUEBLO = {
-  hoy: {
-    tipo: "Nevada moderada ❄️",
-    descripcion:
-      "El pueblo está cubierto por un manto blanco. La nieve cae con intensidad moderada, creando un paisaje invernal perfecto. ¡Abrígate bien antes de salir a jugar en la nieve!",
-    eventos: [
-      { hora: 14, evento: "Nieve intensa 🌨️" },
-      { hora: 20, evento: "Nevada persistente ❄️" },
-    ],
-    timeline: [
-      { hora: 14, texto: "Nubes de nieve ☁️❄️" },
-      { hora: 20, texto: "Nevada moderada 🌨️" },
-      { hora: 2, texto: "Luna despejada 🌙" },
-      { hora: 8, texto: "Mañana soleada ☀️" },
-      { hora: 14, texto: "Sol de mediodía ☀️" },
-    ],
-  },
-  próximos: [
-    { dia: "Martes", clima: "Soleado y despejado ☀️" },
-    { dia: "Miércoles", clima: "Soleado y despejado ☀️" },
-    { dia: "Jueves", clima: "Soleado y despejado ☀️" },
-    { dia: "Viernes", clima: "Lluvia ligera 🌧️" },
-    { dia: "Sábado", clima: "Noche con nubes y luna 🌙☁️" },
-    { dia: "Domingo", clima: "Soleado y despejado ☀️" },
-    { dia: "Lunes", clima: "Lluvia ligera 🌧️" },
-  ],
-};
- */

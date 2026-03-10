@@ -2,7 +2,7 @@ import { SlashCommandBuilder, MessageFlags } from "discord.js";
 import { CONFIG } from "../../core/config.js";
 import { db } from "../../services/db.js";
 import { crearEmbed } from "../../core/utils.js";
-import { isEstrellaActiva, setEstrellaActiva } from "../../core/utils.js";
+import { isEstrellaActiva, setEstrellaActiva, getEstrellaMensaje, setEstrellaMensaje } from "../../core/utils.js";
 
 export const data = new SlashCommandBuilder()
     .setName("deseo")
@@ -18,6 +18,14 @@ export async function execute(interaction, bostezo) {
 
     // Consumir la estrella
     setEstrellaActiva(false);
+
+    // Borrar el mensaje original
+    const estrellaMsg = getEstrellaMensaje();
+    if (estrellaMsg && estrellaMsg.deletable) {
+        estrellaMsg.delete().catch(console.error);
+        // Limpiamos la referencia
+        setEstrellaMensaje(null);
+    }
 
     const xpGanada = Math.floor(Math.random() * 500) + 200;       // 200–700 XP
     const monedasGanadas = Math.floor(Math.random() * 30) + 10;   // 10–40 monedas
