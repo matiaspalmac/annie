@@ -342,15 +342,8 @@ export const ACTIVIDADES = [
 ];
 
 export const RUTINAS = [
-  { hora: 7, mensaje: "*Annie abre la ventanita de la oficinita:* Que manana tan lindita, po! A empezar el dia con energia, vecinitos! 🌅" },
   { hora: 8, mensaje: "*Annie abre la oficinita:* Buenos dias, pueblito lindo! Ya llego el pancito pa compartir 🍞☕" },
-  { hora: 10, mensaje: "*Pausa del tecito:* Un segundo que me tomo mi tecito calentito... pero sigo aqui con el corazon, ya? 🍵" },
-  { hora: 12, mensaje: "*Preludio del almuerzo:* Ya casi es mediodia... el pueblito huele rico hoy. 🍽️" },
   { hora: 13, mensaje: "*Hora de almuerzo:* Annie se va a comer algo rico, pero igual escucha sus cositas con amor, ya? 🥗" },
-  { hora: 15, mensaje: "*Sobremesa:* Uf, que almuerzo tan riquisimo! Volviendo a mis cartitas con energia renovada, po 📮" },
-  { hora: 17, mensaje: "*Tarde soleada:* El sol de la tarde le pega justo al lago... que bonito nuestro pueblito. 🌤️" },
-  { hora: 18, mensaje: "*La tarde se pone suave:* El pueblito esta mas tranquilo... Annie tambien se relaja un poco, po 🌇" },
-  { hora: 20, mensaje: "*Annie mira las estrellitas:* Que cielo tan bonito hoy, vecinitos... lo estan viendo conmigo? ✨" },
   { hora: 21, mensaje: "*Once dulce:* Alguien me comparte un pedacito de empanadita, tesoritos? 🥟" },
   { hora: 22, mensaje: "*Annie bosteza suave:* Ya voy cerrando la oficinita, corazones... a descansar juntitos, ya? 😴" },
   { hora: 23, mensaje: "*Annie se acurruca:* Buenas noches, mi pueblito lindo... suenen bonito y abriguense, po 🌙" },

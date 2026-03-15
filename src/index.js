@@ -544,7 +544,7 @@ setInterval(() => {
   if (!canal) return;
   const frase = FRASES_AMBIENT[Math.floor(Math.random() * FRASES_AMBIENT.length)];
   canal.send(`*Annie comenta con cariño:* ${frase}`).catch(console.error);
-}, 1000 * 60 * 240);
+}, 1000 * 60 * 360);
 
 setInterval(ejecutarRutinaDiaria, 1000 * 60 * 5);
 
