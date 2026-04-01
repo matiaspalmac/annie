@@ -1,15 +1,13 @@
-import { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
+import { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from "discord.js";
 import {
-  validarApuesta,
-  verificarCooldownCasino,
-  actualizarCooldownCasino,
-  obtenerBalance,
+  prepararApuesta,
   actualizarBalance,
   actualizarEstadisticasCasino,
   CASINO_MIN_BET,
   CASINO_MAX_BET,
 } from "../../features/casino.js";
 import { getBostezo } from "../../core/utils.js";
+import { progresarMision } from "../../features/misiones.js";
 
 // Mapas de emojis para las cartas
 const PALOS = ["♠️", "♥️", "♦️", "♣️"];
@@ -93,18 +91,6 @@ export async function execute(interaction, bostezo) {
   
   if (!bostezo) bostezo = getBostezo();
 
-  // Validar apuesta
-  const validacion = validarApuesta(apuesta);
-  if (!validacion.ok) {
-    return interaction.reply({ content: validacion.mensaje, flags: MessageFlags.Ephemeral });
-  }
-
-  // Verificar cooldown
-  const cooldown = await verificarCooldownCasino(userId);
-  if (!cooldown.ok) {
-    return interaction.reply({ content: cooldown.mensaje, flags: MessageFlags.Ephemeral });
-  }
-
   // Verificar si ya tiene una partida activa
   if (partidasActivas.has(userId)) {
     return interaction.reply({
@@ -113,17 +99,9 @@ export async function execute(interaction, bostezo) {
     });
   }
 
-  // Verificar balance
-  const balanceActual = await obtenerBalance(userId);
-  if (balanceActual < apuesta) {
-    return interaction.reply({
-      content: `${bostezo}❌ No tienes suficientes moneditas, tesoro. Balance actual: **${balanceActual}** 💰`,
-      flags: MessageFlags.Ephemeral,
-    });
-  }
-
-  // Actualizar cooldown
-  await actualizarCooldownCasino(userId);
+  const prep = await prepararApuesta(interaction, apuesta, bostezo);
+  if (!prep.ok) return;
+  const balanceActual = prep.balance;
 
   // Iniciar partida
   const mazo = new Mazo();
@@ -309,6 +287,9 @@ async function finalizarPartida(interaction, userId, tipo) {
   if (valorJugador !== valorCasa) {
     await actualizarEstadisticasCasino(userId, gano, apuesta, ganancia);
   }
+
+  // Progreso de misión diaria
+  progresarMision(userId, "casino").catch(() => {});
 
   // Mensaje final
   let mensaje = `🃏 **RESULTADO FINAL** 🃏\n\n` +

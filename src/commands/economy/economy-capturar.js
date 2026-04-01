@@ -3,6 +3,9 @@ import { db } from "../../services/db.js";
 import { crearEmbed, crearEmbedCooldown, crearEmbedDrop } from "../../core/utils.js";
 import { CONFIG } from "../../core/config.js";
 import { ganarXP, registrarEstadistica, registrarBitacora, tieneBoostActivo } from "../../features/progreso.js";
+import { verificarCooldown, setCooldown, detectarMacro } from "../../features/cooldown.js";
+import { degradarHerramienta } from "../../services/db-helpers.js";
+import { progresarMision } from "../../features/misiones.js";
 
 const COOLDOWN_BICHOS = 300000; // 5 minutos
 
@@ -49,24 +52,8 @@ export async function execute(interaction, bostezo) {
 
     try {
         // 1. Revisar cooldown
-        const resCd = await db.execute({
-            sql: "SELECT fecha_limite FROM cooldowns WHERE user_id = ? AND comando = 'capturar' AND extra_id = 'global'",
-            args: [userId]
-        });
-
-        if (resCd.rows.length > 0) {
-            const limite = Number(resCd.rows[0].fecha_limite);
-            if (ahora < limite) {
-                const faltanMinutos = Math.ceil((limite - ahora) / 60000);
-                const embed = crearEmbedCooldown(faltanMinutos, bostezo.trim(), "capturar")
-                    .setDescription(
-                        `*${bostezo.trim()}*\n\n` +
-                        `🍃 Shhh... los bichitos tienen buen oído, ¡si haces ruido no saldrán!\n` +
-                        `⌛ Relájate **${faltanMinutos} minutos** antes de volver a mover los matorrales.`
-                    );
-                return interaction.editReply({ embeds: [embed] });
-            }
-        }
+        const cd = await verificarCooldown(userId, "capturar", COOLDOWN_BICHOS, bostezo);
+        if (!cd.ok) return interaction.editReply({ embeds: [cd.embed] });
 
         // 2. Validar herramienta
         const red = await getEquippedNet(userId);
@@ -81,35 +68,14 @@ export async function execute(interaction, bostezo) {
         }
 
         // 3. Establecer cooldown
-        await db.execute({
-            sql: `INSERT INTO cooldowns (user_id, comando, extra_id, fecha_limite)
-            VALUES (?, 'capturar', 'global', ?)
-            ON CONFLICT(user_id, comando, extra_id) DO UPDATE SET fecha_limite = excluded.fecha_limite`,
-            args: [userId, ahora + COOLDOWN_BICHOS]
-        });
+        await setCooldown(userId, "capturar", COOLDOWN_BICHOS);
 
         // XP de Caza
         const xpGanada = Math.floor(Math.random() * 16) + 15;
         const nivelCaza = await ganarXP(userId, "caza", xpGanada, interaction);
 
         // Anti-macro
-        const resMacro = await db.execute({
-            sql: "SELECT ultimo_ts, patron_count FROM macro_patrones WHERE user_id = ? AND comando = 'capturar'",
-            args: [userId]
-        });
-        let patronCount = Number(resMacro.rows[0]?.patron_count || 0);
-        const ultimoTs = Number(resMacro.rows[0]?.ultimo_ts || 0);
-        const delta = ultimoTs > 0 ? (ahora - ultimoTs) : 0;
-        if (delta > 0 && Math.abs(delta - COOLDOWN_BICHOS) <= 2500) patronCount += 1;
-        else patronCount = Math.max(0, patronCount - 1);
-
-        await db.execute({
-            sql: `INSERT INTO macro_patrones (user_id, comando, ultimo_ts, patron_count)
-                  VALUES (?, 'capturar', ?, ?)
-                  ON CONFLICT(user_id, comando) DO UPDATE SET ultimo_ts = excluded.ultimo_ts, patron_count = excluded.patron_count`,
-            args: [userId, ahora, patronCount]
-        });
-        const penalizacionMacro = patronCount >= 3 ? 0.8 : 1;
+        const penalizacionMacro = await detectarMacro(userId, "capturar", COOLDOWN_BICHOS);
 
         // Datos de clima y hora
         const horaChile = Number(new Intl.DateTimeFormat("es-CL", { timeZone: "America/Santiago", hour: "2-digit", hour12: false }).format(new Date()));
@@ -134,10 +100,7 @@ export async function execute(interaction, bostezo) {
         const chancePocoComun = Math.min((25 + (nivelCaza * 1.0) + bonusSuerte + bonusHora + bonusRed) * penalizacionMacro, 65);
 
         // Desgastar red
-        await db.execute({
-            sql: "UPDATE herramientas_durabilidad SET durabilidad = MAX(0, durabilidad - 1) WHERE user_id = ? AND item_id = ?",
-            args: [userId, red.itemId]
-        });
+        await degradarHerramienta(userId, red.itemId);
         const resRedAfter = await db.execute({
             sql: "SELECT durabilidad FROM herramientas_durabilidad WHERE user_id = ? AND item_id = ?",
             args: [userId, red.itemId]
@@ -158,7 +121,7 @@ export async function execute(interaction, bostezo) {
             ...(bonusHora > 0 ? [{ name: "🌙 Bonus nocturno", value: `+${bonusHora}% de suerte`, inline: true }] : []),
             ...(mensajeClima ? [{ name: "🌤️ Clima", value: mensajeClima, inline: false }] : []),
             ...(comboActivo ? [{ name: "⚡ Combo activo", value: "¡Capturaste **2x** en vez de 1!", inline: true }] : []),
-            ...(patronCount >= 3 ? [{ name: "⚠️ Anti-macro", value: "Se detectó un patrón repetitivo. Juega más natural para drops óptimos.", inline: false }] : []),
+            ...(penalizacionMacro < 1 ? [{ name: "⚠️ Anti-macro", value: "Se detectó un patrón repetitivo. Juega más natural para drops óptimos.", inline: false }] : []),
         ];
 
         const rand = Math.random() * 100;
@@ -290,6 +253,7 @@ export async function execute(interaction, bostezo) {
             ]
         });
 
+        progresarMision(interaction.user.id, "capturar").catch(() => {});
         return interaction.editReply({ embeds: [embed] });
 
     } catch (error) {

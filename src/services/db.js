@@ -165,7 +165,7 @@ export async function initDB() {
             fecha TEXT NOT NULL
           )
         `);
-    // F13 - Eventos y Donaciones
+    // F13 - Eventos y Donaciones (mejorado: soporte para items, fases, deadlines)
     await db.execute(`
           CREATE TABLE IF NOT EXISTS eventos_globales (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -178,6 +178,27 @@ export async function initDB() {
             activo INTEGER DEFAULT 1
           )
         `);
+    // Migraciones de eventos: soporte items, fases, deadline
+    try { await db.execute("ALTER TABLE eventos_globales ADD COLUMN tipo TEXT DEFAULT 'monedas'"); } catch { }
+    try { await db.execute("ALTER TABLE eventos_globales ADD COLUMN item_requerido TEXT DEFAULT NULL"); } catch { }
+    try { await db.execute("ALTER TABLE eventos_globales ADD COLUMN meta_items INTEGER DEFAULT 0"); } catch { }
+    try { await db.execute("ALTER TABLE eventos_globales ADD COLUMN progreso_items INTEGER DEFAULT 0"); } catch { }
+    try { await db.execute("ALTER TABLE eventos_globales ADD COLUMN fase INTEGER DEFAULT 1"); } catch { }
+    try { await db.execute("ALTER TABLE eventos_globales ADD COLUMN total_fases INTEGER DEFAULT 1"); } catch { }
+    try { await db.execute("ALTER TABLE eventos_globales ADD COLUMN fecha_limite TEXT DEFAULT NULL"); } catch { }
+    try { await db.execute("ALTER TABLE eventos_globales ADD COLUMN recompensa_monedas INTEGER DEFAULT 0"); } catch { }
+    try { await db.execute("ALTER TABLE eventos_globales ADD COLUMN recompensa_xp INTEGER DEFAULT 0"); } catch { }
+    // Donaciones: soporte items
+    try { await db.execute("ALTER TABLE evento_donaciones ADD COLUMN cantidad_items INTEGER DEFAULT 0"); } catch { }
+    // ── Prestigio ─────────────────────────────────────────────────
+    await db.execute(`
+          CREATE TABLE IF NOT EXISTS prestigio (
+            user_id TEXT PRIMARY KEY,
+            nivel_prestigio INTEGER DEFAULT 0,
+            fecha_ultimo TEXT DEFAULT NULL
+          )
+        `);
+    try { await db.execute("ALTER TABLE usuarios ADD COLUMN prestigio INTEGER DEFAULT 0"); } catch { }
     await db.execute(`
           CREATE TABLE IF NOT EXISTS evento_donaciones (
             evento_id INTEGER,
@@ -193,6 +214,51 @@ export async function initDB() {
             fecha TEXT NOT NULL
           )
         `);
+    await db.execute(`
+          CREATE TABLE IF NOT EXISTS rifa_ganadores (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id TEXT NOT NULL,
+            fecha TEXT NOT NULL,
+            pozo INTEGER NOT NULL,
+            boletos_ganador INTEGER DEFAULT 1,
+            boletos_totales INTEGER DEFAULT 1
+          )
+        `);
+    // ── Misiones diarias ────────────────────────────────────────
+    await db.execute(`
+          CREATE TABLE IF NOT EXISTS misiones_diarias (
+            user_id TEXT,
+            fecha TEXT,
+            misiones TEXT DEFAULT '[]',
+            bonus_reclamado INTEGER DEFAULT 0,
+            PRIMARY KEY(user_id, fecha)
+          )
+        `);
+    // ── Recompensas de colección reclamadas ────────────────────
+    await db.execute(`
+          CREATE TABLE IF NOT EXISTS coleccion_recompensas (
+            user_id TEXT,
+            categoria TEXT,
+            reclamada INTEGER DEFAULT 0,
+            PRIMARY KEY(user_id, categoria)
+          )
+        `);
+    // ── Nivel de mascotas ──────────────────────────────────────
+    try { await db.execute("ALTER TABLE mascotas_estado ADD COLUMN nivel INTEGER DEFAULT 1"); } catch { }
+    try { await db.execute("ALTER TABLE mascotas_estado ADD COLUMN xp INTEGER DEFAULT 0"); } catch { }
+    // ── Maestría de crafting ───────────────────────────────────
+    await db.execute(`
+          CREATE TABLE IF NOT EXISTS crafting_maestria (
+            user_id TEXT,
+            receta_id TEXT,
+            veces_crafteado INTEGER DEFAULT 0,
+            PRIMARY KEY(user_id, receta_id)
+          )
+        `);
+    // ── Trivia stats mejoradas ─────────────────────────────────
+    try { await db.execute("ALTER TABLE trivia_stats ADD COLUMN categoria TEXT DEFAULT 'habitantes'"); } catch { }
+    try { await db.execute("ALTER TABLE trivia_stats ADD COLUMN dificultad TEXT DEFAULT 'normal'"); } catch { }
+
     await db.execute(`
           CREATE TABLE IF NOT EXISTS items_economia (
             id TEXT PRIMARY KEY,
@@ -392,6 +458,16 @@ export async function initDB() {
           acciones = actividad_diaria.acciones + 1;
       END;
     `);
+
+    // ── Indexes para queries frecuentes ─────────────────────────────
+    await db.execute("CREATE INDEX IF NOT EXISTS idx_cooldowns_user_cmd ON cooldowns(user_id, comando)");
+    await db.execute("CREATE INDEX IF NOT EXISTS idx_herramientas_equipado ON herramientas_durabilidad(user_id, equipado)");
+    await db.execute("CREATE INDEX IF NOT EXISTS idx_inventario_user ON inventario_economia(user_id)");
+    await db.execute("CREATE INDEX IF NOT EXISTS idx_rifa_boletos_fecha ON rifa_boletos(fecha)");
+    await db.execute("CREATE INDEX IF NOT EXISTS idx_colecciones_user ON colecciones(user_id, categoria)");
+    await db.execute("CREATE INDEX IF NOT EXISTS idx_actividad_user_fecha ON actividad_diaria(user_id, fecha)");
+    await db.execute("CREATE INDEX IF NOT EXISTS idx_bitacora_user ON bitacora(user_id)");
+    await db.execute("CREATE INDEX IF NOT EXISTS idx_boosts_user ON boosts_activos(user_id, boost_id)");
 
     // Backfill legacy purchases (idempotent): move active theme/pet into inventory if missing
     await db.execute(`

@@ -1,4 +1,5 @@
 import { db } from "../services/db.js";
+import { addToInventory, deductBalance } from "../services/db-helpers.js";
 
 // ── Constantes ────────────────────────────────────────────────────────────
 /** Cooldown para usar el servicio de reset de racha (1 semana en milisegundos) */
@@ -116,17 +117,8 @@ export async function procesarCompraTienda(interaction, itemSeleccionado) {
 
       // Caso especial: Cebo Simple
       if (itemSeleccionado === "cebo_simple") {
-        await db.execute({
-          sql: "UPDATE usuarios SET monedas = monedas - ? WHERE id = ?",
-          args: [precio, interaction.user.id],
-        });
-
-        await db.execute({
-          sql: `INSERT INTO inventario_economia (user_id, item_id, cantidad)
-                VALUES (?, ?, ?)
-                ON CONFLICT(user_id, item_id) DO UPDATE SET cantidad = inventario_economia.cantidad + ?`,
-          args: [interaction.user.id, itemSeleccionado, CEBO_SIMPLE_CANTIDAD, CEBO_SIMPLE_CANTIDAD],
-        });
+        await deductBalance(interaction.user.id, precio);
+        await addToInventory(interaction.user.id, itemSeleccionado, CEBO_SIMPLE_CANTIDAD);
 
         return { ok: true, message: `🎣 Compraste **Cebo Simple x${CEBO_SIMPLE_CANTIDAD}**. Se usará automáticamente al pescar para mejorar tus capturas.` };
       }
@@ -138,10 +130,7 @@ export async function procesarCompraTienda(interaction, itemSeleccionado) {
       const ahora = Date.now();
       const nuevoExpira = ahora + duracionMs;
 
-      await db.execute({
-        sql: "UPDATE usuarios SET monedas = monedas - ? WHERE id = ?",
-        args: [precio, interaction.user.id],
-      });
+      await deductBalance(interaction.user.id, precio);
 
       await db.execute({
         sql: `INSERT INTO boosts_activos (user_id, boost_id, fecha_expira)
@@ -154,12 +143,7 @@ export async function procesarCompraTienda(interaction, itemSeleccionado) {
         args: [interaction.user.id, boostId, nuevoExpira, ahora, duracionMs, nuevoExpira],
       });
 
-      await db.execute({
-        sql: `INSERT INTO inventario_economia (user_id, item_id, cantidad)
-              VALUES (?, ?, 1)
-              ON CONFLICT(user_id, item_id) DO UPDATE SET cantidad = inventario_economia.cantidad + 1`,
-        args: [interaction.user.id, itemSeleccionado],
-      });
+      await addToInventory(interaction.user.id, itemSeleccionado);
 
       return { ok: true, message: `✨ Consumible aplicado: **${nombreItem}**. Efecto activo: **${textoEfecto}**.` };
     }
@@ -170,10 +154,7 @@ export async function procesarCompraTienda(interaction, itemSeleccionado) {
       if (itemSeleccionado === "seguro_antirobo_24h") {
         const ahora = Date.now();
 
-        await db.execute({
-          sql: "UPDATE usuarios SET monedas = monedas - ? WHERE id = ?",
-          args: [precio, interaction.user.id],
-        });
+        await deductBalance(interaction.user.id, precio);
 
         await db.execute({
           sql: `UPDATE usuarios
@@ -197,10 +178,7 @@ export async function procesarCompraTienda(interaction, itemSeleccionado) {
 
       // Etiqueta para Mascota
       if (itemSeleccionado === "etiqueta_mascota") {
-        await db.execute({
-          sql: "UPDATE usuarios SET monedas = monedas - ? WHERE id = ?",
-          args: [precio, interaction.user.id],
-        });
+        await deductBalance(interaction.user.id, precio);
 
         await db.execute({
           sql: `INSERT INTO inventario_economia (user_id, item_id, cantidad)
@@ -261,10 +239,7 @@ export async function procesarCompraTienda(interaction, itemSeleccionado) {
         return { ok: false, message: "Tu racha no se rompió ayer, así que no necesitas usar este servicio todavía 💖." };
       }
 
-      await db.execute({
-        sql: "UPDATE usuarios SET monedas = monedas - ? WHERE id = ?",
-        args: [precio, interaction.user.id],
-      });
+      await deductBalance(interaction.user.id, precio);
 
       await db.execute({
         sql: `INSERT INTO actividad_diaria (user_id, fecha, xp_ganado, monedas_ganadas, acciones)
@@ -281,12 +256,7 @@ export async function procesarCompraTienda(interaction, itemSeleccionado) {
         args: [interaction.user.id],
       });
 
-      await db.execute({
-        sql: `INSERT INTO inventario_economia (user_id, item_id, cantidad)
-              VALUES (?, ?, 1)
-              ON CONFLICT(user_id, item_id) DO UPDATE SET cantidad = inventario_economia.cantidad + 1`,
-        args: [interaction.user.id, itemSeleccionado],
-      });
+      await addToInventory(interaction.user.id, itemSeleccionado);
 
       return { ok: true, message: "🛟 Servicio aplicado: recuperé tu día perdido de ayer para mantener la racha activa." };
     }
@@ -298,17 +268,8 @@ export async function procesarCompraTienda(interaction, itemSeleccionado) {
         return { ok: false, message: "Esta herramienta no está configurada correctamente." };
       }
 
-      await db.execute({
-        sql: "UPDATE usuarios SET monedas = monedas - ? WHERE id = ?",
-        args: [precio, interaction.user.id],
-      });
-
-      await db.execute({
-        sql: `INSERT INTO inventario_economia (user_id, item_id, cantidad)
-              VALUES (?, ?, 1)
-              ON CONFLICT(user_id, item_id) DO UPDATE SET cantidad = inventario_economia.cantidad + 1`,
-        args: [interaction.user.id, itemSeleccionado],
-      });
+      await deductBalance(interaction.user.id, precio);
+      await addToInventory(interaction.user.id, itemSeleccionado);
 
       await db.execute({
         sql: `INSERT INTO herramientas_durabilidad (user_id, item_id, durabilidad, max_durabilidad, equipado)
@@ -362,12 +323,7 @@ export async function procesarCompraTienda(interaction, itemSeleccionado) {
         args: [precio, itemSeleccionado, interaction.user.id],
       });
 
-      await db.execute({
-        sql: `INSERT INTO inventario_economia (user_id, item_id, cantidad)
-              VALUES (?, ?, 1)
-              ON CONFLICT(user_id, item_id) DO UPDATE SET cantidad = inventario_economia.cantidad + 1`,
-        args: [interaction.user.id, itemSeleccionado],
-      });
+      await addToInventory(interaction.user.id, itemSeleccionado);
 
       return { ok: true, message: `🖼️ ¡Listo! Equipé el **${nombreItem}** en tu perfil web.` };
     }
@@ -387,12 +343,7 @@ export async function procesarCompraTienda(interaction, itemSeleccionado) {
         args: [precio, itemSeleccionado, interaction.user.id],
       });
 
-      await db.execute({
-        sql: `INSERT INTO inventario_economia (user_id, item_id, cantidad)
-              VALUES (?, ?, 1)
-              ON CONFLICT(user_id, item_id) DO UPDATE SET cantidad = inventario_economia.cantidad + 1`,
-        args: [interaction.user.id, itemSeleccionado],
-      });
+      await addToInventory(interaction.user.id, itemSeleccionado);
 
       return { ok: true, message: `🎨 ¡Gracias lindo/a! Acabas de comprar el tema \`${itemSeleccionado}\`.\n\nAcabo de actualizar la escenografía de tu libretita web. ¡Se va a ver preciosa!` };
     }
@@ -412,12 +363,7 @@ export async function procesarCompraTienda(interaction, itemSeleccionado) {
         args: [precio, itemSeleccionado, interaction.user.id],
       });
 
-      await db.execute({
-        sql: `INSERT INTO inventario_economia (user_id, item_id, cantidad)
-              VALUES (?, ?, 1)
-              ON CONFLICT(user_id, item_id) DO UPDATE SET cantidad = inventario_economia.cantidad + 1`,
-        args: [interaction.user.id, itemSeleccionado],
-      });
+      await addToInventory(interaction.user.id, itemSeleccionado);
 
       return { ok: true, message: `🐾 ¡Awww! Felicidades por tu nuevo amiguito \`${itemSeleccionado}\`.\n\nAcabo de hacerle espacio en tu Libretita Web. ¡Ve a la página de tu perfil para mirarlo!` };
     }

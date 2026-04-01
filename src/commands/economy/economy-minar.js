@@ -1,8 +1,11 @@
 import { SlashCommandBuilder } from "discord.js";
 import { db } from "../../services/db.js";
-import { crearEmbed, crearEmbedCooldown, crearEmbedDrop } from "../../core/utils.js";
+import { crearEmbed, crearEmbedDrop } from "../../core/utils.js";
 import { CONFIG } from "../../core/config.js";
 import { ganarXP, registrarBitacora, tieneBoostActivo } from "../../features/progreso.js";
+import { verificarCooldown, setCooldown, detectarMacro } from "../../features/cooldown.js";
+import { degradarHerramienta } from "../../services/db-helpers.js";
+import { progresarMision } from "../../features/misiones.js";
 
 const COOLDOWN_MINAR = 300000; // 5 minutos
 
@@ -50,38 +53,19 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction, bostezo) {
     const userId = interaction.user.id;
-    const ahora = Date.now();
 
     await interaction.deferReply();
 
     try {
         // 1. Revisar cooldown
-        const resCd = await db.execute({
-            sql: "SELECT fecha_limite FROM cooldowns WHERE user_id = ? AND comando = 'minar' AND extra_id = 'global'",
-            args: [userId]
-        });
-
-        if (resCd.rows.length > 0) {
-            const limite = Number(resCd.rows[0].fecha_limite);
-            if (ahora < limite) {
-                const faltanMinutos = Math.ceil((limite - ahora) / 60000);
-                const embed = crearEmbedCooldown(faltanMinutos, bostezo.trim(), "minar")
-                    .setDescription(
-                        `*${bostezo.trim()}*\n\n` +
-                        `⛏️ Ay mi tesoro, tienes los bracitos cansados. ¡Descansa un poco!\n` +
-                        `⌛ Vuelve a picar piedritas en **${faltanMinutos} minutos**.`
-                    );
-                return interaction.editReply({ embeds: [embed] });
-            }
-        }
+        const cd = await verificarCooldown(userId, "minar", COOLDOWN_MINAR, bostezo);
+        if (!cd.ok) return interaction.editReply({ embeds: [cd.embed] });
 
         // 2. Establecer nuevo cooldown
-        await db.execute({
-            sql: `INSERT INTO cooldowns (user_id, comando, extra_id, fecha_limite)
-            VALUES (?, 'minar', 'global', ?)
-            ON CONFLICT(user_id, comando, extra_id) DO UPDATE SET fecha_limite = excluded.fecha_limite`,
-            args: [userId, ahora + COOLDOWN_MINAR]
-        });
+        await setCooldown(userId, "minar", COOLDOWN_MINAR);
+
+        // Anti-macro
+        const macroMult = await detectarMacro(userId, "minar", COOLDOWN_MINAR);
 
         const pick = await getEquippedPick(userId);
         if (pick.durabilidad <= 0) {
@@ -105,21 +89,18 @@ export async function execute(interaction, bostezo) {
         const bonusSuerte = amuletoActivo ? 10 : 0;
         const bonusPick = PICK_META[pick.itemId]?.bonusRare || 0;
 
-        const chanceDiamante = Math.min(1 + (bonoNivel * 0.15) + bonusSuerte + bonusPick, 8);
-        const chanceEsmeralda = Math.min(2 + (bonoNivel * 0.2) + bonusSuerte + bonusPick, 12);
-        const chanceRubi = Math.min(3 + (bonoNivel * 0.25) + bonusSuerte + bonusPick, 18);
-        const chanceZafiro = Math.min(4 + (bonoNivel * 0.3) + bonusSuerte + bonusPick, 22);
-        const chanceAmatista = Math.min(6 + (bonoNivel * 0.4) + bonusSuerte + bonusPick, 30);
-        const chanceFluorita = Math.min(8 + bonoNivel + bonusSuerte + bonusPick, 38);
-        const chanceTopacio = Math.min(12 + bonoNivel + bonusSuerte, 45);
-        const chanceCuarzo = Math.min(20 + (bonoNivel * 1.2) + bonusSuerte, 60);
-        const chanceMineral = Math.min(35 + (bonoNivel * 1.5) + bonusSuerte, 75);
+        const chanceDiamante = Math.min(1 + (bonoNivel * 0.15) + bonusSuerte + bonusPick, 8) * macroMult;
+        const chanceEsmeralda = Math.min(2 + (bonoNivel * 0.2) + bonusSuerte + bonusPick, 12) * macroMult;
+        const chanceRubi = Math.min(3 + (bonoNivel * 0.25) + bonusSuerte + bonusPick, 18) * macroMult;
+        const chanceZafiro = Math.min(4 + (bonoNivel * 0.3) + bonusSuerte + bonusPick, 22) * macroMult;
+        const chanceAmatista = Math.min(6 + (bonoNivel * 0.4) + bonusSuerte + bonusPick, 30) * macroMult;
+        const chanceFluorita = Math.min(8 + bonoNivel + bonusSuerte + bonusPick, 38) * macroMult;
+        const chanceTopacio = Math.min(12 + bonoNivel + bonusSuerte, 45) * macroMult;
+        const chanceCuarzo = Math.min(20 + (bonoNivel * 1.2) + bonusSuerte, 60) * macroMult;
+        const chanceMineral = Math.min(35 + (bonoNivel * 1.5) + bonusSuerte, 75) * macroMult;
 
         // Desgastar herramienta
-        await db.execute({
-            sql: "UPDATE herramientas_durabilidad SET durabilidad = MAX(0, durabilidad - 1) WHERE user_id = ? AND item_id = ?",
-            args: [userId, pick.itemId]
-        });
+        await degradarHerramienta(userId, pick.itemId);
         const resPickAfter = await db.execute({
             sql: "SELECT durabilidad FROM herramientas_durabilidad WHERE user_id = ? AND item_id = ?",
             args: [userId, pick.itemId]
@@ -162,6 +143,7 @@ export async function execute(interaction, bostezo) {
                 ]
             });
 
+            progresarMision(interaction.user.id, "minar").catch(() => {});
             return interaction.editReply({ embeds: [embed] });
         }
 
@@ -240,6 +222,7 @@ export async function execute(interaction, bostezo) {
             ]
         });
 
+        progresarMision(interaction.user.id, "minar").catch(() => {});
         return interaction.editReply({ embeds: [embed] });
 
     } catch (error) {

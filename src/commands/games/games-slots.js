@@ -1,15 +1,13 @@
-import { SlashCommandBuilder, MessageFlags } from "discord.js";
+import { SlashCommandBuilder } from "discord.js";
 import {
-  validarApuesta,
-  verificarCooldownCasino,
-  actualizarCooldownCasino,
-  obtenerBalance,
+  prepararApuesta,
   actualizarBalance,
   actualizarEstadisticasCasino,
   CASINO_MIN_BET,
   CASINO_MAX_BET,
 } from "../../features/casino.js";
 import { getBostezo } from "../../core/utils.js";
+import { progresarMision } from "../../features/misiones.js";
 
 // Símbolos de la tragamonedas con sus pesos (más común = mayor peso)
 const SIMBOLOS = [
@@ -72,29 +70,9 @@ export async function execute(interaction, bostezo) {
   
   if (!bostezo) bostezo = getBostezo();
 
-  // Validar apuesta
-  const validacion = validarApuesta(apuesta);
-  if (!validacion.ok) {
-    return interaction.reply({ content: validacion.mensaje, flags: MessageFlags.Ephemeral });
-  }
-
-  // Verificar cooldown
-  const cooldown = await verificarCooldownCasino(userId);
-  if (!cooldown.ok) {
-    return interaction.reply({ content: cooldown.mensaje, flags: MessageFlags.Ephemeral });
-  }
-
-  // Verificar balance
-  const balanceActual = await obtenerBalance(userId);
-  if (balanceActual < apuesta) {
-    return interaction.reply({
-      content: `${bostezo}❌ No tienes suficientes moneditas, tesoro. Balance actual: **${balanceActual}** 💰`,
-      flags: MessageFlags.Ephemeral,
-    });
-  }
-
-  // Actualizar cooldown
-  await actualizarCooldownCasino(userId);
+  const prep = await prepararApuesta(interaction, apuesta, bostezo);
+  if (!prep.ok) return;
+  const balanceActual = prep.balance;
 
   // Mostrar animación inicial
   await interaction.reply({
@@ -134,6 +112,9 @@ export async function execute(interaction, bostezo) {
 
   // Actualizar estadísticas
   await actualizarEstadisticasCasino(userId, gano, apuesta, ganancia);
+
+  // Progreso de misión diaria
+  progresarMision(interaction.user.id, "casino").catch(() => {});
 
   // Mensaje de resultado
   const combinacion = reels.join("");

@@ -2,6 +2,7 @@ import { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } fro
 import { db } from "../../services/db.js";
 import { getBostezo, crearEmbed, getItemEnDemanda } from "../../core/utils.js";
 import { CONFIG } from "../../core/config.js";
+import { progresarMision } from "../../features/misiones.js";
 
 /**
  * Obtiene el precio de venta de un item desde la base de datos
@@ -128,6 +129,7 @@ async function venderItemEspecifico(interaction, userId, itemNombre, itemData, b
                     embeds: [],
                     components: []
                 });
+                progresarMision(interaction.user.id, "vender").catch(() => {});
             } catch (err) {
                 console.error("Error al vender item:", err);
                 await i.editReply({
@@ -383,6 +385,7 @@ export async function execute(interaction, bostezo) {
                         embeds: [],
                         components: []
                     });
+                    progresarMision(interaction.user.id, "vender").catch(() => {});
                 } catch (err) {
                     console.error("Error al vender items:", err);
                     await i.editReply({

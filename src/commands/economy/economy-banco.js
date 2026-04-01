@@ -4,7 +4,8 @@ import { crearEmbed } from "../../core/utils.js";
 import { CONFIG } from "../../core/config.js";
 import { registrarBitacora } from "../../features/progreso.js";
 
-const TASA_INTERES_DIARIA = 0.02; // 2% diario
+const TASA_INTERES_DIARIA = 0.005; // 0.5% diario (balanceado)
+const MAX_INTERES_DIARIO = 500; // Cap máximo de interés por día
 const MS_DIA = 24 * 60 * 60 * 1000;
 
 // Aplica el interés acumulado desde la última vez que se accedió al banco
@@ -30,8 +31,10 @@ async function aplicarIntereses(userId) {
 
     if (diasPasados === 0) return { monedas, interesGanado: 0, diasPasados: 0 };
 
-    const nuevoSaldo = Math.floor(monedas * Math.pow(1 + TASA_INTERES_DIARIA, diasPasados));
-    const interesGanado = nuevoSaldo - monedas;
+    const nuevoSaldoSinCap = Math.floor(monedas * Math.pow(1 + TASA_INTERES_DIARIA, diasPasados));
+    const interesSinCap = nuevoSaldoSinCap - monedas;
+    const interesGanado = Math.min(interesSinCap, MAX_INTERES_DIARIO * diasPasados);
+    const nuevoSaldo = monedas + interesGanado;
 
     await db.execute({
         sql: "UPDATE banco SET monedas = ?, ultimo_interes = ? WHERE user_id = ?",
@@ -43,10 +46,10 @@ async function aplicarIntereses(userId) {
 
 export const data = new SlashCommandBuilder()
     .setName("banco")
-    .setDescription("Gestiona tus ahorros en el Banco del Pueblito. Ganás 2% de interés diario.")
+    .setDescription("Gestiona tus ahorros en el Banco del Pueblito. Ganás 0.5% de interés diario.")
     .addSubcommand(sub => sub
         .setName("depositar")
-        .setDescription("Deposita moneditas en el banco (ganan 2% al día).")
+        .setDescription("Deposita moneditas en el banco (ganan 0.5% al día).")
         .addIntegerOption(o => o.setName("cantidad").setDescription("¿Cuántas moneditas depositar?").setMinValue(1).setRequired(true))
     )
     .addSubcommand(sub => sub
@@ -94,7 +97,7 @@ export async function execute(interaction, bostezo) {
                     },
                     {
                         name: "📈 Tasa de interés",
-                        value: "**2% diario** (compuesto)",
+                        value: "**0.5% diario** (compuesto, máx ${MAX_INTERES_DIARIO}/día)",
                         inline: true
                     }
                 );
@@ -159,7 +162,7 @@ export async function execute(interaction, bostezo) {
                     },
                     {
                         name: "📈 Interés activo",
-                        value: "**2% diario compuesto** — ¡tus monedas trabajarán solas!",
+                        value: "**0.5% diario** (máx. 500/día) — ¡tus monedas trabajarán solas!",
                         inline: false
                     }
                 );

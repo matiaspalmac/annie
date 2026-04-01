@@ -2,6 +2,7 @@ import { SlashCommandBuilder, ActionRowBuilder, StringSelectMenuBuilder, StringS
 import { db } from "../../services/db.js";
 import { crearEmbed } from "../../core/utils.js";
 import { CONFIG } from "../../core/config.js";
+import { calcularNivelMascota, xpParaNivel, PET_BONUSES, MAX_NIVEL } from "../../features/mascota-bonus.js";
 
 export const data = new SlashCommandBuilder()
     .setName("mascota")
@@ -74,9 +75,57 @@ export async function execute(interaction, bostezo) {
             );
         });
 
+        // Obtener estado de mascota activa para mostrar perfil
+        let perfilMascota = "";
+        const mascotaActivaId = resUsuario.rows.length > 0 ? String(resUsuario.rows[0].mascota_activa || "default") : "default";
+
+        if (mascotaActivaId !== "default") {
+            const resEstado = await db.execute({
+                sql: "SELECT felicidad, hambre, nivel, xp FROM mascotas_estado WHERE user_id = ?",
+                args: [userId]
+            });
+
+            if (resEstado?.rows?.length > 0) {
+                const felicidad = Number(resEstado.rows[0].felicidad ?? 50);
+                const hambre = Number(resEstado.rows[0].hambre ?? 50);
+                const xpTotal = Number(resEstado.rows[0].xp ?? 0);
+                const nivel = calcularNivelMascota(xpTotal);
+                const bonusInfo = PET_BONUSES[mascotaActivaId];
+
+                const barraFelicidad = "💗".repeat(Math.floor(felicidad / 20)) + "🤍".repeat(5 - Math.floor(felicidad / 20));
+                const barraHambre = "🍖".repeat(5 - Math.floor(hambre / 20)) + "🩶".repeat(Math.floor(hambre / 20));
+
+                // Barra de XP
+                const xpNivelActual = xpParaNivel(nivel);
+                const xpSiguienteNivel = xpParaNivel(nivel + 1);
+                const progresoXP = xpTotal - xpNivelActual;
+                const xpNecesaria = xpSiguienteNivel - xpNivelActual;
+                const porcentajeXP = nivel >= MAX_NIVEL ? 100 : Math.floor((progresoXP / xpNecesaria) * 100);
+                const barraXPLlenos = Math.floor(porcentajeXP / 10);
+                const barraXP = "▰".repeat(barraXPLlenos) + "▱".repeat(10 - barraXPLlenos);
+
+                const bonusActivo = felicidad >= 60 && hambre <= 50;
+
+                perfilMascota += `\n\n📊 **Estado de ${mascotaActiva}:**\n`;
+                perfilMascota += `❤️ Felicidad: ${barraFelicidad} \`${felicidad}/100\`\n`;
+                perfilMascota += `🍖 Hambre: ${barraHambre} \`${hambre}/100\`\n`;
+                perfilMascota += nivel >= MAX_NIVEL
+                    ? `⭐ Nivel: **${nivel}** (MAX) — XP: \`${xpTotal}\`\n`
+                    : `⭐ Nivel: **${nivel}** — XP: ${barraXP} \`${progresoXP}/${xpNecesaria}\`\n`;
+
+                if (bonusInfo) {
+                    const bonusPorNivel = nivel * 0.5;
+                    const porcentajeBase = Math.round(bonusInfo.baseMultiplicador * 100);
+                    const porcentajeTotal = porcentajeBase + bonusPorNivel;
+                    const estadoBonus = bonusActivo ? "**ACTIVO**" : "~~inactivo~~ *(necesita felicidad >= 60 y hambre <= 50)*";
+                    perfilMascota += `\n${bonusInfo.emoji} **Bonus:** ${bonusInfo.descripcion.replace("{pct}", porcentajeTotal.toString())} — ${estadoBonus}`;
+                }
+            }
+        }
+
         const embed = crearEmbed(CONFIG.COLORES.ROSA)
             .setTitle(`🐾 Refugio de Mascotas de ${interaction.user.username}`)
-            .setDescription(`Tienes **${resMascotas.rows.length}** amiguito(s) esperándote.\n\n🐕 **Acompañante Actual:**\n${mascotaActiva}\n\nUsa el menú de abajo para elegir quién paseará contigo por el pueblito hoy.`);
+            .setDescription(`Tienes **${resMascotas.rows.length}** amiguito(s) esperándote.\n\n🐕 **Acompañante Actual:**\n${mascotaActiva}${perfilMascota}\n\nUsa el menú de abajo para elegir quién paseará contigo por el pueblito hoy.`);
 
         // Armar el menú selector
         const select = new StringSelectMenuBuilder()

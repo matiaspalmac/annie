@@ -1,8 +1,11 @@
 import { SlashCommandBuilder } from "discord.js";
 import { db } from "../../services/db.js";
-import { getBostezo, crearEmbed, crearEmbedCooldown, crearEmbedDrop } from "../../core/utils.js";
+import { getBostezo, crearEmbed, crearEmbedDrop } from "../../core/utils.js";
 import { CONFIG } from "../../core/config.js";
 import { ganarXP, obtenerNivelHabilidad, registrarBitacora, tieneBoostActivo } from "../../features/progreso.js";
+import { verificarCooldown, setCooldown, detectarMacro } from "../../features/cooldown.js";
+import { degradarHerramienta } from "../../services/db-helpers.js";
+import { progresarMision } from "../../features/misiones.js";
 
 // Cooldown de 5 minutos = 300000 ms
 const COOLDOWN_PESCAR = 300000;
@@ -69,40 +72,20 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction, bostezo) {
     const userId = interaction.user.id;
-    const ahora = Date.now();
     const usarCebo = interaction.options.getBoolean("usar_cebo") ?? true;
 
     await interaction.deferReply();
 
     try {
         // 1. Revisar cooldown
-        const resCd = await db.execute({
-            sql: "SELECT fecha_limite FROM cooldowns WHERE user_id = ? AND comando = 'pescar' AND extra_id = 'global'",
-            args: [userId]
-        });
-
-        if (resCd.rows.length > 0) {
-            const limite = Number(resCd.rows[0].fecha_limite);
-            if (ahora < limite) {
-                const faltanMinutos = Math.ceil((limite - ahora) / 60000);
-                const embed = crearEmbedCooldown(faltanMinutos, bostezo.trim(), "pescar")
-                    .setDescription(
-                        `*${bostezo.trim()}*\n\n` +
-                        `🐟 Ay pescadito... los peces se asustaron y se fueron al fondo del río.\n` +
-                        `⌛ Espera **${faltanMinutos} minutos** para volver a tirar la caña, corazón.`
-                    );
-                return interaction.editReply({ embeds: [embed] });
-            }
-        }
+        const cd = await verificarCooldown(userId, "pescar", COOLDOWN_PESCAR, bostezo);
+        if (!cd.ok) return interaction.editReply({ embeds: [cd.embed] });
 
         // 2. Establecer nuevo cooldown
-        const nuevoLimite = ahora + COOLDOWN_PESCAR;
-        await db.execute({
-            sql: `INSERT INTO cooldowns (user_id, comando, extra_id, fecha_limite) 
-            VALUES (?, 'pescar', 'global', ?) 
-            ON CONFLICT(user_id, comando, extra_id) DO UPDATE SET fecha_limite = excluded.fecha_limite`,
-            args: [userId, nuevoLimite]
-        });
+        await setCooldown(userId, "pescar", COOLDOWN_PESCAR);
+
+        // Anti-macro
+        const macroMult = await detectarMacro(userId, "pescar", COOLDOWN_PESCAR);
 
         const rod = await getEquippedRod(userId);
         if (rod.durabilidad <= 0) {
@@ -167,17 +150,14 @@ export async function execute(interaction, bostezo) {
             }
         } catch { /* Si falla el clima, ignoramos el bono */ }
 
-        const chanceMitico = Math.min(0.5 + (bonoNivel * 0.1) + bonusSuerte + bonusRod.bonusLegend + bonusCebo + bonusClimaPeces, 8);
-        const chanceLegendaria = Math.min(3 + (bonoNivel * 0.25) + bonusSuerte + bonusRod.bonusLegend + bonusCebo + bonusClimaPeces, 18);
-        const chanceEpica = Math.min(8 + (bonoNivel * 0.4) + bonusSuerte + bonusRod.bonusRare + bonusCebo + bonusClimaPeces, 30);
-        const chanceRara = Math.min(15 + (bonoNivel * 0.6) + bonusSuerte + bonusRod.bonusRare + bonusCebo + bonusClimaPeces, 45);
-        const chanceBotella = Math.min(20 + bonoNivel + bonusSuerte + bonusRod.bonusRare + bonusCebo, 60);
+        const chanceMitico = Math.min(0.5 + (bonoNivel * 0.1) + bonusSuerte + bonusRod.bonusLegend + bonusCebo + bonusClimaPeces, 8) * macroMult;
+        const chanceLegendaria = Math.min(3 + (bonoNivel * 0.25) + bonusSuerte + bonusRod.bonusLegend + bonusCebo + bonusClimaPeces, 18) * macroMult;
+        const chanceEpica = Math.min(8 + (bonoNivel * 0.4) + bonusSuerte + bonusRod.bonusRare + bonusCebo + bonusClimaPeces, 30) * macroMult;
+        const chanceRara = Math.min(15 + (bonoNivel * 0.6) + bonusSuerte + bonusRod.bonusRare + bonusCebo + bonusClimaPeces, 45) * macroMult;
+        const chanceBotella = Math.min(20 + bonoNivel + bonusSuerte + bonusRod.bonusRare + bonusCebo, 60) * macroMult;
         const rand = Math.random() * 100;
 
-        await db.execute({
-            sql: "UPDATE herramientas_durabilidad SET durabilidad = MAX(0, durabilidad - 1) WHERE user_id = ? AND item_id = ?",
-            args: [userId, rod.itemId]
-        });
+        await degradarHerramienta(userId, rod.itemId);
 
         const resRodAfter = await db.execute({
             sql: "SELECT durabilidad FROM herramientas_durabilidad WHERE user_id = ? AND item_id = ?",
@@ -219,6 +199,7 @@ export async function execute(interaction, bostezo) {
                 extras: camposBase()
             });
 
+            progresarMision(interaction.user.id, "pescar").catch(() => {});
             return interaction.editReply({ embeds: [embed] });
         }
 
@@ -249,6 +230,7 @@ export async function execute(interaction, bostezo) {
                 extras: camposBase()
             });
 
+            progresarMision(interaction.user.id, "pescar").catch(() => {});
             return interaction.editReply({ embeds: [embed] });
         }
 
@@ -277,6 +259,7 @@ export async function execute(interaction, bostezo) {
                 extras: camposBase()
             });
 
+            progresarMision(interaction.user.id, "pescar").catch(() => {});
             return interaction.editReply({ embeds: [embed] });
         }
 
@@ -305,6 +288,7 @@ export async function execute(interaction, bostezo) {
                 extras: camposBase()
             });
 
+            progresarMision(interaction.user.id, "pescar").catch(() => {});
             return interaction.editReply({ embeds: [embed] });
         }
 
@@ -333,6 +317,7 @@ export async function execute(interaction, bostezo) {
                 ]
             });
 
+            progresarMision(interaction.user.id, "pescar").catch(() => {});
             return interaction.editReply({ embeds: [embed] });
         }
 
@@ -370,6 +355,7 @@ export async function execute(interaction, bostezo) {
             extras: camposBase()
         });
 
+        progresarMision(interaction.user.id, "pescar").catch(() => {});
         return interaction.editReply({ embeds: [embed] });
 
     } catch (error) {

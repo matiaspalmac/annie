@@ -3,6 +3,8 @@ import { db } from "../../services/db.js";
 import { crearEmbed } from "../../core/utils.js";
 import { CONFIG } from "../../core/config.js";
 import { registrarBitacora } from "../../features/progreso.js";
+import { progresarMision } from "../../features/misiones.js";
+import { calcularNivelMascota, xpParaNivel, getPetBonus, PET_BONUSES, MAX_NIVEL } from "../../features/mascota-bonus.js";
 
 // Las frutas que acepta la mascota. Cuestan estas del inventario_economia.
 const ALIMENTOS_VALIDOS = [
@@ -99,26 +101,47 @@ export async function execute(interaction, bostezo) {
             args: [userId, alimento.id]
         });
 
-        // Crear/actualizar estado mascota
+        // Crear/actualizar estado mascota (incluye xp de mascota)
         const ahora = Date.now();
+        const xpGanada = Math.floor(Math.random() * 11) + 5; // 5-15 XP
+
         await db.execute({
-            sql: `INSERT INTO mascotas_estado (user_id, mascota_id, felicidad, hambre, ultima_interaccion)
-                  VALUES (?, ?, 60, 20, ?)
+            sql: `INSERT INTO mascotas_estado (user_id, mascota_id, felicidad, hambre, ultima_interaccion, nivel, xp)
+                  VALUES (?, ?, 60, 20, ?, 1, ?)
                   ON CONFLICT(user_id) DO UPDATE SET
                     hambre = MAX(0, hambre - ?),
                     felicidad = MIN(100, felicidad + 5),
-                    ultima_interaccion = ?`,
-            args: [userId, mascotaId, ahora, alimento.recupera, ahora]
+                    ultima_interaccion = ?,
+                    xp = xp + ?`,
+            args: [userId, mascotaId, ahora, xpGanada, alimento.recupera, ahora, xpGanada]
         });
 
         const resEstado = await db.execute({
-            sql: "SELECT felicidad, hambre FROM mascotas_estado WHERE user_id = ?",
+            sql: "SELECT felicidad, hambre, nivel, xp FROM mascotas_estado WHERE user_id = ?",
             args: [userId]
         });
 
         const felicidad = Number(resEstado.rows[0]?.felicidad ?? 60);
         const hambre = Number(resEstado.rows[0]?.hambre ?? 20);
-        const tieneBuff = felicidad >= 80 && hambre <= 30;
+        const xpTotal = Number(resEstado.rows[0]?.xp ?? 0);
+        const nivelAnterior = Number(resEstado.rows[0]?.nivel ?? 1);
+        const nivelNuevo = calcularNivelMascota(xpTotal);
+        const subioNivel = nivelNuevo > nivelAnterior;
+
+        // Actualizar nivel si cambio
+        if (nivelNuevo !== nivelAnterior) {
+            await db.execute({
+                sql: "UPDATE mascotas_estado SET nivel = ? WHERE user_id = ?",
+                args: [nivelNuevo, userId]
+            });
+        }
+
+        const tieneBuff = felicidad >= 60 && hambre <= 50;
+        const bonusInfo = PET_BONUSES[mascotaId];
+        const xpSiguienteNivel = xpParaNivel(nivelNuevo + 1);
+        const xpNivelActual = xpParaNivel(nivelNuevo);
+        const progresoXP = xpTotal - xpNivelActual;
+        const xpNecesaria = xpSiguienteNivel - xpNivelActual;
 
         // Barras visuales
         const barraFelicidad = "💗".repeat(Math.floor(felicidad / 20)) + "🤍".repeat(5 - Math.floor(felicidad / 20));
@@ -166,15 +189,25 @@ export async function execute(interaction, bostezo) {
                     name: "🍎 Alimento consumido",
                     value: `${alimento.emoji} **${alimento.id}** *(−${alimento.recupera} hambre)*`,
                     inline: false
+                },
+                {
+                    name: "⭐ Nivel de mascota",
+                    value: nivelNuevo >= MAX_NIVEL
+                        ? `**Nv. ${nivelNuevo}** (MAX) — XP: \`${xpTotal}\` | +${xpGanada} XP`
+                        : `**Nv. ${nivelNuevo}** — XP: \`${progresoXP}/${xpNecesaria}\` | +${xpGanada} XP`,
+                    inline: false
                 }
             )
             .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true, size: 128 }));
 
-        // Estado del buff o sugerencia
-        if (tieneBuff) {
+        // Estado del buff con bonus especifico de la mascota
+        if (bonusInfo && tieneBuff) {
+            const bonusPorNivel = nivelNuevo * 0.5;
+            const porcentajeBase = Math.round(bonusInfo.baseMultiplicador * 100);
+            const porcentajeTotal = porcentajeBase + bonusPorNivel;
             embed.addFields({
-                name: "✨ ¡COMPAÑERO FELIZ ACTIVO!",
-                value: "Tu mascota satisfecha y feliz te da **+5% de drops** en tus aventuras. ¡Cuídala bien!",
+                name: `${bonusInfo.emoji} ¡BONUS DE MASCOTA ACTIVO!`,
+                value: `**${bonusInfo.label}** — ${bonusInfo.descripcion.replace("{pct}", porcentajeTotal.toString())}\n*(Nv. ${nivelNuevo} agrega +${bonusPorNivel}% extra)*`,
                 inline: false
             });
         } else if (felicidad < 50) {
@@ -183,17 +216,39 @@ export async function execute(interaction, bostezo) {
                 value: `**${nombreCapital}** necesita más mimos. ¡Recuerda usar \`/mimar\` también!`,
                 inline: false
             });
-        } else {
+        } else if (!tieneBuff) {
             embed.addFields({
-                name: "🌸 ¡Vas bien!",
-                value: `Sigue alimentando y mimando a **${nombreCapital}** para activar el **buff Compañero Feliz**.`,
+                name: "🌸 ¡Casi llegas!",
+                value: `Necesitas **felicidad >= 60** y **hambre <= 50** para activar el bonus de **${nombreCapital}**.`,
                 inline: false
             });
         }
 
         await registrarBitacora(userId, `Alimentó a ${nombreCapital} con ${alimento.id}`);
 
-        return interaction.editReply({ embeds: [embed] });
+        // Progreso de misión diaria
+        progresarMision(interaction.user.id, "mascota").catch(() => {});
+
+        const embeds = [embed];
+
+        // Notificar subida de nivel con embed especial
+        if (subioNivel) {
+            const bonusPorNivel = nivelNuevo * 0.5;
+            const porcentajeBase = bonusInfo ? Math.round(bonusInfo.baseMultiplicador * 100) : 0;
+            const porcentajeTotal = porcentajeBase + bonusPorNivel;
+            const embedNivel = crearEmbed(CONFIG.COLORES.DORADO)
+                .setTitle(`🎉 ¡${nombreCapital} subió al Nivel ${nivelNuevo}!`)
+                .setDescription(
+                    `¡Felicidades! Tu mascota **${nombreCapital}** ha crecido y ahora es **Nivel ${nivelNuevo}**.\n\n` +
+                    (bonusInfo
+                        ? `${bonusInfo.emoji} Su bonus ha mejorado: **${bonusInfo.descripcion.replace("{pct}", porcentajeTotal.toString())}**`
+                        : `¡Sigue cuidándola para que se haga más fuerte!`)
+                );
+            embeds.push(embedNivel);
+            await registrarBitacora(userId, `La mascota ${nombreCapital} subió al nivel ${nivelNuevo}`);
+        }
+
+        return interaction.editReply({ embeds });
 
     } catch (e) {
         console.error("Error en /alimentar:", e);

@@ -3,6 +3,7 @@ import { CONFIG } from "../../core/config.js";
 import { db } from "../../services/db.js";
 import { crearEmbed } from "../../core/utils.js";
 import { getTrato } from "../../core/personality.js";
+import { progresarMision } from "../../features/misiones.js";
 
 export const data = new SlashCommandBuilder()
     .setName("regalar")
@@ -80,6 +81,9 @@ export async function execute(interaction, bostezo) {
             .setThumbnail(recipiente.displayAvatarURL({ dynamic: true, size: 128 }));
 
         await interaction.reply({ embeds: [embed] });
+
+        // Progreso de misión diaria
+        progresarMision(interaction.user.id, "social").catch(() => {});
 
         // DM al recipiente
         try {

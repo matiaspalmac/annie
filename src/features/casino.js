@@ -185,6 +185,48 @@ export async function obtenerEstadisticasCasino(userId) {
 }
 
 /**
+ * Ejecuta toda la validación previa a una apuesta en un solo call.
+ * Reemplaza el bloque de 4 validaciones duplicado en blackjack, slots, coinflip, ruleta.
+ *
+ * @param {import("discord.js").CommandInteraction} interaction
+ * @param {number} apuesta - Cantidad apostada
+ * @param {string} [msgBostezo="corazón"] - Trato para mensajes
+ * @returns {Promise<{ok: boolean, balance?: number}>} ok=true si puede apostar, balance incluido
+ */
+export async function prepararApuesta(interaction, apuesta, msgBostezo = "corazón") {
+  const userId = interaction.user.id;
+
+  // 1. Validar rango de apuesta
+  const validacion = validarApuesta(apuesta);
+  if (!validacion.ok) {
+    await interaction.reply({ content: validacion.mensaje, flags: 64 });
+    return { ok: false };
+  }
+
+  // 2. Verificar cooldown
+  const cooldown = await verificarCooldownCasino(userId);
+  if (!cooldown.ok) {
+    await interaction.reply({ content: cooldown.mensaje, flags: 64 });
+    return { ok: false };
+  }
+
+  // 3. Verificar fondos
+  const balance = await obtenerBalance(userId);
+  if (balance < apuesta) {
+    await interaction.reply({
+      content: `❌ No tienes suficientes moneditas, ${msgBostezo}. Balance actual: **${balance}** 💰`,
+      flags: 64,
+    });
+    return { ok: false };
+  }
+
+  // 4. Setear cooldown
+  await actualizarCooldownCasino(userId);
+
+  return { ok: true, balance };
+}
+
+/**
  * Obtiene el ranking de mejores jugadores del casino.
  * @async
  * @param {number} [limit=10] - Cantidad de jugadores a retornar

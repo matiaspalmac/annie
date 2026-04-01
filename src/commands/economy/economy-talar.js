@@ -1,8 +1,11 @@
 import { SlashCommandBuilder } from "discord.js";
 import { db } from "../../services/db.js";
-import { crearEmbed, crearEmbedCooldown, crearEmbedDrop } from "../../core/utils.js";
+import { crearEmbed, crearEmbedDrop } from "../../core/utils.js";
 import { CONFIG } from "../../core/config.js";
 import { ganarXP, registrarEstadistica, registrarBitacora, tieneBoostActivo } from "../../features/progreso.js";
+import { verificarCooldown, setCooldown, detectarMacro } from "../../features/cooldown.js";
+import { degradarHerramienta } from "../../services/db-helpers.js";
+import { progresarMision } from "../../features/misiones.js";
 
 const COOLDOWN_ARBOL = 300000; // 5 minutos
 
@@ -43,30 +46,13 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction, bostezo) {
     const userId = interaction.user.id;
-    const ahora = Date.now();
 
     await interaction.deferReply();
 
     try {
         // 1. Revisar cooldown
-        const resCd = await db.execute({
-            sql: "SELECT fecha_limite FROM cooldowns WHERE user_id = ? AND comando = 'talar' AND extra_id = 'global'",
-            args: [userId]
-        });
-
-        if (resCd.rows.length > 0) {
-            const limite = Number(resCd.rows[0].fecha_limite);
-            if (ahora < limite) {
-                const faltanMinutos = Math.ceil((limite - ahora) / 60000);
-                const embed = crearEmbedCooldown(faltanMinutos, bostezo.trim(), "talar")
-                    .setDescription(
-                        `*${bostezo.trim()}*\n\n` +
-                        `🌳 Ya sacudiste todos los frutales cercanos, tesoro. ¡Siéntate un ratito!\n` +
-                        `⌛ Vuelve a sacudir árboles en **${faltanMinutos} minutos**.`
-                    );
-                return interaction.editReply({ embeds: [embed] });
-            }
-        }
+        const cd = await verificarCooldown(userId, "talar", COOLDOWN_ARBOL, bostezo);
+        if (!cd.ok) return interaction.editReply({ embeds: [cd.embed] });
 
         // 2. Validar herramienta
         const axe = await getEquippedAxe(userId);
@@ -81,12 +67,10 @@ export async function execute(interaction, bostezo) {
         }
 
         // 3. Establecer cooldown
-        await db.execute({
-            sql: `INSERT INTO cooldowns (user_id, comando, extra_id, fecha_limite)
-            VALUES (?, 'talar', 'global', ?)
-            ON CONFLICT(user_id, comando, extra_id) DO UPDATE SET fecha_limite = excluded.fecha_limite`,
-            args: [userId, ahora + COOLDOWN_ARBOL]
-        });
+        await setCooldown(userId, "talar", COOLDOWN_ARBOL);
+
+        // Anti-macro
+        const macroMult = await detectarMacro(userId, "talar", COOLDOWN_ARBOL);
 
         // XP de Recolección
         const xpGanada = Math.floor(Math.random() * 11) + 10;
@@ -114,18 +98,15 @@ export async function execute(interaction, bostezo) {
         const bonusEstacion = [3, 4, 5].includes(month) ? 4 : 0; // otoño = más frutos
 
         const chanceAbejas = Math.max((10 - bonoNivel + climaAbejas) - (amuletoActivo ? 4 : 0), 1);
-        const chanceMonedas = Math.min(20 + bonoNivel + bonusSuerte + climaMonedas + (bonusHacha / 2), 55);
-        const chanceFrutaEpica = Math.min(5 + bonusEstacion + bonusSuerte + (bonusHacha / 2), 25);
-        const chanceFrutaRara = Math.min(12 + bonusEstacion + bonusSuerte + bonusHacha, 40);
-        const chanceEventoRaro = Math.min(8 + bonusEstacion + (bonusSuerte / 2) + bonusHacha, 28);
+        const chanceMonedas = Math.min(20 + bonoNivel + bonusSuerte + climaMonedas + (bonusHacha / 2), 55) * macroMult;
+        const chanceFrutaEpica = Math.min(5 + bonusEstacion + bonusSuerte + (bonusHacha / 2), 25) * macroMult;
+        const chanceFrutaRara = Math.min(12 + bonusEstacion + bonusSuerte + bonusHacha, 40) * macroMult;
+        const chanceEventoRaro = Math.min(8 + bonusEstacion + (bonusSuerte / 2) + bonusHacha, 28) * macroMult;
 
         const rand = Math.random() * 100;
 
         // Desgastar hacha
-        await db.execute({
-            sql: "UPDATE herramientas_durabilidad SET durabilidad = MAX(0, durabilidad - 1) WHERE user_id = ? AND item_id = ?",
-            args: [userId, axe.itemId]
-        });
+        await degradarHerramienta(userId, axe.itemId);
         const resAxeAfter = await db.execute({
             sql: "SELECT durabilidad FROM herramientas_durabilidad WHERE user_id = ? AND item_id = ?",
             args: [userId, axe.itemId]
@@ -151,6 +132,7 @@ export async function execute(interaction, bostezo) {
                     narrativa: `🌳 *¡Evento raro: nido escondido!*\n\nEntre las ramas apareció un nidito suavecito con una pluma mágica brillando dentro. 🥹`,
                     extras: [{ name: "📦 Obtenido", value: "**1x 🪶 Pluma brillante**", inline: true }, ...camposBase]
                 });
+                progresarMision(interaction.user.id, "talar").catch(() => {});
                 return interaction.editReply({ embeds: [embed] });
             }
 
@@ -163,6 +145,7 @@ export async function execute(interaction, bostezo) {
                         narrativa: `🥚 *¡Evento: nido con huevito!*\n\n¡Qué ternura! Entre las hojitas había un nidito con un huevito bien calientito. 🐣`,
                         extras: [{ name: "📦 Obtenido", value: "**1x 🥚 Huevo de Pájaro**", inline: true }, ...camposBase]
                     });
+                    progresarMision(interaction.user.id, "talar").catch(() => {});
                     return interaction.editReply({ embeds: [embed] });
                 } else if (nidoTipo === 1) {
                     const pajaritos = Math.floor(Math.random() * 5) + 3;
@@ -172,6 +155,7 @@ export async function execute(interaction, bostezo) {
                         narrativa: `🐦 *¡Evento: nido de pajaritos!*\n\nLos pichoncitos hicieron pío-pío y su mamá te regaló **${pajaritos} moneditas** de agradecimiento. ¡Qué dulzura!`,
                         extras: [{ name: "💰 Monedas recibidas", value: `**+${pajaritos} 🪙**`, inline: true }, ...camposBase]
                     });
+                    progresarMision(interaction.user.id, "talar").catch(() => {});
                     return interaction.editReply({ embeds: [embed] });
                 } else {
                     await db.execute({ sql: `INSERT INTO inventario_economia (user_id, item_id, cantidad) VALUES (?, 'Rama Dorada', 1) ON CONFLICT(user_id, item_id) DO UPDATE SET cantidad = cantidad + 1`, args: [userId] });
@@ -180,6 +164,7 @@ export async function execute(interaction, bostezo) {
                         narrativa: `✨ *¡Evento: rama mágica!*\n\n¡Una rama del árbol brillaba en dorado! La tomaste con cuidado... ¡es mágica!`,
                         extras: [{ name: "📦 Obtenido", value: "**1x 🌿 Rama Dorada**", inline: true }, ...camposBase]
                     });
+                    progresarMision(interaction.user.id, "talar").catch(() => {});
                     return interaction.editReply({ embeds: [embed] });
                 }
             }
@@ -207,6 +192,7 @@ export async function execute(interaction, bostezo) {
                     narrativa: `🍎 *¡Evento raro: fruto dorado!*\n\nCayó un fruto mágico dorado que brillaba solo. Lo cambiaste por **${monedasDorado} moneditas** en el mercado del pueblito. 🌟`,
                     extras: [{ name: "💰 Monedas ganadas", value: `**+${monedasDorado} 🪙**`, inline: true }, ...camposBase]
                 });
+                progresarMision(interaction.user.id, "talar").catch(() => {});
                 return interaction.editReply({ embeds: [embed] });
             }
 
@@ -218,6 +204,7 @@ export async function execute(interaction, bostezo) {
                 narrativa: `🐿️ *¡Evento: ardilla traviesa!*\n\n¡Una ardillita cayó junto con un montón de cositas guardadas! Te dejó **${ardillaLoot} moneditas** del tesoro que tenía escondido.`,
                 extras: [{ name: "💰 Monedas ganadas", value: `**+${ardillaLoot} 🪙**`, inline: true }, ...camposBase]
             });
+            progresarMision(interaction.user.id, "talar").catch(() => {});
             return interaction.editReply({ embeds: [embed] });
         }
 
@@ -256,6 +243,7 @@ export async function execute(interaction, bostezo) {
                 narrativa: `🌳 *El árbol desprendió un brillo especial...*\n\n${elegida.texto}`,
                 extras: [{ name: "📦 Obtenido", value: `**1x ${elegida.emoji} ${elegida.id}**`, inline: true }, ...camposBase]
             });
+            progresarMision(interaction.user.id, "talar").catch(() => {});
             return interaction.editReply({ embeds: [embed] });
         }
 
@@ -278,6 +266,7 @@ export async function execute(interaction, bostezo) {
                 narrativa: `🌳 *Shake, shake... thump!*\n\n${elegida.texto}`,
                 extras: [{ name: "📦 Obtenido", value: `**${elegida.cantidad}x ${elegida.emoji} ${elegida.id}**`, inline: true }, ...camposBase]
             });
+            progresarMision(interaction.user.id, "talar").catch(() => {});
             return interaction.editReply({ embeds: [embed] });
         }
 
@@ -308,6 +297,7 @@ export async function execute(interaction, bostezo) {
             narrativa,
             extras: [{ name: "📦 Obtenido", value: `**${elegida.cantidad}x ${elegida.emoji} ${elegida.id}**`, inline: true }, ...camposBase]
         });
+        progresarMision(interaction.user.id, "talar").catch(() => {});
         return interaction.editReply({ embeds: [embed] });
 
     } catch (error) {

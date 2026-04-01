@@ -3,6 +3,8 @@ import { db } from "../../services/db.js";
 import { crearEmbed, crearEmbedCooldown, crearEmbedDrop } from "../../core/utils.js";
 import { CONFIG } from "../../core/config.js";
 import { ganarXP, registrarBitacora, tieneBoostActivo } from "../../features/progreso.js";
+import { verificarCooldown, setCooldown, detectarMacro } from "../../features/cooldown.js";
+import { progresarMision } from "../../features/misiones.js";
 
 // Cooldown de 3 minutos
 const COOLDOWN_FOTOGRAFIAR = 180000;
@@ -13,52 +15,33 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction, bostezo) {
     const userId = interaction.user.id;
-    const ahora = Date.now();
 
     await interaction.deferReply();
 
     try {
         // 1. Revisar cooldown
-        const resCd = await db.execute({
-            sql: "SELECT fecha_limite FROM cooldowns WHERE user_id = ? AND comando = 'fotografiar' AND extra_id = 'global'",
-            args: [userId]
-        });
-
-        if (resCd.rows.length > 0) {
-            const limite = Number(resCd.rows[0].fecha_limite);
-            if (ahora < limite) {
-                const faltanMinutos = Math.ceil((limite - ahora) / 60000);
-                const embed = crearEmbedCooldown(faltanMinutos, bostezo.trim(), "fotografiar")
-                    .setDescription(
-                        `*${bostezo.trim()}*\n\n` +
-                        `📷 Todavía estás revelando el rollo de fotos, corazón...\n` +
-                        `⌛ Espera **${faltanMinutos} minutos** para volver a fotografiar aves.`
-                    );
-                return interaction.editReply({ embeds: [embed] });
-            }
-        }
+        const cd = await verificarCooldown(userId, "fotografiar", COOLDOWN_FOTOGRAFIAR, bostezo);
+        if (!cd.ok) return interaction.editReply({ embeds: [cd.embed] });
 
         // 2. Establecer cooldown
-        await db.execute({
-            sql: `INSERT INTO cooldowns (user_id, comando, extra_id, fecha_limite)
-            VALUES (?, 'fotografiar', 'global', ?)
-            ON CONFLICT(user_id, comando, extra_id) DO UPDATE SET fecha_limite = excluded.fecha_limite`,
-            args: [userId, ahora + COOLDOWN_FOTOGRAFIAR]
-        });
+        await setCooldown(userId, "fotografiar", COOLDOWN_FOTOGRAFIAR);
 
         // XP de Fotografía
         const xpGanada = Math.floor(Math.random() * 15) + 10;
         const nivelFoto = await ganarXP(userId, "fotografia", xpGanada, interaction);
+
+        // Anti-macro
+        const penalizacionMacro = await detectarMacro(userId, "fotografiar", COOLDOWN_FOTOGRAFIAR);
 
         // Lógica de drops
         const bonoNivel = (nivelFoto - 1) * 0.3;
         const amuletoActivo = await tieneBoostActivo(userId, "amuleto_suerte_15m");
         const bonusSuerte = amuletoActivo ? 8 : 0;
 
-        const chanceMitica = Math.min(0.5 + (bonoNivel * 0.1) + bonusSuerte, 5);
-        const chanceLegendaria = Math.min(3 + (bonoNivel * 0.2) + bonusSuerte, 15);
-        const chanceEpica = Math.min(10 + (bonoNivel * 0.4) + bonusSuerte, 28);
-        const chanceRara = Math.min(20 + (bonoNivel * 0.5) + bonusSuerte, 40);
+        const chanceMitica = Math.min((0.5 + (bonoNivel * 0.1) + bonusSuerte) * penalizacionMacro, 5);
+        const chanceLegendaria = Math.min((3 + (bonoNivel * 0.2) + bonusSuerte) * penalizacionMacro, 15);
+        const chanceEpica = Math.min((10 + (bonoNivel * 0.4) + bonusSuerte) * penalizacionMacro, 28);
+        const chanceRara = Math.min((20 + (bonoNivel * 0.5) + bonusSuerte) * penalizacionMacro, 40);
 
         const rand = Math.random() * 100;
 
@@ -137,6 +120,7 @@ export async function execute(interaction, bostezo) {
             ]
         });
 
+        progresarMision(interaction.user.id, "fotografiar").catch(() => {});
         return interaction.editReply({ embeds: [embed] });
 
     } catch (error) {
