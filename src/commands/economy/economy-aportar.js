@@ -209,7 +209,7 @@ async function procesarDonacionMonedas(interaction, ctx) {
 
     const nuevoProgreso = progreso + donacionReal;
     const porcentaje = meta > 0 ? Math.min(100, Math.floor((nuevoProgreso / meta) * 100)) : 0;
-    const barra = barraProgreso(porcentaje, "\u{1F7E9}", "\u2B1C", 10);
+    const barra = barraProgreso(porcentaje, 100, "\u{1F7E9}", "\u2B1C", 10);
 
     // Milestone check
     const milestones = [25, 50, 75, 100];
@@ -311,7 +311,7 @@ async function procesarDonacionItems(interaction, ctx) {
     const nuevoProgreso = evento.progreso_items + donacionReal;
     const metaItems = evento.meta_items;
     const porcentaje = metaItems > 0 ? Math.min(100, Math.floor((nuevoProgreso / metaItems) * 100)) : 0;
-    const barra = barraProgreso(porcentaje, "\u{1F7E6}", "\u2B1C", 10);
+    const barra = barraProgreso(porcentaje, 100, "\u{1F7E6}", "\u2B1C", 10);
 
     const embed = crearEmbed(CONFIG.COLORES.VERDE)
         .setTitle("\u{1F4E6} Gracias por tu aporte!")

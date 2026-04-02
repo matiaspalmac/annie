@@ -193,7 +193,7 @@ export function getProgresoEvento(evento) {
     const meta = Number(evento.meta_monedas);
     const pct = meta > 0 ? Math.min(100, Math.floor((prog / meta) * 100)) : 0;
     lines.push(`\u{1F4B0} **Moneditas:** ${prog.toLocaleString()} / ${meta.toLocaleString()}`);
-    lines.push(barraProgreso(pct, "\u{1F7E9}", "\u2B1C", 10));
+    lines.push(barraProgreso(pct, 100, "\u{1F7E9}", "\u2B1C", 10));
   }
 
   // Progreso de items
@@ -203,7 +203,7 @@ export function getProgresoEvento(evento) {
     const pct = meta > 0 ? Math.min(100, Math.floor((prog / meta) * 100)) : 0;
     const itemNombre = evento.item_requerido || "items";
     lines.push(`\u{1F4E6} **${itemNombre}:** ${prog.toLocaleString()} / ${meta.toLocaleString()}`);
-    lines.push(barraProgreso(pct, "\u{1F7E6}", "\u2B1C", 10));
+    lines.push(barraProgreso(pct, 100, "\u{1F7E6}", "\u2B1C", 10));
   }
 
   // Deadline

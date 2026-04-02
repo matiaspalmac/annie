@@ -119,11 +119,12 @@ export function crearEmbed(color) {
     .setFooter(getAnnieFooter());
 }
 
-export function barraProgreso(valor, emojiLleno = "█", emojiVacio = "░", bloques = 10) {
-  const porcentaje = Math.max(0, Math.min(100, Number(valor) || 0));
+export function barraProgreso(valor, max = 100, emojiLleno = "█", emojiVacio = "░", bloques = 10) {
+  const maxVal = Math.max(1, Number(max) || 100);
+  const porcentaje = Math.max(0, Math.min(100, ((Number(valor) || 0) / maxVal) * 100));
   const llenos = Math.round((porcentaje / 100) * bloques);
   const vacios = bloques - llenos;
-  return emojiLleno.repeat(llenos) + emojiVacio.repeat(vacios) + ` **${porcentaje}%**`;
+  return emojiLleno.repeat(llenos) + emojiVacio.repeat(vacios) + ` **${Math.round(porcentaje)}%**`;
 }
 
 export function crearEmbedCooldown(minutosRestantes, bostezo = "", nombreComando = "") {
