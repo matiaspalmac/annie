@@ -20,7 +20,7 @@ import { registerInterval, registerTimeout } from "../schedulers/scheduler.js";
 import { procesarSorteoRifa } from "../features/rifa.js";
 import { chequearDoris } from "../features/doris.js";
 import { anunciarClima, updateWeatherChannel } from "../features/clima.js";
-import { ejecutarRutinaDiaria, enviarFraseAmbient, mencionarVecinoRandom } from "../features/rutinas.js";
+// import { ejecutarRutinaDiaria, enviarFraseAmbient, mencionarVecinoRandom } from "../features/rutinas.js";
 import { lanzarEstrellaFugaz } from "../core/utils.js";
 import { lanzarTriviaAleatoria } from "../features/trivia.js";
 import { refreshCache } from "../features/wiki-sync.js";
@@ -88,9 +88,9 @@ export async function execute(client) {
   registerInterval("doris", () => chequearDoris(client), 90 * 60_000);
   registerInterval("cache-refresh", () => refreshCache(client), 30 * 60_000);
   registerInterval("anunciar-clima", () => anunciarClima(client), 3600_000);
-  registerInterval("frase-ambient", () => enviarFraseAmbient(client), 360 * 60_000);
-  registerInterval("rutina-diaria", () => ejecutarRutinaDiaria(client), 5 * 60_000);
-  registerInterval("vecino-random", () => mencionarVecinoRandom(client), 360 * 60_000);
+  // registerInterval("frase-ambient", () => enviarFraseAmbient(client), 360 * 60_000);
+  // registerInterval("rutina-diaria", () => ejecutarRutinaDiaria(client), 5 * 60_000);
+  // registerInterval("vecino-random", () => mencionarVecinoRandom(client), 360 * 60_000);
 
   // Deadline de eventos comunitarios — cada 10 min
   registerInterval("evento-deadline", () => verificarDeadline(client), 10 * 60_000);

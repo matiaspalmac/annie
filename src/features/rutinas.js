@@ -1,16 +1,18 @@
 /**
  * Rutinas diarias, frases ambient y menciones de vecinos.
  */
-import { CONFIG } from "../core/config.js";
-import { estaDurmiendo } from "../core/state.js";
-import { getUltimaRutina, setUltimaRutina } from "../core/state.js";
-import { getCanalGeneral, getHoraChile } from "../core/utils.js";
-import { getTrato, RUTINAS, FRASES_AMBIENT } from "../core/personality.js";
+// import { CONFIG } from "../core/config.js";
+// import { estaDurmiendo } from "../core/state.js";
+// import { getUltimaRutina, setUltimaRutina } from "../core/state.js";
+// import { getCanalGeneral, getHoraChile } from "../core/utils.js";
+// import { getTrato, RUTINAS, FRASES_AMBIENT } from "../core/personality.js";
 
 /**
  * Ejecuta rutinas horarias de Annie (mensajes automáticos).
  */
 export function ejecutarRutinaDiaria(client) {
+  void client;
+  /*
   try {
     if (estaDurmiendo()) return;
 
@@ -28,23 +30,29 @@ export function ejecutarRutinaDiaria(client) {
   } catch (error) {
     console.error("[Rutina] Error:", error.message);
   }
+  */
 }
 
 /**
  * Envía una frase ambient aleatoria al canal general.
  */
 export function enviarFraseAmbient(client) {
+  void client;
+  /*
   if (estaDurmiendo()) return;
   const canal = getCanalGeneral(client);
   if (!canal) return;
   const frase = FRASES_AMBIENT[Math.floor(Math.random() * FRASES_AMBIENT.length)];
   canal.send(`*Annie comenta con cariño:* ${frase}`).catch(() => {});
+  */
 }
 
 /**
  * Menciona a un vecino random con una frase cariñosa.
  */
 export async function mencionarVecinoRandom(client) {
+  void client;
+  /*
   if (estaDurmiendo()) return;
 
   const guild = client.guilds.cache.get(CONFIG.GUILD_ID);
@@ -67,4 +75,5 @@ export async function mencionarVecinoRandom(client) {
   const intro = intros[Math.floor(Math.random() * intros.length)];
 
   canal.send(`${intro} "${frase.replace("corazón", trato).replace("vecin@", trato)}"`).catch(() => {});
+  */
 }
