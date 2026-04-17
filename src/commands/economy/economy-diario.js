@@ -1,5 +1,6 @@
-import { SlashCommandBuilder, MessageFlags } from "discord.js";
+import { SlashCommandBuilder } from "discord.js";
 import { db } from "../../services/db.js";
+import { ensureUser } from "../../services/db-helpers.js";
 import { CONFIG } from "../../core/config.js";
 import { crearEmbed, barraProgreso } from "../../core/utils.js";
 
@@ -27,20 +28,16 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction, bostezo) {
     const userId = interaction.user.id;
+    const avatarUrl = interaction.user.displayAvatarURL({ extension: "png", size: 256 }) || null;
 
     await interaction.deferReply();
+
+    await ensureUser(userId, interaction.user.username, avatarUrl);
 
     const resDb = await db.execute({
         sql: "SELECT ultimo_diario, diario_racha FROM usuarios WHERE id = ?",
         args: [userId]
     });
-
-    if (resDb.rows.length === 0) {
-        const embed = crearEmbed(CONFIG.COLORES.ROSA)
-            .setTitle("🌸 ¡Aún no estás registrado!")
-            .setDescription(`${bostezo} Todavía no te has paseado por el pueblito... Escribe unos cuantos mensajitos en el chat y vuelve a pedir tu regalito, corazón.`);
-        return interaction.editReply({ embeds: [embed] });
-    }
 
     const userData = resDb.rows[0];
     const ahora = new Date();

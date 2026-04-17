@@ -1,11 +1,11 @@
 import { SlashCommandBuilder } from "discord.js";
-import { db } from "../../services/db.js";
 import { crearEmbed, getFechaChile } from "../../core/utils.js";
-import { deductBalance, getBalance } from "../../services/db-helpers.js";
+import { deductBalance, ensureUser, getBalance } from "../../services/db-helpers.js";
 import { CONFIG } from "../../core/config.js";
 import {
   COSTO_BOLETO,
   MAX_BOLETOS_DIA,
+  MIN_PARTICIPANTES_SORTEO,
   POZO_MINIMO,
   getEstadisticasRifa,
   getBoletosUsuario,
@@ -60,6 +60,8 @@ async function handleVer(interaction, bostezo, hoyStr) {
   const { totalBoletos, pozoVentas, pozoAcumulado, pozoTotal, participantes } = await getEstadisticasRifa(hoyStr);
   const misBoletos = await getBoletosUsuario(interaction.user.id, hoyStr);
   const numParticipantes = Object.keys(participantes).length;
+  const faltanParticipantes = Math.max(0, MIN_PARTICIPANTES_SORTEO - numParticipantes);
+  const sorteoHabilitado = numParticipantes >= MIN_PARTICIPANTES_SORTEO;
   const miChance = totalBoletos > 0 ? ((misBoletos / totalBoletos) * 100).toFixed(1) : "0";
   const boletosRestantes = MAX_BOLETOS_DIA - misBoletos;
 
@@ -89,12 +91,22 @@ async function handleVer(interaction, bostezo, hoyStr) {
     .setDescription(
       `${bostezo}*A ver, a ver... veamos cómo va la cajita de los boletos...*\n\n` +
       `¡El sorteo es esta noche a las **23:59**! ¿Ya tienes tu boleto? 🌸` +
-      (pozoAcumulado > 0 ? `\n\n📦 *¡Hay **${pozoAcumulado.toLocaleString()} 🪙** acumuladas de días anteriores!*` : ""),
+      (pozoAcumulado > 0 ? `\n\n📦 *¡Hay **${pozoAcumulado.toLocaleString()} 🪙** acumuladas de días anteriores!*` : "") +
+      (!sorteoHabilitado
+        ? `\n\n⚠️ *Faltan **${faltanParticipantes} participante(s)** para habilitar el sorteo de hoy.*`
+        : ""),
     )
     .addFields(
       { name: "💰 Pozo Estimado", value: `**${pozoTotal.toLocaleString()} 🪙**`, inline: true },
       { name: "🎫 Boletos Vendidos", value: `**${totalBoletos}**`, inline: true },
       { name: "👥 Participantes", value: `**${numParticipantes}**`, inline: true },
+      {
+        name: "🎯 Estado del sorteo",
+        value: sorteoHabilitado
+          ? `✅ Habilitado (mínimo ${MIN_PARTICIPANTES_SORTEO})`
+          : `⏳ En espera (${faltanParticipantes} participante(s) más)\nSi no se llega al mínimo: reembolso de boletos + aporte de Annie`,
+        inline: false,
+      },
       { name: "📊 Desglose", value: desgloseLines.join("\n"), inline: false },
       {
         name: "🎯 Tu Participación",
@@ -109,7 +121,9 @@ async function handleVer(interaction, bostezo, hoyStr) {
     embed.addFields({ name: "🏅 Top participantes", value: topParticipantes, inline: false });
   }
 
-  embed.setFooter({ text: `Mín. garantizado: ${POZO_MINIMO} 🪙 | Máx. ${MAX_BOLETOS_DIA} boletos/día | Sorteo 23:59` });
+  embed.setFooter({
+    text: `Mín. pozo: ${POZO_MINIMO} 🪙 | Mín. participantes: ${MIN_PARTICIPANTES_SORTEO} | Máx. ${MAX_BOLETOS_DIA} boletos/día`,
+  });
 
   return interaction.followUp({ embeds: [embed] });
 }
@@ -118,24 +132,11 @@ async function handleVer(interaction, bostezo, hoyStr) {
 
 async function handleComprar(interaction, bostezo, hoyStr) {
   const cantidad = interaction.options.getInteger("cantidad") || 1;
+  const avatarUrl = interaction.user.displayAvatarURL({ extension: "png", size: 256 }) || null;
 
-  // Verificar registro
+  await ensureUser(interaction.user.id, interaction.user.username, avatarUrl);
+
   const monedasActuales = await getBalance(interaction.user.id);
-  if (monedasActuales === 0) {
-    const userCheck = await db.execute({
-      sql: "SELECT id FROM usuarios WHERE id = ?",
-      args: [interaction.user.id],
-    });
-    if (userCheck.rows.length === 0) {
-      const embed = crearEmbed(CONFIG.COLORES.ROSA)
-        .setTitle("📋 ¡Aún no estás registrado!")
-        .setDescription(
-          `${bostezo}Ay corazón, todavía no te tengo anotado en mi libretita de vecinos. ` +
-          `¡Habla un poquito más por el chat general primero!`,
-        );
-      return interaction.followUp({ embeds: [embed] });
-    }
-  }
 
   // Verificar límite diario
   const boletosHoy = await getBoletosUsuario(interaction.user.id, hoyStr);

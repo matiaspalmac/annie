@@ -9,8 +9,7 @@ import {
   getHistorialMensajes, setHistorialMensajes,
   getUltimoChisme, setUltimoChisme,
 } from "../core/state.js";
-import { crearEmbed, getHoraChile } from "../core/utils.js";
-import { getTrato } from "../core/personality.js";
+import { crearEmbed } from "../core/utils.js";
 import { db } from "../services/db.js";
 import { updateUserProfile } from "../services/db-helpers.js";
 
@@ -28,12 +27,40 @@ const EASTER_EGGS = {
   "4": "En tu culo mi aparatito dulce!",
 };
 
+const MENCION_PROBABILIDAD = 0.35;
+const MENCION_COOLDOWN_MS = 15 * 60 * 1000;
+const CHISME_UMBRAL_MINIMO = 40;
+const CHISME_COOLDOWN_MINIMO_MS = 90 * 60 * 1000;
+
+const _cooldownsMencion = new Map();
+
+function puedeResponderMencion(msg, ahora) {
+  if (Math.random() > MENCION_PROBABILIDAD) return false;
+
+  const key = `${msg.channel.id}:${msg.author.id}`;
+  const ultimo = _cooldownsMencion.get(key) || 0;
+  if (ahora - ultimo < MENCION_COOLDOWN_MS) return false;
+
+  _cooldownsMencion.set(key, ahora);
+
+  // Limpieza defensiva para evitar crecimiento ilimitado
+  if (_cooldownsMencion.size > 1000) {
+    for (const [k, ts] of _cooldownsMencion.entries()) {
+      if (ahora - ts > MENCION_COOLDOWN_MS * 4) _cooldownsMencion.delete(k);
+    }
+  }
+
+  return true;
+}
+
 export async function execute(message, client) {
   if (message.author.bot) return;
 
   const msg = message;
   const texto = msg.content.toLowerCase();
   const ahora = Date.now();
+  const durmiendo = estaDurmiendo();
+  const mencionaAnnie = texto.includes("annie");
 
   // ── Actualizar perfil silenciosamente ─────────────────────
   const avatarUrl = msg.author.displayAvatarURL({ extension: "png", size: 256 }) || null;
@@ -44,48 +71,39 @@ export async function execute(message, client) {
     await procesarChuchada(msg);
   }
 
-  // ── Easter egg: mondongo ──────────────────────────────────
-  if (/mondongo/i.test(texto)) {
-    msg.reply({
-      files: [{ attachment: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTb-m0Yqk1nEAvN0Z1GN4QuHY5lXXFDTj6CyA&s", name: "mondongo.jpg" }],
-    }).catch(() => {});
-  }
+  // ── Ruido social: solo de día para evitar flood nocturno ───
+  if (!durmiendo) {
+    // ── Easter egg: mondongo ────────────────────────────────
+    if (/mondongo/i.test(texto)) {
+      msg.reply({
+        files: [{ attachment: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTb-m0Yqk1nEAvN0Z1GN4QuHY5lXXFDTj6CyA&s", name: "mondongo.jpg" }],
+      }).catch(() => {});
+    }
 
-  // ── Detección de chisme ───────────────────────────────────
-  if (message.channel.id === CONFIG.CANAL_GENERAL_ID) {
-    await detectarChisme(msg, ahora);
-  }
+    // ── Detección de chisme ─────────────────────────────────
+    if (message.channel.id === CONFIG.CANAL_GENERAL_ID) {
+      await detectarChisme(msg, ahora);
+    }
 
-  // ── Easter eggs numéricos ─────────────────────────────────
-  if (EASTER_EGGS[texto]) {
-    return msg.reply(EASTER_EGGS[texto]).catch(() => {});
-  }
-  if (texto.startsWith("me gusta")) {
-    return msg.reply("Y el pico? Acuerdese que soy de campo, vecino lindo!").catch(() => {});
-  }
+    // ── Easter eggs numéricos ───────────────────────────────
+    if (EASTER_EGGS[texto]) {
+      return msg.reply(EASTER_EGGS[texto]).catch(() => {});
+    }
+    if (texto.startsWith("me gusta")) {
+      return msg.reply("Y el pico? Acuerdese que soy de campo, vecino lindo!").catch(() => {});
+    }
 
-  // ── Respuestas de Annie a menciones ───────────────────────
-  const mencionaAnnie = texto.includes("annie");
-
-  if (estaDurmiendo()) {
-    if ((texto.includes("hola") || texto.includes("holi") || texto.includes("wena")) && mencionaAnnie) {
-      return msg.reply("*(Annie se despereza suave)* Zzz... ah? Wena mi vecino lindo... que necesitas tan tempranito?");
-    }
-    if ((texto.includes("gracias") || texto.includes("vale")) && mencionaAnnie) {
-      return msg.reply("*(susurra dormida)* De nada po, corazón... Zzz... siempre aqui para ti.");
-    }
-    if (texto.includes("chao") || texto.includes("buenas noches")) {
-      return msg.reply("Buenas noches, mi vecino precioso... suena bonito y abrigate, ya? Zzz...");
-    }
-  } else {
-    if ((texto.includes("hola") || texto.includes("holi") || texto.includes("wena")) && mencionaAnnie) {
-      return msg.reply("Wena, wena mi vecino lindo! Como estas hoy, corazón? Pasa no mas, estoy con tecito dulce.");
-    }
-    if ((texto.includes("gracias") || texto.includes("vale")) && mencionaAnnie) {
-      return msg.reply("De nada po, mi alegria! Siempre aqui para ti, ya?");
-    }
-    if ((texto.includes("chao") || texto.includes("adios")) && mencionaAnnie) {
-      return msg.reply("Chao, corazón! Cuidate harto y vuelve prontito, ya?");
+    // ── Respuestas de Annie a menciones (con probabilidad + cooldown) ──
+    if (mencionaAnnie && puedeResponderMencion(msg, ahora)) {
+      if (texto.includes("hola") || texto.includes("holi") || texto.includes("wena")) {
+        return msg.reply("Wena, wena mi vecino lindo! Como estas hoy, corazón? Pasa no mas, estoy con tecito dulce.");
+      }
+      if (texto.includes("gracias") || texto.includes("vale")) {
+        return msg.reply("De nada po, mi alegria! Siempre aqui para ti, ya?");
+      }
+      if (texto.includes("chao") || texto.includes("adios") || texto.includes("buenas noches")) {
+        return msg.reply("Chao, corazón! Cuidate harto y vuelve prontito, ya?");
+      }
     }
   }
 
@@ -120,12 +138,16 @@ async function procesarChuchada(msg) {
 }
 
 async function detectarChisme(msg, ahora) {
+  const ventanaChisme = Number(CONFIG.VENTANA_CHISME || 300000);
+  const umbralChisme = Math.max(Number(CONFIG.UMBRAL_CHISME || 25), CHISME_UMBRAL_MINIMO);
+  const cooldownChisme = Math.max(Number(CONFIG.COOLDOWN_CHISME || 1800000), CHISME_COOLDOWN_MINIMO_MS);
+
   let historial = getHistorialMensajes();
   historial.push(ahora);
-  historial = historial.filter(m => ahora - m < CONFIG.VENTANA_CHISME);
+  historial = historial.filter(m => ahora - m < ventanaChisme);
   setHistorialMensajes(historial);
 
-  if (historial.length >= CONFIG.UMBRAL_CHISME && ahora - getUltimoChisme() > CONFIG.COOLDOWN_CHISME) {
+  if (historial.length >= umbralChisme && ahora - getUltimoChisme() > cooldownChisme) {
     setUltimoChisme(ahora);
     setHistorialMensajes([]);
 
@@ -166,19 +188,15 @@ async function procesarXp(msg, client) {
 
       if (nivelNuevo > nivelAnterior) {
         await db.execute({ sql: "UPDATE usuarios SET nivel = ? WHERE id = ?", args: [nivelNuevo, msg.author.id] });
-        const embed = crearEmbed(CONFIG.COLORES.DORADO)
-          .setTitle("¡Subiste de Nivel!")
-          .setDescription(`¡Felicidades <@${msg.author.id}>! Has alcanzado el **Nivel ${nivelNuevo}** paseando por el pueblito. 🥳`);
 
-        let canalDestino = msg.channel;
-        if (nivelNuevo % 5 === 0) {
-          const cGeneral = client.channels.cache.get(CONFIG.CANAL_GENERAL_ID);
-          if (cGeneral) canalDestino = cGeneral;
-        } else {
-          const canalComandosId = CONFIG.CONFIG_COMANDOS_ID || "1463662463693230110";
-          const cComandos = client.channels.cache.get(canalComandosId);
-          if (cComandos) canalDestino = cComandos;
-        }
+        // Para no floodear: solo anunciar hitos (cada 5 niveles) y nunca de madrugada.
+        if (estaDurmiendo() || nivelNuevo % 5 !== 0) return;
+
+        const embed = crearEmbed(CONFIG.COLORES.DORADO)
+          .setTitle("🏆 ¡Hito de Nivel!")
+          .setDescription(`¡Felicidades <@${msg.author.id}>! Alcanzaste el **Nivel ${nivelNuevo}** paseando por el pueblito. 🥳`);
+
+        let canalDestino = client.channels.cache.get(CONFIG.CANAL_GENERAL_ID) || msg.channel;
 
         canalDestino.send({ embeds: [embed] }).catch(() => {});
       }

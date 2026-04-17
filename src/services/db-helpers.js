@@ -5,6 +5,21 @@
 import { db } from "./db.js";
 
 /**
+ * Asegura que exista la fila base del usuario en `usuarios`.
+ * @param {string} userId
+ * @param {string|null} [username=null]
+ * @param {string|null} [avatar=null]
+ */
+export async function ensureUser(userId, username = null, avatar = null) {
+  await db.execute({
+    sql: `INSERT INTO usuarios (id, username, avatar, monedas, xp, nivel)
+          VALUES (?, ?, ?, 0, 0, 1)
+          ON CONFLICT(id) DO NOTHING`,
+    args: [userId, username, avatar],
+  });
+}
+
+/**
  * Agrega items al inventario de un usuario (UPSERT).
  * @param {string} userId - ID del usuario
  * @param {string} itemId - ID del item
@@ -51,8 +66,10 @@ export async function deductBalance(userId, cantidad) {
  */
 export async function addBalance(userId, cantidad) {
   await db.execute({
-    sql: "UPDATE usuarios SET monedas = monedas + ? WHERE id = ?",
-    args: [cantidad, userId],
+    sql: `INSERT INTO usuarios (id, monedas, xp, nivel)
+          VALUES (?, ?, 0, 1)
+          ON CONFLICT(id) DO UPDATE SET monedas = usuarios.monedas + excluded.monedas`,
+    args: [userId, cantidad],
   });
 }
 

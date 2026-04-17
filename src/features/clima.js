@@ -2,7 +2,8 @@
  * Anuncio de clima diario y actualización del canal de clima.
  */
 import { CONFIG } from "../core/config.js";
-import { crearEmbed, getCanalGeneral, getHoraChile } from "../core/utils.js";
+import { estaDurmiendo } from "../core/state.js";
+import { crearEmbed, getCanalGeneral, getFechaChile, getHoraChile } from "../core/utils.js";
 import { db } from "../services/db.js";
 
 /**
@@ -12,9 +13,11 @@ import { db } from "../services/db.js";
  */
 export async function anunciarClima(client, forzado = false) {
   try {
+    if (!forzado && estaDurmiendo()) return;
+
     const hora = getHoraChile();
     const horaAnuncio = CONFIG.HORA_ANUNCIO_CLIMA || 19;
-    if (!forzado && hora !== horaAnuncio) return;
+    if (!forzado && hora < horaAnuncio) return;
 
     const canal = getCanalGeneral(client);
     if (!canal) return;
@@ -24,6 +27,15 @@ export async function anunciarClima(client, forzado = false) {
 
     const hoy = result.rows[0];
     const timeline = JSON.parse(hoy.timeline || "[]");
+    const firmaHoy = `${getFechaChile()}|${hoy.tipo || "--"}|${hoy.descripcion || ""}`;
+
+    if (!forzado) {
+      const lastRes = await db.execute({
+        sql: "SELECT valor FROM configuracion WHERE clave = 'CLIMA_ULTIMO_ANUNCIO_FIRMA'",
+      });
+      const ultimaFirma = String(lastRes.rows[0]?.valor || "");
+      if (ultimaFirma === firmaHoy) return;
+    }
 
     const embed = crearEmbed(CONFIG.COLORES.CIELO)
       .setTitle("☁️ Clima del Pueblito — Hoy")
@@ -37,6 +49,11 @@ export async function anunciarClima(client, forzado = false) {
     embed.setFooter({ text: "Pronóstico hecho con amor | Annie" });
 
     await canal.send({ content: "Annie les trae el clima con amor:", embeds: [embed] });
+    await db.execute({
+      sql: `INSERT INTO configuracion (clave, valor) VALUES ('CLIMA_ULTIMO_ANUNCIO_FIRMA', ?)
+            ON CONFLICT(clave) DO UPDATE SET valor = ?`,
+      args: [firmaHoy, firmaHoy],
+    });
     console.log("[Clima] Clima anunciado exitosamente");
   } catch (error) {
     console.error("[Clima] Error:", error.message);

@@ -4,6 +4,8 @@
  * Mecánica de pozo:
  * - POZO MÍNIMO GARANTIZADO: Si hay participantes pero el pozo de boletos
  *   es menor al mínimo, Annie completa la diferencia.
+ * - MÍNIMO DE PARTICIPANTES: Se necesitan al menos 2 personas distintas
+ *   para habilitar el sorteo del día.
  * - ROLLOVER: Si nadie compra boletos, el pozo no se sortea y se acumula
  *   para el día siguiente (+ una contribución diaria de Annie).
  *   Esto genera expectativa: "el pozo lleva 3 días acumulando..."
@@ -24,6 +26,9 @@ export const COSTO_BOLETO = 10;
 
 /** Máximo de boletos que un usuario puede comprar por día */
 export const MAX_BOLETOS_DIA = 10;
+
+/** Mínimo de personas distintas para habilitar el sorteo */
+export const MIN_PARTICIPANTES_SORTEO = 2;
 
 /** Pozo mínimo garantizado cuando hay participantes */
 const POZO_MINIMO = 200;
@@ -100,8 +105,9 @@ async function enviarRecordatorio(client) {
   if (!canal) return;
 
   const hoyStr = getFechaChile();
-  const { totalBoletos } = await getEstadisticasRifa(hoyStr);
+  const { totalBoletos, participantes } = await getEstadisticasRifa(hoyStr);
   const acumulado = await getPozoAcumulado();
+  const numParticipantes = Object.keys(participantes).length;
 
   // Calcular pozo que se mostraría
   const pozoVentas = totalBoletos * COSTO_BOLETO;
@@ -118,7 +124,9 @@ async function enviarRecordatorio(client) {
       ` con **${totalBoletos} boletos** vendidos.\n\n` +
       (totalBoletos === 0
         ? `¡Aún nadie ha comprado boleto! Si no hay participantes, el pozo seguirá creciendo para mañana... 👀\n\n`
-        : "") +
+        : numParticipantes < MIN_PARTICIPANTES_SORTEO
+          ? `⚠️ Aún faltan participantes: se necesitan **${MIN_PARTICIPANTES_SORTEO} personas** para que hoy haya ganador.\n\n`
+          : "") +
       `¡Última oportunidad para comprar tu boleto con \`/rifa comprar\`! El sorteo es a las **23:59**. 🎰`,
     );
 
@@ -175,17 +183,44 @@ async function ejecutarSorteo(client, ahora) {
   const totalBoletos = resBoletos.rows.length;
   const pozoVentas = totalBoletos * COSTO_BOLETO;
 
-  // Pozo final = ventas + acumulado, con mínimo garantizado
-  const pozoSinMinimo = pozoVentas + acumuladoAnterior;
-  const pozoFinal = Math.max(POZO_MINIMO, pozoSinMinimo);
-  const annieAporto = pozoFinal - pozoVentas - acumuladoAnterior;
-
   // Contar boletos por participante
   const participantes = {};
   for (const row of resBoletos.rows) {
     participantes[row.user_id] = (participantes[row.user_id] || 0) + 1;
   }
   const numParticipantes = Object.keys(participantes).length;
+
+  // ── Participantes insuficientes → rollover ─────────────────
+  if (numParticipantes < MIN_PARTICIPANTES_SORTEO) {
+    // Reembolsar todos los boletos cuando no se alcanza el mínimo de participantes
+    const reembolsos = Object.entries(participantes).map(([uid, boletos]) =>
+      addBalance(uid, Number(boletos) * COSTO_BOLETO),
+    );
+    await Promise.all(reembolsos);
+
+    const nuevoAcumulado = acumuladoAnterior + APORTE_DIARIO_ROLLOVER;
+    await setPozoAcumulado(nuevoAcumulado);
+
+    const embed = crearEmbed(CONFIG.COLORES.NARANJA)
+      .setTitle("🎫 Sorteo en espera")
+      .setDescription(
+        `*Annie mira la tómbola y cuenta los nombres despacito...*\n\n` +
+        `Hoy hubo **${numParticipantes} participante${numParticipantes === 1 ? "" : "s"}**.\n` +
+        `Para sacar ganadorcito necesitamos al menos **${MIN_PARTICIPANTES_SORTEO} personas distintas**, así que hoy no se sortea.\n\n` +
+        `Annie devolvió **${pozoVentas.toLocaleString()} 🪙** en boletos a quienes participaron para que nadie pierda por falta de gente.\n` +
+        `Además, puso **${APORTE_DIARIO_ROLLOVER.toLocaleString()} 🪙** de su bolsillo para que el pozo siga creciendo.\n\n` +
+        `💰 **Pozo acumulado para mañana: ${nuevoAcumulado.toLocaleString()} 🪙**`,
+      )
+      .setFooter({ text: "Rifa en pausa por participantes insuficientes | Mañana vuelve el sorteo" });
+
+    await canal.send({ embeds: [embed] });
+    return;
+  }
+
+  // Pozo final = ventas + acumulado, con mínimo garantizado
+  const pozoSinMinimo = pozoVentas + acumuladoAnterior;
+  const pozoFinal = Math.max(POZO_MINIMO, pozoSinMinimo);
+  const annieAporto = pozoFinal - pozoVentas - acumuladoAnterior;
 
   // Sorteo
   const boletoGanador = resBoletos.rows[Math.floor(Math.random() * totalBoletos)];

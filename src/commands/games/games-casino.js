@@ -41,7 +41,7 @@ async function mostrarMenu(interaction, bostezo) {
   const balance = await obtenerBalance(userId);
 
   const embed = crearEmbed()
-    .setColor(CONFIG.COLOR)
+    .setColor(CONFIG.COLORES.CASINO)
     .setTitle("🎰 Casino de Heartopia 🎰")
     .setDescription(
       `${bostezo} ¡Bienvenido al casino, tesoro! Elige tu juego favorito, corazón:\n\n` +
@@ -102,7 +102,7 @@ async function mostrarStats(interaction, bostezo) {
   const winRate = totalPartidas > 0 ? ((stats.wins / totalPartidas) * 100).toFixed(1) : 0;
 
   const embed = crearEmbed()
-    .setColor(CONFIG.COLOR)
+    .setColor(CONFIG.COLORES.CASINO)
     .setTitle(`📊 Estadísticas del Casino`)
     .setDescription(`${bostezo} Aquí están tus números, ${interaction.user.username}:\n\nJugador: <@${userId}>`)
     .addFields(
@@ -129,7 +129,7 @@ async function mostrarTop(interaction, bostezo) {
   }
 
   const embed = crearEmbed()
-    .setColor(CONFIG.COLOR)
+    .setColor(CONFIG.COLORES.CASINO)
     .setTitle("🏆 Top Ganadores del Casino 🏆")
     .setDescription(`${bostezo} Estos son los mejores del casino, corazón:\n\nLos 10 jugadores con mayor ganancia neta:\n`);
 
