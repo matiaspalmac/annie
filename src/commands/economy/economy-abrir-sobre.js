@@ -5,7 +5,7 @@ import { crearEmbed } from "../../core/utils.js";
 
 const PRECIO_SOBRE = 1000;
 
-// Posibles cromos (Residentes de Heartopia)
+// Posibles cromos (Residentes de la Aldea)
 const CROMOS = [
     { nombre: "Gato Romano", rareza: "Común", desc: "Un gatito estándar pero mimoso." },
     { nombre: "Pato Pescador", rareza: "Común", desc: "Pato experto en sacar bocadillos del lago." },

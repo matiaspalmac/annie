@@ -6,11 +6,17 @@ import { CONFIG } from "../core/config.js";
 export const event = "messageReactionRemove";
 export const once = false;
 
+function resolveRoleId(messageId, emojiName) {
+  if (messageId === CONFIG.MENSAJE_ROLES_ID) return CONFIG.REACTION_ROLES?.[emojiName];
+  if (messageId === CONFIG.MENSAJE_ROLES_COZY_ID) return CONFIG.REACTION_ROLES_COZY?.[emojiName];
+  return null;
+}
+
 export async function execute(reaction, user) {
-  if (user.bot || reaction.message.id !== CONFIG.MENSAJE_ROLES_ID) return;
+  if (user.bot) return;
   if (reaction.partial) { try { await reaction.fetch(); } catch { return; } }
 
-  const roleId = CONFIG.REACTION_ROLES?.[reaction.emoji.name];
+  const roleId = resolveRoleId(reaction.message.id, reaction.emoji.name);
   if (!roleId) return;
 
   try {

@@ -56,7 +56,7 @@ const FOOTERS_ANNIE = [
   "Susurros del pueblito con cariñito 🌿",
   "Annie dice: ¡Cuídate mucho, tesoro! 🫶",
   "Con mimo y buen rollo de tu carterita 💌",
-  "Heartopia te quiere, corazón 🏡",
+  "La Aldea te quiere, corazón 🏡",
   "Un abrazo apretado desde la oficinita 🤗",
   "¡Wena, sigue adelante! Annie te apoya 🌈",
   "Despachado con amor desde el correo 📬",

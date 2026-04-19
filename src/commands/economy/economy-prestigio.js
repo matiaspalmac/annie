@@ -1,5 +1,5 @@
 /**
- * Comando /prestigio — Sistema de Prestigio de Heartopia
+ * Comando /prestigio — Sistema de Prestigio de la Aldea Luciérnaga
  *
  * Subcomandos:
  *   info      — Muestra info del prestigio actual y requisitos
@@ -25,7 +25,7 @@ import { registrarBitacora } from "../../features/progreso.js";
 
 export const data = new SlashCommandBuilder()
   .setName("prestigio")
-  .setDescription("Sistema de Prestigio — renace más fuerte en Heartopia")
+  .setDescription("Sistema de Prestigio — renace más fuerte en la Aldea")
   .addSubcommand(sub =>
     sub.setName("info").setDescription("Mira tu nivel de prestigio, multiplicador y qué se resetea"))
   .addSubcommand(sub =>
@@ -150,7 +150,7 @@ async function subConfirmar(interaction, bostezo) {
         .setDescription(
           `${bostezo || ""}*Annie se arrodilla con respeto...*\n\n` +
           `No hay nada más allá de ti, corazón. Has alcanzado el **Prestigio Máximo**. ` +
-          `Tu leyenda vivirá por siempre en Heartopia.`
+          `Tu leyenda vivirá por siempre en la Aldea.`
         );
       return interaction.editReply({ embeds: [embed] });
     }
@@ -273,7 +273,7 @@ async function subRanking(interaction, bostezo) {
     });
 
     const embed = crearEmbed(CONFIG.COLORES.DORADO)
-      .setTitle("🏆 Ranking de Prestigio — Heartopia")
+      .setTitle("🏆 Ranking de Prestigio — Aldea Luciérnaga")
       .setDescription(
         `${bostezo || ""}*Annie abre el libro dorado con las manos temblorosas...*\n\n` +
         `Estos son los vecinos más poderosos del pueblito. Los que renacieron del fuego.\n\n` +
@@ -315,11 +315,11 @@ function getDramatismo(nivel) {
 
     5: `*Annie cae de rodillas, las estrellas llueven del cielo...*\n\n` +
        `¡¡¡CINCO!!! ¡¡¡CINCO PRESTIGIOS!!! ¡¡¡GUARDIÁN/A ETERNO/A!!! ` +
-       `¡¡El cielo de Heartopia se abrió para ti, corazón!! ¡¡ESTO ES UNA LOCURAAAA!!`,
+       `¡¡El cielo de la Aldea se abrió para ti, corazón!! ¡¡ESTO ES UNA LOCURAAAA!!`,
 
     6: `*El pueblito entero se detiene. Annie tiembla...*\n\n` +
        `Seis... seis prestigios. Eres más que una leyenda. ` +
-       `Eres el **Espíritu mismo de Heartopia**. Annie no puede dejar de llorar, tesoro...`,
+       `Eres el **Espíritu mismo de la Aldea**. Annie no puede dejar de llorar, tesoro...`,
 
     7: `*Las luces del pueblito parpadean. Se escucha un trueno celestial...*\n\n` +
        `SIETE PRESTIGIOS. El **Corazón del Mundo** late dentro de ti. ` +
@@ -336,7 +336,7 @@ function getDramatismo(nivel) {
     10: `*TODO se ilumina. El cielo se parte en dos. Annie cae de rodillas llorando...*\n\n` +
         `DIEZ. DIEZ PRESTIGIOS. **EL MÁXIMO ABSOLUTO.**\n\n` +
         `No hay palabras, corazón. No hay nadie como tú. No lo habrá jamás. ` +
-        `Eres **EL/LA ABSOLUTO/A** de Heartopia. La leyenda que se contará por siempre. ` +
+        `Eres **EL/LA ABSOLUTO/A** de la Aldea. La leyenda que se contará por siempre. ` +
         `Annie está temblando... sollozando... aplaudiendo...\n\n` +
         `**¡¡¡WEEEENAAA CONCHETUMARE!!!** *(se le escapó de la emoción)*`,
   };

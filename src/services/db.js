@@ -31,13 +31,14 @@ const CONFIG_DEFAULTS = {
   CHILE_TZ_OFFSET_SQLITE: "-3 hours",
   TIMEZONE_VOZ: "America/New_York",
   GUILD_ID: "1463659718382977253",
-  CANAL_GENERAL_ID: "1463659720207372464",
+  CANAL_GENERAL_ID: "1495527885476200569",
+  CANAL_GENERAL_HEARTOPIA_ID: "1463659720207372464",
   CANAL_BIENVENIDA_ID: "1463664186310791392",
   CANAL_HORA_ID: "1465953316029726801",
   CANAL_CLIMA_ID: "1466973835831283876",
   CANAL_VOZ_DORMIR_ID: "1466250598302355570",
   LOG_CHANNEL_ID: "1474525474632892469",
-  MENSAJE_ROLES_ID: "1470188601760284931",
+  MENSAJE_ROLES_ID: "1495551440385478866",
   ANNIE_IMG: "https://imgur.com/pCWlxKG.png",
   ANNIE_IMG_BIG: "https://imgur.com/pCWlxKG.png",
   WIKI_URL: "https://heartopiachile.vercel.app/",
@@ -63,12 +64,43 @@ const CONFIG_DEFAULTS = {
   TRIVIA_RECOMPENSA_XP: "100",
   TRIVIA_RECOMPENSA_MONEDAS: "10",
   ROLES_PROGRESION: JSON.stringify([
-    { nivel: 1,  nombre: "🍃 Aprendiz",            roleId: "" },
-    { nivel: 10, nombre: "🐛 Coleccionista",        roleId: "" },
-    { nivel: 20, nombre: "🌾 Agricultor Dedicado",  roleId: "" },
-    { nivel: 30, nombre: "🎣 Pescador Experto",     roleId: "" },
-    { nivel: 50, nombre: "⛏️ Minero Legendario",   roleId: "" }
+    { nivel: 1,  nombre: "🍃 Aprendiz",            roleId: "1495528480320913548" },
+    { nivel: 10, nombre: "🐛 Coleccionista",        roleId: "1495528575166840992" },
+    { nivel: 20, nombre: "🌾 Agricultor Dedicado",  roleId: "1495528634050674706" },
+    { nivel: 30, nombre: "🎣 Pescador Experto",     roleId: "1495528705127223437" },
+    { nivel: 50, nombre: "⛏️ Minero Legendario",   roleId: "1495528793744343111" }
   ]),
+  ROL_VISITANTE_ID: "1495548034514157711",
+  CANAL_CUMPLEANOS_ID: "1495552161428275300",
+  CUMPLE_ULTIMA_REVISION: "",
+  CANAL_HIGHLIGHTS_ID: "1495556569943769219",
+  CANAL_EVENTOS_ID: "1495556557159796838",
+  CANAL_FOTO_DIA_ID: "1495556559185383564",
+  CANAL_ARTE_ID: "1495556566521352213",
+  CANAL_STAGE_ID: "1495556573341417625",
+  CANAL_ASMR_ID: "1495556577669681343",
+  PROMPT_DIARIO_ULTIMA_FECHA: "",
+  HIGHLIGHTS_ULTIMA_FECHA: "",
+  PROMPTS_DIARIOS: JSON.stringify([
+    { dia: 1, canalId: "1495552165551276205", titulo: "📚 Lunes de Recomendación", mensaje: "¿Qué serie, libro, anime, manga o juego estás consumiendo esta semana? Cuéntanos y comparte tu recomendación 💌" },
+    { dia: 2, canalId: "1467326699707564187", titulo: "🐈 Martes de Mascotas", mensaje: "Muéstranos a tu pet cotidiano — perrito, gato, conejo, pececito, el que sea. ¡La aldea quiere conocerlo! 🪷" },
+    { dia: 3, canalId: "1463659720207372464", titulo: "🎀 Miércoles de Heartopia", mensaje: "Comparte una captura tuya del juego — tu casa, tu mascota ingame, un momentito cute. ✨" },
+    { dia: 4, canalId: "1495546967382818847", titulo: "🖼️ Jueves de Jardines", mensaje: "¿Qué cozy game estás jugando esta semana? Stardew, AC, Palia, Dreamlight, Hello Kitty Island... muéstranos 🌾" },
+    { dia: 5, canalId: "1495552158236541070", titulo: "💭 Viernes de Mood", mensaje: "¿Cómo estás hoy? Usa una palabra, un emoji o una frase corta — nos leemos sin juicio 🌙" },
+    { dia: 6, canalId: "1495527885476200569", titulo: "🎤 Sábado de Charla", mensaje: "Sábado en la aldea — esta noche podemos juntarnos en voz para chismecito. ¿Quién se apunta? ✨" },
+  ]),
+  CANALES_HIGHLIGHTS_SCAN: JSON.stringify([
+    "1495527885476200569",
+    "1495552158236541070",
+    "1463660849653874853",
+    "1467326699707564187",
+    "1495556559185383564",
+    "1495556566521352213",
+  ]),
+  ROL_VECINO_ID: "1463661564568801485",
+  ROL_GUIA_ID: "1469760697503322132",
+  ROL_LUCIERNAGA_MAYOR_ID: "1467953316922392598",
+  ROL_LUNA_GUARDIANA_ID: "1463661508679696590",
   REACTION_ROLES: JSON.stringify({
     "🪲": "1465882704607449190",
     "🫧": "1465882796198330389",
@@ -77,6 +109,18 @@ const CONFIG_DEFAULTS = {
     "🪺": "1465883082824483060",
     "💐": "1465928627123257550",
     "🌠": "1469838445865079009",
+  }),
+  MENSAJE_ROLES_COZY_ID: "1495550443902865448",
+  REACTION_ROLES_COZY: JSON.stringify({
+    "🌾": "1495550359278583972",
+    "🍃": "1495550361778262088",
+    "🏰": "1495550367776116938",
+    "🌸": "1495550372419342436",
+    "🐱": "1495550375883837482",
+  }),
+  MENSAJE_NORMAS_ID: "1495554820604563527",
+  REACTION_NORMAS: JSON.stringify({
+    "✅": "1463661564568801485",
   }),
   COLORES: JSON.stringify({
     ROSA: "#FFB7C5",
@@ -427,6 +471,7 @@ export async function initDB() {
     try { await db.execute("ALTER TABLE usuarios ADD COLUMN diario_racha INTEGER DEFAULT 0"); } catch (e) { /* Ignorar si ya existe */ }
     try { await db.execute("ALTER TABLE usuarios ADD COLUMN seguro_antirobo_hasta INTEGER DEFAULT 0"); } catch (e) { /* Ignorar si ya existe */ }
     try { await db.execute("ALTER TABLE usuarios ADD COLUMN reputacion_pillo INTEGER DEFAULT 0"); } catch (e) { /* Ignorar si ya existe */ }
+    try { await db.execute("ALTER TABLE usuarios ADD COLUMN cumple TEXT DEFAULT NULL"); } catch (e) { /* Ignorar si ya existe */ }
 
     await db.execute(`
       CREATE TRIGGER IF NOT EXISTS trg_actividad_usuarios_update

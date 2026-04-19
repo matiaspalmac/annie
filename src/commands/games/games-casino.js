@@ -5,7 +5,7 @@ import { CONFIG } from "../../core/config.js";
 
 export const data = new SlashCommandBuilder()
   .setName("casino")
-  .setDescription("🎰 Casino de Heartopia")
+  .setDescription("🎰 Casino de la Aldea")
   .addSubcommand((subcommand) =>
     subcommand
       .setName("menu")
@@ -42,7 +42,7 @@ async function mostrarMenu(interaction, bostezo) {
 
   const embed = crearEmbed()
     .setColor(CONFIG.COLORES.CASINO)
-    .setTitle("🎰 Casino de Heartopia 🎰")
+    .setTitle("🎰 Casino de la Aldea 🎰")
     .setDescription(
       `${bostezo} ¡Bienvenido al casino, tesoro! Elige tu juego favorito, corazón:\n\n` +
       "🎰 **Slots** - Máquina tragamonedas con jackpots\n" +

@@ -19,13 +19,16 @@ import { logStartup } from "../core/logger.js";
 import { registerInterval, registerTimeout } from "../schedulers/scheduler.js";
 import { procesarSorteoRifa } from "../features/rifa.js";
 import { chequearDoris } from "../features/doris.js";
-import { anunciarClima, updateWeatherChannel } from "../features/clima.js";
+import { updateWeatherChannel } from "../features/clima.js";
 // import { ejecutarRutinaDiaria, enviarFraseAmbient, mencionarVecinoRandom } from "../features/rutinas.js";
 import { lanzarEstrellaFugaz } from "../core/utils.js";
 import { lanzarTriviaAleatoria } from "../features/trivia.js";
 import { refreshCache } from "../features/wiki-sync.js";
 import { updateTimeChannel } from "../features/time-channel.js";
 import { verificarDeadline } from "../features/eventos.js";
+import { checkCumpleanos } from "../features/cumpleanos.js";
+import { checkPromptDiario } from "../features/prompt-diario.js";
+import { checkHighlights } from "../features/highlights.js";
 
 export const event = Events.ClientReady;
 export const once = true;
@@ -87,13 +90,24 @@ export async function execute(client) {
   registerInterval("trivia", () => lanzarTriviaAleatoria(client), 8 * 3600_000);
   registerInterval("doris", () => chequearDoris(client), 90 * 60_000);
   registerInterval("cache-refresh", () => refreshCache(client), 30 * 60_000);
-  registerInterval("anunciar-clima", () => anunciarClima(client), 3 * 3600_000);
   // registerInterval("frase-ambient", () => enviarFraseAmbient(client), 360 * 60_000);
   // registerInterval("rutina-diaria", () => ejecutarRutinaDiaria(client), 5 * 60_000);
   // registerInterval("vecino-random", () => mencionarVecinoRandom(client), 360 * 60_000);
 
   // Deadline de eventos comunitarios — cada 10 min
   registerInterval("evento-deadline", () => verificarDeadline(client), 10 * 60_000);
+
+  // Cumpleaños — cada 30 min (se autolimita a 1 saludo por día después de 9am Chile)
+  checkCumpleanos(client);
+  registerInterval("cumpleanos", () => checkCumpleanos(client), 30 * 60_000);
+
+  // Prompt diario (día con dueño) — cada 30 min (post único por día tras 10am Chile)
+  checkPromptDiario(client);
+  registerInterval("prompt-diario", () => checkPromptDiario(client), 30 * 60_000);
+
+  // Highlights semanales — cada 30 min (solo posta domingos tras 11am Chile)
+  checkHighlights(client);
+  registerInterval("highlights", () => checkHighlights(client), 30 * 60_000);
 
   // Canal de clima cada 15 min
   updateWeatherChannel(client);

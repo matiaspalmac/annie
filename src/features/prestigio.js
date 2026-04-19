@@ -1,5 +1,5 @@
 /**
- * Sistema de Prestigio — Heartopia
+ * Sistema de Prestigio — Aldea Luciérnaga
  *
  * Cuando un usuario alcanza nivel 50+, puede "prestigiar":
  * - Resetea nivel, XP, monedas de bolsillo, racha diaria y stats de casino
@@ -23,7 +23,7 @@ const RECOMPENSAS_PRESTIGIO = {
   3:  { titulo: "⭐⭐⭐ Leyenda",               marco: "marco_prestigio_3",  monedas_inicio: 1500 },
   4:  { titulo: "🌟 Alma del Pueblo",            marco: "marco_prestigio_4",  monedas_inicio: 2000 },
   5:  { titulo: "🌟🌟 Guardián/a Eterno/a",     marco: "marco_prestigio_5",  monedas_inicio: 2500 },
-  6:  { titulo: "💫 Espíritu de Heartopia",      marco: null,                 monedas_inicio: 3000 },
+  6:  { titulo: "💫 Espíritu de la Aldea",       marco: null,                 monedas_inicio: 3000 },
   7:  { titulo: "💫💫 Corazón del Mundo",        marco: null,                 monedas_inicio: 3500 },
   8:  { titulo: "✨ Inmortal del Pueblito",      marco: null,                 monedas_inicio: 4000 },
   9:  { titulo: "✨✨ Trascendente",             marco: null,                 monedas_inicio: 4500 },

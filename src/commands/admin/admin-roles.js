@@ -46,7 +46,7 @@ export async function execute(interaction) {
             }).join("\n") +
             "\n\nReacciona con el emoji que quieras y te pongo el rol con cariño.\nSi quitas la reacción, te lo quito sin drama."
         )
-        .setFooter({ text: `${CONFIG.APP_LABEL} | Heartopia`, iconURL: interaction.guild?.iconURL({ size: 32 }) })
+        .setFooter({ text: `${CONFIG.APP_LABEL} | Aldea Luciérnaga`, iconURL: interaction.guild?.iconURL({ size: 32 }) })
         .setTimestamp();
 
     try {

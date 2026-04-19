@@ -68,7 +68,7 @@ export async function execute(interaction, bostezo) {
             }
         )
         .setFooter({
-            text: `${CONFIG.APP_LABEL} | ${estaDurmiendo() ? "💤 Zzz... sueñen bonito" : "🌸 Hecho con amor para Heartopia"}`,
+            text: `${CONFIG.APP_LABEL} | ${estaDurmiendo() ? "💤 Zzz... sueñen bonito" : "🌸 Hecho con amor para la Aldea Luciérnaga"}`,
             iconURL: interaction.guild?.iconURL() ?? undefined,
         })
         .setTimestamp();

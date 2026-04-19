@@ -24,6 +24,16 @@ function saludoAleatorio(member) {
 
 export async function execute(member) {
   try {
+    // Auto-asignar rol 🌱 Visitante del Valle a nuevos miembros
+    const rolVisitanteId = CONFIG.ROL_VISITANTE_ID;
+    if (rolVisitanteId && !member.user.bot) {
+      try {
+        await member.roles.add(rolVisitanteId, "Auto-asignación a nuevo miembro");
+      } catch (e) {
+        console.error("[guildMemberAdd] No pude asignar rol Visitante:", e.message);
+      }
+    }
+
     const canalId = CONFIG.CANAL_BIENVENIDA_ID || CONFIG.CANAL_GENERAL_ID;
     const canal = await member.guild.channels.fetch(canalId);
     if (!canal) return;
@@ -39,9 +49,9 @@ export async function execute(member) {
         {
           name: "🌱 Primeros pasitos",
           value:
-            "• Lee las reglas del pueblo\n" +
-            "• Pasa por los roles y elige los tuyos\n" +
-            "• Usa `/diario` conmigo para reclamar tu primer regalito",
+            "• Lee las normas en <#1465883350509293640>\n" +
+            "• Reacciona con ✅ al final para graduarte a **🍄 Vecino del Valle** y ver toda la aldea\n" +
+            "• Después, pasa por <#1465883980728504482> para suscribirte a los juegos que te gusten",
         },
       );
 
@@ -49,6 +59,23 @@ export async function execute(member) {
       content: saludoAleatorio(member),
       embeds: [embed],
     });
+
+    // DM personal con el flow de onboarding (no bloqueante)
+    try {
+      const dmEmbed = crearEmbed(COLOR_LUCIERNAGA)
+        .setTitle("🏮 Bienvenid@ a Aldea Luciérnaga")
+        .setDescription(
+          `Hola **${member.user.username}** 🪷 Soy **Annie**, la ayudantita de la aldea.\n\n` +
+          "Te dejo los tres pasitos para empezar:\n\n" +
+          "**1.** Pásate por <#1465883350509293640> y lee las normas — al final hay un ✅ para aceptarlas y desbloquear toda la aldea.\n\n" +
+          "**2.** Una vez dentro, elige los juegos cozy que te interesan en <#1465883980728504482> — te pingueo cuando haya eventos.\n\n" +
+          "**3.** Agrega tu cumple con `/cumple guardar fecha:DD-MM` y usa `/aldea` para un tour completo.\n\n" +
+          "Si te pierdes, estoy por ahí con tecito calientito 🫖✨"
+        );
+      await member.send({ embeds: [dmEmbed] });
+    } catch {
+      // DMs cerrados — no pasa nada, se recibe en canal igual
+    }
   } catch (e) {
     console.error("Error bienvenida:", e.message);
   }

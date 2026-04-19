@@ -1,64 +1,9 @@
 /**
- * Anuncio de clima diario y actualización del canal de clima.
+ * Actualización del canal de clima (el anuncio automático fue removido).
  */
 import { CONFIG } from "../core/config.js";
-import { estaDurmiendo } from "../core/state.js";
-import { crearEmbed, getCanalGeneral, getFechaChile, getHoraChile } from "../core/utils.js";
+import { getHoraChile } from "../core/utils.js";
 import { db } from "../services/db.js";
-
-/**
- * Anuncia el clima del día en el canal general.
- * @param {import("discord.js").Client} client
- * @param {boolean} [forzado=false]
- */
-export async function anunciarClima(client, forzado = false) {
-  try {
-    if (!forzado && estaDurmiendo()) return;
-
-    const hora = getHoraChile();
-    const horaAnuncio = CONFIG.HORA_ANUNCIO_CLIMA || 19;
-    if (!forzado && hora < horaAnuncio) return;
-
-    const canal = getCanalGeneral(client);
-    if (!canal) return;
-
-    const result = await db.execute("SELECT * FROM clima WHERE id = 'hoy'");
-    if (result.rows.length === 0) return;
-
-    const hoy = result.rows[0];
-    const timeline = JSON.parse(hoy.timeline || "[]");
-    const firmaHoy = `${getFechaChile()}|${hoy.tipo || "--"}|${hoy.descripcion || ""}`;
-
-    if (!forzado) {
-      const lastRes = await db.execute({
-        sql: "SELECT valor FROM configuracion WHERE clave = 'CLIMA_ULTIMO_ANUNCIO_FIRMA'",
-      });
-      const ultimaFirma = String(lastRes.rows[0]?.valor || "");
-      if (ultimaFirma === firmaHoy) return;
-    }
-
-    const embed = crearEmbed(CONFIG.COLORES.CIELO)
-      .setTitle("☁️ Clima del Pueblito — Hoy")
-      .setDescription(`**${hoy.tipo || "--"}**\n${hoy.descripcion || ""}`);
-
-    if (Array.isArray(timeline) && timeline.length > 0) {
-      const horariosTexto = timeline.map(h => `${h.hora}:00 — ${h.texto}`).join("\n");
-      embed.addFields({ name: "Horarios con cariño", value: horariosTexto });
-    }
-
-    embed.setFooter({ text: "Pronóstico hecho con amor | Annie" });
-
-    await canal.send({ content: "Annie les trae el clima con amor:", embeds: [embed] });
-    await db.execute({
-      sql: `INSERT INTO configuracion (clave, valor) VALUES ('CLIMA_ULTIMO_ANUNCIO_FIRMA', ?)
-            ON CONFLICT(clave) DO UPDATE SET valor = ?`,
-      args: [firmaHoy, firmaHoy],
-    });
-    console.log("[Clima] Clima anunciado exitosamente");
-  } catch (error) {
-    console.error("[Clima] Error:", error.message);
-  }
-}
 
 /**
  * Actualiza el nombre del canal de clima con el estado actual.

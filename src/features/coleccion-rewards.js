@@ -18,7 +18,7 @@ const RECOMPENSAS_COLECCION = {
   cultivos:      { titulo: "Horticultor/a Supremo/a",    monedas: 1500, xp: 400,  emoji: "🌱" },
   recolectables: { titulo: "Coleccionista Legendario/a", monedas: 2500, xp: 600,  emoji: "🍄" },
   recetas:       { titulo: "Chef Estrella del Pueblito", monedas: 2000, xp: 500,  emoji: "🍳" },
-  logros:        { titulo: "Leyenda de Heartopia",       monedas: 5000, xp: 1000, emoji: "🏆" },
+  logros:        { titulo: "Leyenda de la Aldea",        monedas: 5000, xp: 1000, emoji: "🏆" },
 };
 
 // ── Función principal ────────────────────────────────────────────

@@ -34,7 +34,7 @@ export async function execute(interaction, bostezo) {
             baseEmbed: crearEmbed(color),
             items,
             itemsPorPagina: 10,
-            titulo: `${em.titulo} Logros de Heartopia ${em.titulo}`,
+            titulo: `${em.titulo} Logros de la Aldea ${em.titulo}`,
             descripcion: "Metas lindas que puedes alcanzar en el pueblito. \u00a1Tú puedes, tesoro! 🌸",
             content: bostezo,
             renderItem: ([nombre, l]) => {

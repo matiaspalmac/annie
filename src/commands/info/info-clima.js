@@ -58,7 +58,7 @@ export async function execute(interaction, bostezo) {
         const embed = crearEmbed(color)
             .setTitle(`${climaEmoji} Clima del Pueblito — Hoy`)
             .setDescription(
-                `${bostezo}Aquí tienes el reporte del tiempo para hoy en Heartopia, corazón. 🌸`
+                `${bostezo}Aquí tienes el reporte del tiempo para hoy en la Aldea, corazón. 🌸`
             )
             .addFields(
                 {
