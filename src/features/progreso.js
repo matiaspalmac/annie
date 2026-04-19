@@ -1,6 +1,7 @@
 import { db } from "../services/db.js";
 import { crearEmbed } from "../core/utils.js";
 import { CONFIG } from "../core/config.js";
+import { obtenerNivelMaximo, sincronizarRolesProgresion } from "./roles-progresion.js";
 
 // ── Constantes ────────────────────────────────────────────────────────────
 /** Multiplicador de XP cuando el booster está activo (25% extra) */
@@ -87,6 +88,24 @@ export async function ganarXP(userId, habilidad, cantidad, interaction) {
             const nombreHabilidad = habilidad.charAt(0).toUpperCase() + habilidad.slice(1);
             interaction.followUp(`🌟 *¡Tatachán!* Has subido al **Nivel ${nivelActual}** de \`${nombreHabilidad.toUpperCase()}\`.`).catch(() => { });
             await registrarBitacora(userId, `Alcanzó el Nivel ${nivelActual} de ${nombreHabilidad}`);
+
+            // 6. Sincronizar roles de progresión de la aldea (según nivel máximo)
+            try {
+                const nivelMax = await obtenerNivelMaximo(userId);
+                const guild = interaction.guild;
+                const member = guild ? await guild.members.fetch(userId).catch(() => null) : null;
+                if (member) {
+                    const tierNuevo = await sincronizarRolesProgresion(member, nivelMax);
+                    if (tierNuevo) {
+                        interaction.followUp(
+                            `🏡 *¡Las luciérnagas te rodean!* En la aldea ahora eres **${tierNuevo.nombre}**.`
+                        ).catch(() => { });
+                        await registrarBitacora(userId, `Ascendió al rango ${tierNuevo.nombre}`);
+                    }
+                }
+            } catch (errRoles) {
+                console.error("[Progreso] Error sincronizando roles:", errRoles.message);
+            }
         }
 
         return nivelActual;

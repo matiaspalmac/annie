@@ -32,6 +32,7 @@ const CONFIG_DEFAULTS = {
   TIMEZONE_VOZ: "America/New_York",
   GUILD_ID: "1463659718382977253",
   CANAL_GENERAL_ID: "1463659720207372464",
+  CANAL_BIENVENIDA_ID: "1463664186310791392",
   CANAL_HORA_ID: "1465953316029726801",
   CANAL_CLIMA_ID: "1466973835831283876",
   CANAL_VOZ_DORMIR_ID: "1466250598302355570",
@@ -61,6 +62,13 @@ const CONFIG_DEFAULTS = {
   TRIVIA_DURACION_MS: "60000",
   TRIVIA_RECOMPENSA_XP: "100",
   TRIVIA_RECOMPENSA_MONEDAS: "10",
+  ROLES_PROGRESION: JSON.stringify([
+    { nivel: 1,  nombre: "🍃 Aprendiz",            roleId: "" },
+    { nivel: 10, nombre: "🐛 Coleccionista",        roleId: "" },
+    { nivel: 20, nombre: "🌾 Agricultor Dedicado",  roleId: "" },
+    { nivel: 30, nombre: "🎣 Pescador Experto",     roleId: "" },
+    { nivel: 50, nombre: "⛏️ Minero Legendario",   roleId: "" }
+  ]),
   REACTION_ROLES: JSON.stringify({
     "🪲": "1465882704607449190",
     "🫧": "1465882796198330389",
