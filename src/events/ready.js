@@ -29,6 +29,7 @@ import { verificarDeadline } from "../features/eventos.js";
 import { checkCumpleanos } from "../features/cumpleanos.js";
 import { checkPromptDiario } from "../features/prompt-diario.js";
 import { checkHighlights } from "../features/highlights.js";
+import { limpiarSalasHuerfanas } from "./voiceStateUpdate.js";
 
 export const event = Events.ClientReady;
 export const once = true;
@@ -49,6 +50,9 @@ export async function execute(client) {
 
   // ── Conectar al canal de voz ────────────────────────────────
   conectarOficina(client);
+
+  // ── Limpiar salas temporales huérfanas (si el bot reinició) ─
+  limpiarSalasHuerfanas(client);
 
   // ── Actualizar estado ───────────────────────────────────────
   actualizarEstado(client);
