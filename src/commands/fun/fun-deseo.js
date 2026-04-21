@@ -1,7 +1,7 @@
 import { SlashCommandBuilder, MessageFlags } from "discord.js";
 import { CONFIG } from "../../core/config.js";
 import { db } from "../../services/db.js";
-import { crearEmbed } from "../../core/utils.js";
+import { crearEmbed, autoDeleteMsg } from "../../core/utils.js";
 import { isEstrellaActiva, setEstrellaActiva, getEstrellaMensaje, setEstrellaMensaje } from "../../core/utils.js";
 
 export const data = new SlashCommandBuilder()
@@ -55,6 +55,8 @@ export async function execute(interaction, bostezo) {
             content: "🌠 ¡¡Tenemos un vecinito afortunado!! ¡Lanzó su deseo primero!",
             embeds: [embed]
         });
+        const replyMsg = await interaction.fetchReply().catch(() => null);
+        autoDeleteMsg(replyMsg);
     } catch (e) {
         console.error("Error al dar premio de estrella:", e);
         const embed = crearEmbed(CONFIG.COLORES.ROSA)

@@ -1,6 +1,6 @@
 import { db } from "../services/db.js";
 import { CONFIG } from "../core/config.js";
-import { getCanalGeneral, estaDurmiendo, crearEmbed, getFechaChile } from "../core/utils.js";
+import { getCanalGeneral, estaDurmiendo, crearEmbed, getFechaChile, autoDeleteMsg } from "../core/utils.js";
 
 // ── Constantes ────────────────────────────────────────────────────────────
 /** Límite de mensajes a recolectar en la trivia */
@@ -97,7 +97,8 @@ async function ejecutarTriviaFija(canal, preguntaData) {
       `⏱️ *Tienes ${tiempoSegundos} segundos para responder en el chat.*`
     );
 
-  await canal.send({ embeds: [embedTrivia] });
+  const preguntaMsg = await canal.send({ embeds: [embedTrivia] });
+  autoDeleteMsg(preguntaMsg);
 
   // Registrar la trivia en la DB
   let triviaId = 0;
@@ -128,6 +129,7 @@ async function ejecutarTriviaFija(canal, preguntaData) {
 
   collector.on("end", async (_collected, reason) => {
     try {
+      let resultadoMsg;
       if (reason === "ganador" && ganador) {
         await db.execute({
           sql: `INSERT INTO usuarios (id, monedas, xp, nivel)
@@ -146,10 +148,10 @@ async function ejecutarTriviaFija(canal, preguntaData) {
         }
 
         const respuestaCorrecta = respuestas[0];
-        canal.send(
+        resultadoMsg = await canal.send(
           `🎉 ¡Correcto <@${ganador.id}>! La respuesta era **${respuestaCorrecta}**. ` +
           `¡Ganaste **${recompensa.xp} XP** y **${recompensa.monedas} moneditas**! 🌸`
-        );
+        ).catch(() => null);
       } else {
         if (triviaId > 0) {
           db.execute({
@@ -158,10 +160,11 @@ async function ejecutarTriviaFija(canal, preguntaData) {
           }).catch(() => {});
         }
         const respuestaCorrecta = respuestas[0];
-        canal.send(
+        resultadoMsg = await canal.send(
           `⏰ ¡Se acabó el tiempo vecinitos! La respuesta correcta era **${respuestaCorrecta}**. ¡Para la próxima será!`
-        );
+        ).catch(() => null);
       }
+      autoDeleteMsg(resultadoMsg);
     } catch (err) {
       console.error("[Trivia] Error al finalizar trivia fija:", err);
     }
@@ -225,7 +228,8 @@ async function ejecutarTriviaNPC(canal) {
       `⏱️ *Tienes ${tiempoSegundos} segundos para responder en el chat.*`
     );
 
-  await canal.send({ embeds: [embedTrivia] });
+  const preguntaMsg = await canal.send({ embeds: [embedTrivia] });
+  autoDeleteMsg(preguntaMsg);
 
   // Registrar en DB
   let triviaId = 0;
@@ -254,6 +258,7 @@ async function ejecutarTriviaNPC(canal) {
 
   collector.on("end", async (_collected, reason) => {
     try {
+      let resultadoMsg;
       if (reason === "ganador" && ganador) {
         await db.execute({
           sql: `INSERT INTO usuarios (id, monedas, xp, nivel)
@@ -271,9 +276,9 @@ async function ejecutarTriviaNPC(canal) {
           }).catch(() => {});
         }
 
-        canal.send(
+        resultadoMsg = await canal.send(
           `🎉 ¡Correcto <@${ganador.id}>! Era **${nombreHabitante}**. ¡Ganaste **${xpGanada} XP** y **${moneditas} moneditas**! 🌸`
-        );
+        ).catch(() => null);
       } else {
         if (triviaId > 0) {
           db.execute({
@@ -281,10 +286,11 @@ async function ejecutarTriviaNPC(canal) {
             args: [triviaId],
           }).catch(() => {});
         }
-        canal.send(
+        resultadoMsg = await canal.send(
           `⏰ ¡Se acabó el tiempo vecinitos! La respuesta correcta era **${nombreHabitante}**. ¡Para la próxima será!`
-        );
+        ).catch(() => null);
       }
+      autoDeleteMsg(resultadoMsg);
     } catch (err) {
       console.error("[Trivia] Error al finalizar trivia NPC:", err);
     }

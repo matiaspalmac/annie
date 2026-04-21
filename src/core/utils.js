@@ -66,6 +66,22 @@ const FOOTERS_ANNIE = [
 ];
 
 const DURACION_ESTRELLA_FUGAZ = 5 * 60 * 1000;
+
+/** Tiempo por defecto antes de auto-borrar mensajes efímeros (trivia/deseos). */
+export const AUTO_DELETE_MS = 5 * 60 * 1000;
+
+/**
+ * Programa el borrado de un mensaje tras `ms` milisegundos.
+ * Silencioso: si el mensaje ya no existe o no se puede borrar, no lanza.
+ * @param {import("discord.js").Message|null|undefined} msg
+ * @param {number} [ms=AUTO_DELETE_MS]
+ */
+export function autoDeleteMsg(msg, ms = AUTO_DELETE_MS) {
+  if (!msg) return;
+  setTimeout(() => {
+    msg.delete?.().catch(() => {});
+  }, ms);
+}
 const TIMEOUT_PAGINACION_DEFAULT = 300_000;
 
 // ── Footer helper (elimina la duplicación) ────────────────────
@@ -210,20 +226,25 @@ export async function lanzarEstrellaFugaz(client) {
       "**¡El primero que escriba `/deseo` se la lleva!** ✨",
     );
 
+  let estrellaMsg;
   try {
-    const msg = await canal.send({ embeds: [embed] });
-    setEstrellaMensaje(msg);
+    estrellaMsg = await canal.send({ embeds: [embed] });
+    setEstrellaMensaje(estrellaMsg);
   } catch (error) {
     console.error("Error enviando estrella:", error);
     setEstrellaActiva(false);
     return;
   }
 
-  setTimeout(() => {
+  setTimeout(async () => {
     if (isEstrellaActiva()) {
       setEstrellaActiva(false);
       setEstrellaMensaje(null);
-      canal.send("❄️ La chispita de la estrella se apagó solita... ¡Ojalá para la próxima estemos más atentos!").catch(() => {});
+      estrellaMsg?.delete?.().catch(() => {});
+      const avisoMsg = await canal
+        .send("❄️ La chispita de la estrella se apagó solita... ¡Ojalá para la próxima estemos más atentos!")
+        .catch(() => null);
+      autoDeleteMsg(avisoMsg);
     }
   }, DURACION_ESTRELLA_FUGAZ);
 }
