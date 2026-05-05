@@ -1,5 +1,6 @@
 import { SlashCommandBuilder } from "discord.js";
 import { crearEmbed, getFechaChile } from "../../core/utils.js";
+import { db } from "../../services/db.js";
 import { deductBalance, ensureUser, getBalance } from "../../services/db-helpers.js";
 import { CONFIG } from "../../core/config.js";
 import {
